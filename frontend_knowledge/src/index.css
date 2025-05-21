@@ -1,0 +1,321 @@
+
+
+
+
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+/*это атрибут className для товаров*/
+.goods {
+  display: flex;
+  height: 500px;
+  display: inline-block;
+  place-items: center;
+  justify-content: center;
+  border: 5px solid green;
+/*  display: inline-block;*/
+}
+
+/*это атрибут id*/
+#goods {
+/*height: 400px;*/
+display: inline-block;
+}
+
+
+
+.active-link {
+  color: var(--color-active);
+  cursor: default;
+}
+
+
+header {
+  display: flex;
+  justify-content: space-between; /* равномерное распределение */
+  align-items: center; /* выравнивание по вертикали */
+  padding: 10px 20px; /* отступы внутри header */
+  background: #696969; /* фон (по желанию) */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* тень (опционально) */
+}
+
+
+/*.headerInline{
+    
+    display: inline-block;
+    vertical-align: middle;
+    padding: 10px;
+
+}
+*/
+
+
+
+main{
+  text-align: center; 
+  /*background-color: seagreen;*/
+  width: 60%;
+/*  padding: 50px 0px 100px 0px;*/
+  /* height: 100vh;*/
+  padding: 2.5%;
+  /*border-right: 5px solid slategrey;*/
+  margin-left: 20%;
+  /*margin-bottom: 200px;*/
+  /*padding-bottom: 150%;*/
+  margin-bottom: -130px; /* Высота footer с минусом */
+  padding-bottom: 130px; /* Отступ снизу = высота footer */
+  
+}
+
+aside{
+  float: left;
+  width: 20%;
+  padding: 2.5%;
+  
+  }
+
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: green;
+  color: white;
+}
+
+
+.footer p{
+text-align: left;
+color: white;
+}
+
+
+
+.list-pages {
+  text-align: center;
+  margin: 0 0 20px 0;
+
+}
+
+
+.list-pages ul {
+  margin: 20px 0 0 0;
+  padding: 0; 
+}
+
+.list-pages ul li {
+  display: inline-block;
+  margin: 0 20px 0 0;
+}
+
+
+.list-pages a {
+  color: greenyellow;
+  font-size: 24px;
+  text-decoration: none;
+}
+
+.list-pages .page-num, .page-num-selected, .page_selected {
+  display: inline-block;
+  width: 60px;
+  height: 40px;
+  padding: 3px 0 0 0;
+  border: 1px solid #d0d0d0;
+  border-radius: 30px;
+  background: royalblue;
+}
+
+.list-pages .page-num:hover {
+  box-shadow: 3px 3px 1px #d0d0d0; 
+
+
+}
+.list-pages .page-num-selected {
+  /* border: none;*/
+  color: red;
+  font-size: 20px;
+}
+
+
+.list-pages .page-num-selected:hover {
+  box-shadow: none; 
+}
+
+
+
+.invis{
+visibility: hidden;
+/* display: none; */
+}
+
+
+.product-image {
+    width: 300px;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+
+/*стили для таблиц*/
+.receipt-editor {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.receipt-editor table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.receipt-editor th, .receipt-editor td {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.receipt-editor th {
+    background-color: green;
+}
+
+.receipt-editor input[type="number"] {
+    width: 80px;
+    padding: 5px;
+}
+
+.receipt-editor .reset-price {
+    margin-left: 5px;
+    padding: 3px 6px;
+    font-size: 12px;
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+}
+
+.receipt-editor .total-label {
+    text-align: right;
+    font-weight: bold;
+}
+
+.receipt-editor .total-sum {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.receipt-editor .actions {
+    text-align: right;
+}
+
+.receipt-editor .error {
+    color: #d32f2f;
+    margin-top: 10px;
+}
+
+
+
+
+/*
+position: fixed;
+    right: 0; bottom: 0;
+    padding: 10px; 
+    background: #39b54a; 
+    color: #fff; 
+    width: 100%; 
+*/
+
+
+
+/*
+  box-sizing: border-box;
+
+  background: #3F4137;
+  padding: 5px;
+  color: #aaa;
+  font-size: 14px;
+  font-family: Verdana, Geneva, Arial, Helvetica;
+  text-align: left;
+  overflow: hidden;
+*/
+
+
+
+
+
+
+
+
+
+/*a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}*/
