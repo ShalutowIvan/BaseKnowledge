@@ -15,7 +15,7 @@ from sqlalchemy import MetaData, String, Boolean
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 #боевые креды для ДБ
-from src.settings import DB_HOST, DB_NAME, DB_PASS, DB_PORT, DB_USER
+from settings import DB_HOST, DB_NAME, DB_PASS, DB_PORT, DB_USER
 
 
 #ссылка для подключения БД постгре, тестовая и боевая
