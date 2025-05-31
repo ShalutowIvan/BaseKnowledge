@@ -1,10 +1,10 @@
 from dotenv import load_dotenv
-from fastapi.templating import Jinja2Templates
+# from fastapi.templating import Jinja2Templates
 import os
 
 
 #папка с шаблонами html
-templates = Jinja2Templates(directory="src/templates")
+# templates = Jinja2Templates(directory="src/templates")
 
 load_dotenv()
 #креды для боевой БД
