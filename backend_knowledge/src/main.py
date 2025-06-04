@@ -17,6 +17,10 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 #пояснения к статичным файлам
 # ("папка из фаст апи вшитая", StaticFiles(directory="путь к папке со статичными файлами"), name="имя")
 
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
 #роутеры
 app.include_router(router_knowledge_api)
 # app.include_router(router_reg_api)
