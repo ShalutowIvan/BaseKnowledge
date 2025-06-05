@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi.staticfiles import StaticFiles
-
+import os
 
 
 from routers_api.knowledge.router_api import router_knowledge_api
@@ -17,8 +17,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 #пояснения к статичным файлам
 # ("папка из фаст апи вшитая", StaticFiles(directory="путь к папке со статичными файлами"), name="имя")
 
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# UPLOAD_FOLDER = "uploads"
+# os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 #роутеры

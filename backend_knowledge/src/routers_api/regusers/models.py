@@ -4,7 +4,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.db import Base
+from db_api import Base
 
 
 class User(Base):
@@ -19,12 +19,12 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     #связи
-    knowledge: Mapped["Knowledges"] = relationship(back_populates="user")
-    # tokens: Mapped["Token"] = relationship(back_populates="user")
+    knowledge_user: Mapped["Knowledges"] = relationship(back_populates="user")
+    tokens: Mapped["Token"] = relationship(back_populates="user")
     # basket: Mapped["Basket"] = relationship(back_populates="user")
     # order_list: Mapped["Order_list"] = relationship(back_populates="user")
     # # order_counter: Mapped["Order_counter"] = relationship(back_populates="user")
-    # client_generate: Mapped["Code_verify_client"] = relationship(back_populates="user")
+    client_generate: Mapped["Code_verify_client"] = relationship(back_populates="user")
 
 
 class Token(Base):

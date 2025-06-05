@@ -16,18 +16,16 @@ class Knowledges(Base):
     slug: Mapped[str] = mapped_column(unique=True, nullable=False)
     content: Mapped[str] = mapped_column(Text, default="_")
     created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=text("TIMEZONE('utc', now())"), server_onupdate=text("TIMEZONE('utc', now())"))
+    updated_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"), server_onupdate=text("TIMEZONE('utc', now())"))
 
     free_access: Mapped[bool] = mapped_column(default=False)
     # связи
     # группы
-    group_id: Mapped[int] = mapped_column(ForeignKey("group.id", ondelete="RESTRICT"))#ссылаемся на таблицу group на ее элемент id
+    group_id: Mapped[int] = mapped_column(ForeignKey("groups.id", ondelete="RESTRICT"))#ссылаемся на таблицу group на ее элемент id
     group: Mapped["Group"] = relationship(back_populates="knowledge")
     # юзеры
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
-    user: Mapped["User"] = relationship(back_populates="knowledge")
-    # user: Mapped["User"] = relationship(back_populates="knowledge") это обозначение связи с моделью User, back_populates="knowledge" тут указывается параметр из модели User обозначающий связь с текущей моделью. 
-    #так это выглядит в модели User: knowledge: Mapped["Knowledges"] = relationship(back_populates="user")
+    user: Mapped["User"] = relationship(back_populates="knowledge_user")
     
     # изображения
     images: Mapped["Images"] = relationship(
@@ -38,7 +36,7 @@ class Knowledges(Base):
 
     
 class Group(Base):
-    __tablename__ = "group"
+    __tablename__ = "groups"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name_group: Mapped[str] = mapped_column(nullable=False)
     slug: Mapped[str] = mapped_column(nullable=False)

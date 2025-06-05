@@ -1,5 +1,5 @@
 # Схемы Pydantic для валидации данных
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 
@@ -11,11 +11,11 @@ class ImageBaseSchema(BaseModel):
     filepath: str
 
 
-class ImageCreateSchema(ImageBase):
+class ImageCreateSchema(ImageBaseSchema):
     pass
 
 
-class ImageSchema(ImageBase):
+class ImageSchema(ImageBaseSchema):
     id: int
     created_at: datetime
     
@@ -25,9 +25,13 @@ class ImageSchema(ImageBase):
 
 
 # схема групп знаний
+
 class GroupShema(BaseModel):
-    id: int
     name_group: str = Field(max_length=255)
+
+
+class GroupShemaFull(GroupShema):
+    id: int    
     slug: str = Field(max_length=255)
 
     class Config:
@@ -41,7 +45,7 @@ class KnowledgesSchema(BaseModel):
     # slug: str
 
 
-class KnowledgesCreateSchema(PostBase):
+class KnowledgesCreateSchema(KnowledgesSchema):
     pass
 
 
@@ -50,7 +54,7 @@ class KnowledgesSchemaFull(KnowledgesSchema):
     content: str
     created_at: datetime
     updated_at: Optional[datetime]
-    images: Optional[list[Image]] = None
+    images: Optional[list[ImageSchema]] = None
     
     
     class Config:

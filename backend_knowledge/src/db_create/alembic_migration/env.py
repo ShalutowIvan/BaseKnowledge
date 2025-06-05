@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 from db_api import Base
 
 # импорты моделей из папок с роутами по разделам
-# from routers_api.regusers.models import *
+from routers_api.regusers.models import *
 from routers_api.knowledge.models import *
 
 
