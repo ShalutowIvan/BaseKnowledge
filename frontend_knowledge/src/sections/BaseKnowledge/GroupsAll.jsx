@@ -21,11 +21,11 @@ function GroupsAll() {
 	return (
 		<>
 			<aside>
-			<h3><NavLink to="/goods_all/" className={setActive}>Все группы</NavLink></h3>
+			<h3><NavLink to="/knowledge/" className={setActive}>Все группы</NavLink></h3>
 
             {
                 groups?.map(group => (
-                        <NavLink key={group.id} to={`/groups/${group.slug}`} className={setActive}>
+                        <NavLink key={group.id} to={`/knowledge/${group.slug}`} className={setActive}>
                             <li>{group.name_group}</li>
                         </NavLink>
                     ))

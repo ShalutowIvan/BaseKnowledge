@@ -50,7 +50,7 @@ function GroupCreate() {
             if (response.statusText==='OK') {            
                 
                 //если все ок, то переходим в список товаров                
-                navigate("/BaseKnowledge/");
+                navigate("/knowledge/");
 
             } else {
                 const errorData = await response.data

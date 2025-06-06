@@ -16,24 +16,23 @@ import axios from "axios";
 
 export default function Start() {
 	const setActive = ({isActive}) => isActive ? 'active-link' : '';
-  const [state, setState ] = useState(null)
-    // const { user, logout } = useAuth();
+      // const { user, logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
     
-    useEffect(() => {
-        axios.get('http://127.0.0.1:8000')
-        .then(response => {
-        setState(response.data.fio);
-        setLoading(false);
-      })
-      .catch(error => {
-        setError(error);
-        setLoading(false);
-      });
+    // useEffect(() => {
+    //     axios.get('http://127.0.0.1:8000')
+    //     .then(response => {
+    //     setState(response.data.fio);
+    //     setLoading(false);
+    //   })
+    //   .catch(error => {
+    //     setError(error);
+    //     setLoading(false);
+    //   });
             
          
-    }, [])
+    // }, [])
 
     
     
@@ -45,13 +44,13 @@ export default function Start() {
             <h2><NavLink to="/" className={setActive}>Start</NavLink></h2>
 
             <p>Разделы ></p>
-            <h2><NavLink to="/BaseKnowledge/" className={setActive}>База знаний</NavLink></h2>
-            <h2><NavLink to="/ProjectManagement/" className={setActive}>Управление проектами</NavLink></h2>
-            <h2><NavLink to="/RoadMap/" className={setActive}>Путь развития</NavLink></h2>
+            <h2><NavLink to="/knowledge/" className={setActive}>База знаний</NavLink></h2>
+            <h2><NavLink to="/projectmanagement/" className={setActive}>Управление проектами</NavLink></h2>
+            <h2><NavLink to="/roadmap/" className={setActive}>Путь развития</NavLink></h2>
 
 
             <p>Информация о пользователе ></p>
-            <h1>{state}</h1>
+            <h1>Привет</h1>
             
 
 

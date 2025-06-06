@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import *
 from .schemas import *
-from .services import group_create_service, get_knowledge, knowledges_create_service, upload_image_service, update_knowledge
+from .services import group_create_service, get_knowledges, get_knowledge, knowledges_create_service, upload_image_service, update_knowledge, get_group_service, get_knowledges_in_group, knowledges_open_service
 # from src.regusers.models import User
 # from src.regusers.secure import test_token_expire, access_token_decode
 
@@ -38,78 +38,50 @@ async def group_create(group: GroupShema, session: AsyncSession = Depends(get_as
     return await group_create_service(db=session, group=group)
 
 
-
 #получение всех групп
-@router_knowledge_api.get("/groups_all/", response_model=list[GroupShema])
-async def groups_all(request: Request, session: AsyncSession = Depends(get_async_session)) -> GroupShema:
-    query = select(Group)
-    group = await session.scalars(query)    
-    return group
+@router_knowledge_api.get("/groups_all/", response_model=list[GroupShemaFull])
+async def groups_all(session: AsyncSession = Depends(get_async_session)) -> GroupShemaFull:
+    return await get_group_service(db=session)
 
 
-# получение всех знаний, только список с заголовками и описанием. 
+# получение всех знаний, только список с заголовками и описанием.
 @router_knowledge_api.get("/knowledge_all/", response_model=list[KnowledgesSchema])
-async def knowledges_all(request: Request, session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:    
-    knowledge = await session.execute(select(Knowledges))    
-    context = knowledge.scalars()
-    return context
+async def knowledges_all(session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:    
+    return await get_knowledges(db=session)
 
 
 #получение всех знаний по фильтру слага группы
 @router_knowledge_api.get("/knowledges_in_group/{slug}", response_model=list[KnowledgesSchema])
-async def knowledges_in_group(request: Request, slug: str, session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:    
-    
-    query = select(Knowledges).options(joinedload(Knowledges.group))
-    knowledges_gr = await session.scalars(query)
-    if slug == "0":
-        knowledges_gr = list(knowledges_gr)
-    else:
-        knowledges_gr = list(filter(lambda x: x.group.slug == slug, knowledges_gr))
+async def knowledges_in_group(slug: str, session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:
+    return await get_knowledges_in_group(db=session, slug=slug)
 
-    return knowledges_gr
+
+#сделал создание знания, переделал уже как надо. Возвращаем целое знание, чтобы открыть его. Так как после создания оно открывается и его можно будет редачить. Открытие со стороны фронта делать надо будет, и роут для открытия надо сделать
+@router_knowledge_api.post("/knowledges_create/", response_model=KnowledgesSchemaFull)
+async def knowledges_create(knowledge: KnowledgesCreateSchema, session: AsyncSession = Depends(get_async_session)):
+    return await knowledges_create_service(db=session, knowledge=knowledge)
 
 
 # открыть знание, тут фильтр по слагу знания
-@router_knowledge_api.get("/knowledges_open/{slug}", response_model=list[KnowledgesSchemaFull])
-async def knowledges_open(request: Request, slug: str, session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchemaFull:    
-    
-    response = await session.scalars(select(Knowledges).where(Knowledges.slug == slug))
-    
-    return response
+@router_knowledge_api.get("/knowledges_open/{slug}", response_model=KnowledgesSchemaFull)
+async def knowledges_open(slug: str, session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchemaFull:    
+    return await knowledges_open_service(db=session, slug=slug)
 
 
 #создание знания. После создания оно сразу открывается для заполнения. Поэтму тут схема ответа фул знания. Редактирование тела знания будет при открытии знания. При создании мы пишем название и описание знания и валидация идет по KnowledgesSchema. Потом оно открывается, и его заполняем - редактируем по остальным полям.
-#переделать создание поста, у меня не тенутся фото из фронта
-# @router_knowledge_api.post("/knowledges_create/", response_model=list[KnowledgesSchemaFull])
-# async def knowledges_create(request: Request, formData: KnowledgesSchema, session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchemaFull:
-#     fake_user = 1
-#     # Генерируем уникальный ID для поста
-#     # post_id = str(uuid.uuid4())
-#     # Создаем новое знание
-#     # new_knowledge = Knowledges(title=title, description=description, content=content, group_id=group, user_id=fake_user)
-#     slug = "тут написать формирование слага по транслиту и потом его указать в создании объекта знания"
-#     new_knowledge = Knowledges(title=title, description=description, group_id=1, user_id=fake_user)
-#     # Сохраняем пост в "базу данных"
-#     session.add(new_knowledge)
-#     await session.commit()
-#     return new_knowledge
 
 
 ####################################################################
 
 # из дипсика ответы, их тут разобрать надо
 
-#сделал создание знания, переделал уже как надо. Но надо тестить...
-@router_knowledge_api.post("/knowledges_create/", response_model=KnowledgesSchemaFull)
-async def knowledges_create(
-    knowledges: KnowledgesCreateSchema,
-    session: AsyncSession = Depends(get_async_session)
-):
-    return await knowledges_create_service(session, knowledges)
-
 # тут типа фотка грузится из контента по ссылке, и текст грузится в базу. Как срабатывает урл для загрузки фотог смотреть на фронте...!!!!!!!ост тут
 
 ####################################################################
+
+
+
+
 
 # Эндпоинт для загрузки изображения. Не понятно как будет срабатывать загрузка изображения...
 @router_knowledge_api.post("/upload-image/", response_model=ImageSchema)

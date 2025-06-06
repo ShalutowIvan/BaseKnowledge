@@ -3,8 +3,10 @@ import { Route, createBrowserRouter, createRoutesFromElements } from "react-rout
 import { Start } from './start/Start';
 
 import { KnowledgePageView } from './sections/BaseKnowledge/KnowledgePageView';
+import { KnowledgeInGroup } from './sections/BaseKnowledge/KnowledgeInGroup';
 import { GroupCreate } from './sections/BaseKnowledge/GroupCreate';
-
+import { KnowledgeCreate } from './sections/BaseKnowledge/KnowledgeCreate';
+import { KnowledgeOpen, KnowledgeOpenLoader } from './sections/BaseKnowledge/KnowledgeOpen';
 
 
 import { ProjectManagement } from './sections/ProjectManagement/ProjectManagement';
@@ -24,8 +26,12 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
         // </AuthProvider>
          } >
             {/* база знаний */}
-          <Route path="baseknowledge/" element={<KnowledgePageView />}  />
           <Route path="group/create/" element={<GroupCreate />}  />
+          <Route path="knowledge/" element={<KnowledgePageView />}  />
+          <Route path="knowledge/:slug" element={<KnowledgeInGroup />}  />       
+          <Route path="knowledge/create/" element={<KnowledgeCreate />}  />
+          {/*loader={KnowledgeOpenLoader}*/}
+          <Route path="knowledge/open/:slug" element={<KnowledgeOpen />}  />
           
           {/* проекты */}
           <Route path="ProjectManagement/" element={<ProjectManagement />}  />

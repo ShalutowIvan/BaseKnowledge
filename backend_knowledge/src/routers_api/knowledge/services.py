@@ -1,6 +1,6 @@
 from fastapi import HTTPException, Request
 from sqlalchemy import select, update, delete
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from .models import *
@@ -26,6 +26,17 @@ async def group_create_service(db: AsyncSession, group: GroupShema) -> GroupShem
     return new_group
 
 
+#получение списка групп
+async def get_group_service(db: AsyncSession) -> GroupShemaFull:
+    query = await db.execute(select(Group))
+    groups = query.scalars().all()
+    
+    # query = select(Group)
+    # groups = await db.scalars(query)
+    return groups
+
+
+# получение одного знания по ИД. Используется в других функциях
 async def get_knowledge(db: AsyncSession, knowledge_id: int) -> KnowledgesSchemaFull | None:
     # Получаем пост с подгрузкой связанных изображений
     result = await db.execute(
@@ -40,7 +51,7 @@ async def knowledges_create_service(db: AsyncSession, knowledge: KnowledgesCreat
     # Создаем новое знание
     fake_user = 1
     slug = translit(knowledge.title, language_code='ru', reversed=True)    
-    new_knowledge = Knowledges(title=knowledge.title, description=knowledge.description, group_id=knowledge.group, slug=slug, user_id=fake_user)
+    new_knowledge = Knowledges(title=knowledge.title, description=knowledge.description, group_id=knowledge.group_id, slug=slug, user_id=fake_user)
     db.add(new_knowledge)
     await db.commit()
     await db.refresh(new_knowledge)
@@ -48,35 +59,40 @@ async def knowledges_create_service(db: AsyncSession, knowledge: KnowledgesCreat
 
 
 
+# Получаем список знаний с пагинацией
 # async def get_knowledges(db: AsyncSession, skip: int = 0, limit: int = 100) -> list[KnowledgesSchemaFull]:
-#     # Получаем список постов с пагинацией
-#     result = await db.execute(
-#         select(Post)
-#         .offset(skip)
-#         .limit(limit)
-#         .options(selectinload(Post.images))
-#         .order_by(Post.created_at.desc())
-#     )
-#     return result.scalars().all()
+    # result = await db.execute(
+    #     select(Post)
+    #     .offset(skip)
+    #     .limit(limit)
+    #     .options(selectinload(Post.images))
+    #     .order_by(Post.created_at.desc())
+    # )
+    # return result.scalars().all()
 
-# async def create_knowledge(db: AsyncSession, post: schemas.PostCreate) -> KnowledgesSchemaFull:
-#     # Создаем новый пост
-#     db_post = Post(**post.model_dump())
-#     db.add(db_post)
-#     await db.commit()
-#     await db.refresh(db_post)
-#     return db_post
+# получение всех знаний, пока без пагинации
+async def get_knowledges(db: AsyncSession) -> list[KnowledgesSchema]:
+    knowledges = await db.execute(select(Knowledges).order_by(Knowledges.created_at.desc()))    
+    return knowledges.scalars().all()
+    
+
+#полкчение знаний по фильтру группы
+async def get_knowledges_in_group(db: AsyncSession, slug) -> list[KnowledgesSchema]:    
+    query = select(Knowledges.title, Knowledges.description, Knowledges.slug).join(Knowledges.group).where(Group.slug == slug)        
+    knowledges_gr = await db.execute(query)
+    return knowledges_gr.all()
+
+
+# открыть знание
+async def knowledges_open_service(db: AsyncSession, slug):
+    # us_token: Token = await db.scalar(select(Token).where(Token.refresh_token == RT))
+
+    query = select(Knowledges).where(Knowledges.slug == slug)
+    knowledge = await db.execute(query)
+    return knowledge.scalar()
 
 
 
-# async def delete_knowledge(db: AsyncSession, post_id: int) -> bool:
-#     # Удаляем пост и возвращаем статус операции
-#     result = await db.execute(
-#         delete(Post)
-#         .where(Post.id == post_id)
-#     )
-#     await db.commit()
-#     return result.rowcount > 0
 
 
 # для изображений
@@ -107,7 +123,7 @@ async def add_record_image_in_base(db: AsyncSession, filename: str, filepath: st
 
 
 
-#функции для загрузки файла фото
+#функции для загрузки файла фото. Берем папку с сервера, потом делаем расширение файла и название файла, и склеиваем папку и имя файла с расширением. Далее загружаем файл асинхронно. Другими словами грузим файл тут!
 async def save_uploaded_file(file, upload_dir: str) -> tuple[str, str]:
     if not os.path.exists(upload_dir):
         os.makedirs(upload_dir)
@@ -127,6 +143,14 @@ async def save_uploaded_file(file, upload_dir: str) -> tuple[str, str]:
     
     return filename, filepath
 
+
+
+
+
+
+
+
+
 # вторая функция тоже относится к загрузке файла фото
 async def upload_image_service(request, file, db: AsyncSession):
     try:
@@ -137,7 +161,7 @@ async def upload_image_service(request, file, db: AsyncSession):
         base_url = str(request.base_url)  # Получаем базовый URL сервера
         # print("тут базовый урл при загрузке изображения")
         # print(base_url)
-        image_url = f"{base_url}uploads/{filename}".replace("//uploads", "/uploads")
+        image_url = f"{base_url}uploads/{filename}".replace("//uploads", "/uploads")#это полный урл фото. Тут мы почему не используем полученный ранее filepath, а делаем такой путь повторно.
         
         # 3. Создаем запись в БД (сохраняем относительный путь)
         db_image = await add_record_image_in_base(

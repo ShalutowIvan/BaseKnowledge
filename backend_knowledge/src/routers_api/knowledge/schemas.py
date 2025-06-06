@@ -42,20 +42,24 @@ class GroupShemaFull(GroupShema):
 class KnowledgesSchema(BaseModel):
     title: str
     description: str
-    # slug: str
+    slug: str
 
 
-class KnowledgesCreateSchema(KnowledgesSchema):
-    pass
+class KnowledgesCreateSchema(BaseModel):
+    title: str
+    description: str
+    group_id: int
 
 
 class KnowledgesSchemaFull(KnowledgesSchema):
     id: int
     content: str
     created_at: datetime
-    updated_at: Optional[datetime]
+    updated_at: datetime
     images: Optional[list[ImageSchema]] = None
-    
+    group_id: int
+    free_access: bool
+
     
     class Config:
         from_attributes = True
