@@ -14,32 +14,113 @@ function KnowledgeOpen() {
     // const [free_access, setFree_access] = useState(false);    
     // const [group_id, setGroup_id] = useState(null);    
     // const [images, setImages] = useState("");
-    // const {knowledgeLoad} = useLoaderData();
+
+
+    const { knowledgeLoad } = useLoaderData();
+    const [editMode, setEditMode] = useState(false);    
+    const [preview, setPreview] = useState(false);
+
+
 
 
     const {slug} = useParams();
-    const [knowledge, setKnowledge] = useState("");
-    // console.log(knowledge)
+    const [knowledge, setKnowledge] = useState(knowledgeLoad);
+    
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     
+    //функция для изменения текста в контенте
+    const handleTextChange = (e) => {
+    setKnowledge({ ...knowledge, content: e.target.value });
+    };
 
+
+    const handleImageUpload = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      try {
+        // 1. Загружаем файл
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // Отправляем изображение на сервер через эндпоинт бэка в и БД запись, и файл грузим
+        const response = await axios.post(`http://127.0.0.1:8000/upload-image/${knowledge.id}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+
+        // 2. Вставляем Markdown-код изображения в текст. При вставке изображения оно происходит переход на следующую строку из-за \n
+        // const markdown = `![${file.name}](${data.url})`;
+        const imageMarkdown = `![${file.name}](${response.data.url})`;
+        setKnowledge(prev => ({
+          ...prev,
+          content: `${prev.content}\n${imageMarkdown}`
+        }));
+
+      } catch (error) {
+        console.error('Upload failed:', error);
+        alert('Image upload failed');
+      }
+    };
+    
+    // useEffect(() => {
+    // fetch(`http://127.0.0.1:8000/knowledges_open/${slug}`)
+    //   .then(res => res.json())
+    //   .then(data => setKnowledge(data))
+    //   .catch((error) => {
+    //       console.error('Error fetching state receipt:', error);
+    //         });
+    // }, [])
+  
+    
+    const onSave = async (kn) => {
+
+      try {
+        
+          // Обновляем существующий пост
+          await axios.put(`http://127.0.0.1:8000/knowledges_update/${knowledge.id}`, {
+            title: knowledge.title,
+            content: knowledge.content
+          });
+        
+        
+        // Сбрасываем форму и обновляем список постов
+        // resetForm();
+        // fetchPosts();
+      } catch (error) {
+        console.error('Error saving post:', error);
+      }
+    
+    };
 
     
-    useEffect(() => {
-    fetch(`http://127.0.0.1:8000/knowledges_open/${slug}`)
-      .then(res => res.json())
-      .then(data => setKnowledge(data))
-      .catch((error) => {
-          console.error('Error fetching state receipt:', error);
-            });
-    }, [])
-  
-  const navigate = useNavigate();
 
-  const goBack = () => {
-    return navigate(-1);
-  }
+    const handleSave = async () => {
+    try {
+      //тут идет отправка текста знания на сервер. Если ссылку на изображение удалить сервер удалит и изображение из БД и файл с сервера
+      await axios.put(`http://127.0.0.1:8000/knowledges_update/${knowledge.id}`, {
+            title: knowledge.title,
+            content: knowledge.content
+          });
+      
+      setEditMode(false);
+    } catch (error) {
+      console.error('Error saving knowledge: ', error);
+      }
+    };
+
+
+
+
+
+
+    const navigate = useNavigate();
+
+    const goBack = () => {
+      return navigate(-1);
+    }
 
     
   return (
@@ -50,17 +131,72 @@ function KnowledgeOpen() {
         <button onClick={goBack}>Назад</button>
 
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        
+        <br/>
 
           <h2>Название знания: {knowledge.title}</h2>  
-          <h2>Дата создания: {knowledge.created_at}</h2>  
+          
+          {/*<h2>Дата создания: {knowledge.created_at}</h2>  
           <h2>Описание: {knowledge.description}</h2>  
           <h2>Содержание: {knowledge.content}</h2>  
           <h2>Свободный доступ: 
           {!knowledge.free_access && <> Не разрешен</>}
           {knowledge.free_access && <> Разрешен</>}
-          </h2>  
+          </h2>  */}
 
+    <div className="post-container">
+      {editMode ? (
+        <div className="editor-section">
+          <div className="editor-toolbar">
+            <button type="button" onClick={() => setPreview(!preview)}>
+              {preview ? 'Edit' : 'Preview'}
+            </button>
+            <label className="upload-button">
+              Upload Image
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                style={{ display: 'none' }}
+              />
+            </label>
+          </div>
+
+          {preview ? (
+            <div className="markdown-preview">
+              <ReactMarkdown>{knowledge.content}</ReactMarkdown>
+            </div>
+          ) : (
+            <textarea
+              value={knowledge.content}
+              onChange={handleTextChange}
+              rows={10}
+            />
+          )}
+
+          <div className="editor-actions">
+            <button onClick={handleSave} className="save-button">
+              Save
+            </button>
+            <button onClick={() => {
+              setKnowledge(knowledge);
+              setEditMode(false);
+            }} className="cancel-button">
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="view-mode">
+          <ReactMarkdown>{knowledge.content}</ReactMarkdown>
+          <button 
+            onClick={() => setEditMode(true)} 
+            className="edit-button"
+          >
+            Edit
+          </button>
+        </div>
+      )}
+    </div>
                     
                     
     </>
@@ -94,7 +230,7 @@ const KnowledgeOpenLoader = async ({params}) => {
   
   const slug = params.slug//после params писать название параметра которое прописали в файле AppRouter.jsx с урлками
   
-  return {knowledge: await getKnowledgeOpen(slug)}
+  return {knowledgeLoad: await getKnowledgeOpen(slug)}
 }
 
 

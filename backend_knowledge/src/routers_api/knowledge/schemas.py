@@ -51,6 +51,13 @@ class KnowledgesCreateSchema(BaseModel):
     group_id: int
 
 
+class KnowledgesUpdateSchema(BaseModel):
+    # title: str
+    content: str
+    
+
+
+
 class KnowledgesSchemaFull(KnowledgesSchema):
     id: int
     content: str

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, Cookie, Form, Body, Header, status, UploadFile, File
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, PlainTextResponse, FileResponse
 from sqlalchemy import insert, select, text
 # from sqlalchemy.orm import joinedload
 
@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import *
 from .schemas import *
-from .services import group_create_service, get_knowledges, get_knowledge, knowledges_create_service, upload_image_service, update_knowledge, get_group_service, get_knowledges_in_group, knowledges_open_service
+from .services import group_create_service, get_knowledges, get_knowledge, knowledges_create_service, upload_image_service, update_knowledge, get_group_service, get_knowledges_in_group, knowledges_open_service, view_file_image_service
 # from src.regusers.models import User
 # from src.regusers.secure import test_token_expire, access_token_decode
 
@@ -40,7 +40,7 @@ async def group_create(group: GroupShema, session: AsyncSession = Depends(get_as
 
 #получение всех групп
 @router_knowledge_api.get("/groups_all/", response_model=list[GroupShemaFull])
-async def groups_all(session: AsyncSession = Depends(get_async_session)) -> GroupShemaFull:
+async def groups_all(request: Request, session: AsyncSession = Depends(get_async_session)) -> GroupShemaFull:    
     return await get_group_service(db=session)
 
 
@@ -71,38 +71,71 @@ async def knowledges_open(slug: str, session: AsyncSession = Depends(get_async_s
 #создание знания. После создания оно сразу открывается для заполнения. Поэтму тут схема ответа фул знания. Редактирование тела знания будет при открытии знания. При создании мы пишем название и описание знания и валидация идет по KnowledgesSchema. Потом оно открывается, и его заполняем - редактируем по остальным полям.
 
 
-####################################################################
 
-# из дипсика ответы, их тут разобрать надо
-
-# тут типа фотка грузится из контента по ссылке, и текст грузится в базу. Как срабатывает урл для загрузки фотог смотреть на фронте...!!!!!!!ост тут
-
-####################################################################
+# Эндпоинт для загрузки изображения. Этот эндпоинт будет срабатывать при вставке изображения в текст контента сразу же, и записывать файл на сервер и строку в БД в таблицу Images. Возвращает ссылку на изображение для его отрисовки на фронте, эта ссылка обрабатывается другим эндпоинтом - serve_file, который описан ниже. В реакт коде ссылка возвращаемая не пишется, она пишется в самом тексте поста который хранится в базе, и потом автоматом рисуется
+@router_knowledge_api.post("/upload-image/{knowledge_id}", response_model=ImageSchema)
+async def upload_image(request: Request, knowledge_id: int, file: UploadFile = File(...), session: AsyncSession = Depends(get_async_session)):
+    return await upload_image_service(request=request, knowledge_id=knowledge_id, file=file, db=session)
 
 
 
 
-
-# Эндпоинт для загрузки изображения. Не понятно как будет срабатывать загрузка изображения...
-@router_knowledge_api.post("/upload-image/", response_model=ImageSchema)
-async def upload_image(request: Request, file: UploadFile = File(...), session: AsyncSession = Depends(get_async_session)):
-    return await upload_image_service(request=request, file=file, db=session)
+# Эндпоинт для отображения на фронте загруженных файлов изображений, то есть чтобы можно было по ссылке обратиться и отобразить файл на фронте. Логику перенести в сервисные функции. В дипсике функция называется serve_file
+@router_knowledge_api.get("/uploads/{file_name}")
+async def view_file_image(file_name: str):
+    return await view_file_image_service(file_name=file_name)
 
 
 #изменение знания. Меняется и изображение и текст
-@router_knowledge_api.put("/knowledges_update/{kn_id}", response_model=list[KnowledgesSchemaFull])
-async def knowledge_update(request: Request, knowledge: KnowledgesCreateSchema, kn_id: int, session: AsyncSession = Depends(get_async_session)):
+@router_knowledge_api.put("/knowledges_update/{kn_id}", response_model=KnowledgesSchemaFull)
+async def knowledge_update(request: Request, knowledge: KnowledgesUpdateSchema, kn_id: int, session: AsyncSession = Depends(get_async_session)):
     # Получаем текущие изображения поста
-    current_knowledge = await get_knowledge(db=session, knowledge_id=kn_id)
-    current_images = [img.filepath for img in current_knowledge.images]
+    # current_knowledge = await get_knowledge(db=session, knowledge_id=kn_id)
+    # current_images = [img.filepath for img in current_knowledge.images]
     
-    return await update_knowledge(
-        db=session,
+    return await update_knowledge(  
         knowledge_id=kn_id,
-        knowledge=knowledge,
-        current_images=current_images
+        knowledge_update=knowledge,
+        db=session
+        # current_images=current_images
     )
 
+# knowledge_update работает с горем пополам... Загрузка фото плохо работает и потом знание с ним не открывается, после загрузки фото. Посмотреть схемы ответа и как у меня фото грузится с сервака и как на фронте принимается...
 
-# ост урл для удаления знания
-# Эндпоинт для загрузки изображения. Не понятно как будет срабатывать загрузка изображения... при изменении у меня удаляются лишние фото, а как они добавляются?
+
+
+
+
+# @router_knowledge_api.put("/posts/{post_id}")
+# async def update_post(
+#     post_id: int,
+#     post_update: schemas.PostUpdate,
+#     db: AsyncSession = Depends(get_db)
+# ):
+#     # 1. Получаем текущий пост с изображениями
+#     db_post = await services.posts.get_post(db, post_id)
+#     if not db_post:
+#         raise HTTPException(status_code=404, detail="Post not found")
+
+#     # 2. Извлекаем URL изображений из старого и нового контента
+#     old_images = {img.filepath for img in db_post.images}
+#     new_images = set(re.findall(r'!\[.*?\]\((.*?)\)', post_update.content))
+
+#     # 3. Находим изображения для удаления
+#     images_to_delete = old_images - new_images
+
+#     # от старых отнимаем новые и в это пойдет на удаление
+#     # от новых отнимаем старые это пойдет на добавление. Про добавление уточнить
+
+
+#     # 4. Удаляем изображения
+#     for image_url in images_to_delete:
+#         await services.images.delete_image_by_url(db, image_url)
+
+#     # 5. Обновляем пост
+#     db_post.title = post_update.title
+#     db_post.content = post_update.content
+#     await db.commit()
+#     await db.refresh(db_post)
+
+#     return db_post

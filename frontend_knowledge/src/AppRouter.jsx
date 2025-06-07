@@ -31,7 +31,7 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
           <Route path="knowledge/:slug" element={<KnowledgeInGroup />}  />       
           <Route path="knowledge/create/" element={<KnowledgeCreate />}  />
           {/*loader={KnowledgeOpenLoader}*/}
-          <Route path="knowledge/open/:slug" element={<KnowledgeOpen />}  />
+          <Route path="knowledge/open/:slug" element={<KnowledgeOpen />} loader={KnowledgeOpenLoader} />
           
           {/* проекты */}
           <Route path="ProjectManagement/" element={<ProjectManagement />}  />
