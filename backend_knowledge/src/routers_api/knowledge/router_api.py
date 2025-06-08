@@ -73,7 +73,8 @@ async def knowledges_open(slug: str, session: AsyncSession = Depends(get_async_s
 
 
 # Эндпоинт для загрузки изображения. Этот эндпоинт будет срабатывать при вставке изображения в текст контента сразу же, и записывать файл на сервер и строку в БД в таблицу Images. Возвращает ссылку на изображение для его отрисовки на фронте, эта ссылка обрабатывается другим эндпоинтом - serve_file, который описан ниже. В реакт коде ссылка возвращаемая не пишется, она пишется в самом тексте поста который хранится в базе, и потом автоматом рисуется
-@router_knowledge_api.post("/upload-image/{knowledge_id}", response_model=ImageSchema)
+# response_model=ImageSchema
+@router_knowledge_api.post("/upload-image/{knowledge_id}")#тут что то не так с response_model
 async def upload_image(request: Request, knowledge_id: int, file: UploadFile = File(...), session: AsyncSession = Depends(get_async_session)):
     return await upload_image_service(request=request, knowledge_id=knowledge_id, file=file, db=session)
 
@@ -93,7 +94,8 @@ async def knowledge_update(request: Request, knowledge: KnowledgesUpdateSchema, 
     # current_knowledge = await get_knowledge(db=session, knowledge_id=kn_id)
     # current_images = [img.filepath for img in current_knowledge.images]
     
-    return await update_knowledge(  
+    return await update_knowledge(
+        request=request,
         knowledge_id=kn_id,
         knowledge_update=knowledge,
         db=session

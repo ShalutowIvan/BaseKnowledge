@@ -2,7 +2,7 @@ import enum
 
 from sqlalchemy import Integer, String, TIMESTAMP, ForeignKey, Float, Boolean, Text, Table, Column, JSON, text, Enum, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from typing import Annotated, Optional
+from typing import Annotated, Optional, List
 from datetime import datetime
 from ..regusers.models import User
 
@@ -27,8 +27,8 @@ class Knowledges(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
     user: Mapped["User"] = relationship(back_populates="knowledge_user")
     
-    # изображения
-    images: Mapped["Images"] = relationship(
+    # изображения. тут определил список изображений, а не одно изображение - [List["Images"]]
+    images: Mapped[List["Images"]] = relationship(
         back_populates="knowledge", # Ссылка на обратное отношение в Images
         cascade="all, delete-orphan", # Автоматическое удаление связанных изображений
         lazy="selectin" # Жадная загрузка при использовании selectinload

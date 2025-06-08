@@ -1,6 +1,11 @@
-a = {"a", "s", "d"}
-b = {"q", "w", "a"}
+# a = {"a",}
+# b = {"q", "w", "e"}
 
-res = a - b
+# res = a - b
 
-print(res)
+# print(res)
+
+a = "asd"
+b = "qwe"
+print(a + b)
+

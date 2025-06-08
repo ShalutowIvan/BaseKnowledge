@@ -235,19 +235,21 @@ visibility: hidden;
 
 /*стили для знаний*/
 .post-container {
-  max-width: 800px;
-  margin: 0 auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
   padding: 20px;
+  margin-bottom: 20px;
 }
 
 .editor-section {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .editor-toolbar {
-  margin-bottom: 10px;
+  display: flex;
+  gap: 10px;
 }
 
 .upload-button {
@@ -256,33 +258,35 @@ visibility: hidden;
   padding: 8px 15px;
   border-radius: 4px;
   cursor: pointer;
-  display: inline-block;
+}
+
+textarea {
+  width: 100%;
+  min-height: 300px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.markdown-preview {
+  border: 1px solid #ddd;
+  padding: 15px;
+  min-height: 300px;
 }
 
 .editor-actions {
-  margin-top: 30px;
   display: flex;
-  gap: 30px;
+  gap: 10px;
 }
 
 .save-button {
-  min-width: 130px;
   background: #2196F3;
   color: white;
-  font-weight: 500;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
 }
 
 .cancel-button {
-  min-width: 130px;
   background: #f44336;
   color: white;
-  font-weight: 500;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;  
 }
 
 .edit-button {
@@ -290,69 +294,3 @@ visibility: hidden;
   color: black;
   margin-top: 15px;
 }
-
-.error-message {
-  color: #f44336;
-  margin-top: 10px;
-}
-
-.markdown-content {
-  text-align: left; /* Выравнивание текста по левому краю */
-  padding: 15px;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  line-height: 1.6; /* Комфортный межстрочный интервал */
-  font-size: 16px;
-  word-wrap: break-word;  /* Перенос длинных строк */
-  white-space: normal;
-}
-
-
-.markdown-content table {
-  border-collapse: collapse;
-  width: 100%;
-  margin-top: 1em;
-  margin-bottom: 1em;
-}
-
-.markdown-content th,
-.markdown-content td {
-  border: 2px solid #ccc;        /* Толщина и цвет границ */
-  padding: 8px 12px;             /* Отступы внутри ячеек */
-  text-align: left;
-}
-
-.markdown-content th {
-  background-color: green;     /* Светлый фон для заголовков */
-  font-weight: bold;
-}
-
-.editor-toolbar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 1rem;
-}
-
-.toolbar-button {
-  min-width: 130px; /* или ширину, которую занимает "Upload Image" */
-  padding: 8px 12px;
-  text-align: center;
-  background-color: #e0e0e0;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  /*transition: background-color 0.2s ease;*/
-}
-
-.toolbar-button:hover {
-  background-color: #d5d5d5;
-}
-
-/*
-.upload-button input[type="file"] {
-  display: none;
-}
-*/
-
-

@@ -10,6 +10,7 @@ from .schemas import *
 import os
 import uuid
 import aiofiles
+import re
 from transliterate import translit
 
 # для знаний
@@ -42,8 +43,8 @@ async def get_knowledge(db: AsyncSession, knowledge_id: int) -> KnowledgesSchema
     # Получаем пост с подгрузкой связанных изображений
     result = await db.execute(
         select(Knowledges)
-        .where(Knowledges.id == knowledge_id)
         .options(selectinload(Knowledges.images))
+        .where(Knowledges.id == knowledge_id)        
     )
     return result.scalar()
 
@@ -86,11 +87,22 @@ async def get_knowledges_in_group(db: AsyncSession, slug) -> list[KnowledgesSche
 
 # открыть знание
 async def knowledges_open_service(db: AsyncSession, slug):
-    # us_token: Token = await db.scalar(select(Token).where(Token.refresh_token == RT))
-
-    query = select(Knowledges).where(Knowledges.slug == slug)
+    # query = select(Knowledges).where(Knowledges.slug == slug).options(selectinload(Knowledges.images))
+    # query = select(Knowledges).options(joinedload(Knowledges.images)).where(Knowledges.slug == slug)
+    query = select(Knowledges).options(selectinload(Knowledges.images)).where(Knowledges.slug == slug)
+    
     knowledge = await db.execute(query)
+    
     return knowledge.scalar()
+
+    # result = await db.execute(
+    #     select(Knowledges)
+    #     .where(Knowledges.slug == slug)
+    #     .options(selectinload(Knowledges.images))
+    # )
+    # return result.scalar()
+
+    # неправильно указан был тип в связанном поле модели алхимии, указал лист и теперь все ок
 
 
 
@@ -146,9 +158,12 @@ async def save_uploaded_file(file, upload_dir: str) -> tuple[str, str]:
 
 
 
+# файл фото грузится, но  фронт выдает ошибку. Пока не понял почему, разбирать функцию надо... может и на фронте проблема. Ошибка не выдается, но файл не грузится на сервер, а ссылка в посте сохраняется....
+
 # вторая функция тоже относится к загрузке файла фото. Тут вроде бы все готово
 async def upload_image_service(request: Request, knowledge_id: int, db: AsyncSession, file: UploadFile = File(...)):
     try:
+
         # 1. Сохраняем файл на сервере
         filename, filepath = await save_uploaded_file(file=file, upload_dir=UPLOAD_FOLDER)
         
@@ -195,6 +210,7 @@ async def view_file_image_service(file_name: str):
 
 #удаление картинки по ссылке из БД и файл с сервера
 async def delete_image_by_url(db: AsyncSession, image_url: str) -> bool:
+    print("идет удаление, такую ссылку получили!!!!!!!!!!!!!!!", image_url)
     # 1. Извлекаем имя файла из URL
     filename = image_url.split('/')[-1]
     
@@ -214,62 +230,25 @@ async def delete_image_by_url(db: AsyncSession, image_url: str) -> bool:
 
 
 
-
-#функция для редактирования знания. 
-# async def update_knowledge(
-#     db: AsyncSession,
-#     knowledge_id: int,
-#     knowledge: KnowledgesCreateSchema,
-#     current_images: list[str] = None  # Принимаем текущие изображения
-# ) -> KnowledgesSchemaFull | None:
-#     # 1. Получаем текущий пост с изображениями
-#     db_knowledge = await get_knowledge(db, knowledge_id)
-#     if not db_knowledge:
-#         return None
-
-#     # 2. Анализируем Markdown-контент для поиска изображений
-#     import re
-#     current_content_images = re.findall(r'\!\[.*?\]\((.*?)\)', knowledge.content)
-
-#     # 3. Находим изображения для удаления (есть в БД, но нет в новом контенте)
-#     images_to_delete = [
-#         img for img in current_images 
-#         if img not in current_content_images
-#     ]
-
-#     # 4. Удаляем изображения
-#     for image_url in images_to_delete:
-#         await delete_image_by_url(db, image_url)
-
-#     # 5. Обновляем пост
-#     db_knowledge.title = knowledge.title
-#     db_knowledge.content = knowledge.content
-#     db_knowledge.updated_at = datetime.utcnow()
-    
-#     await db.commit()
-#     await db.refresh(db_knowledge)
-#     return db_knowledge
-
-
 # сравнить с функцией выше. knowledge_update тут фул знание скорее всего. Но если что сделать отдельную схему в питоне для обновления знания
-async def update_knowledge(knowledge_id: int, knowledge_update: KnowledgesUpdateSchema, db: AsyncSession):
+async def update_knowledge(request: Request, knowledge_id: int, knowledge_update: KnowledgesUpdateSchema, db: AsyncSession):
     # 1. Получаем текущий знание с изображениями
     db_knowledge = await get_knowledge(db=db, knowledge_id=knowledge_id)
     if not db_knowledge:
         raise HTTPException(status_code=404, detail="knowledge not found")
 
-    # 2. Анализируем изображения    
-    # print("!!!!!!!!!!!!!!!!!")
-    # print(db_knowledge.images)
-
+    # 2. Анализируем изображения
     if db_knowledge.images != None:
-
-        old_images = {img.filepath for img in db_knowledge.images}        
+        base_url = str(request.base_url)[:-1]
+        old_images = {f'{base_url}{img.filepath}' for img in db_knowledge.images}        
         new_images = set(re.findall(r'!\[.*?\]\((.*?)\)', knowledge_update.content))
         
         # 3. Удаляем отсутствующие изображения
-        for url in old_images - new_images:
-            if url.startswith('/uploads/'):  # Удаляем только локальные файлы
+        images_to_delete = old_images - new_images
+        # print("11111111111111111111111")
+        # print("фото для удаления: ", images_to_delete)
+        for url in images_to_delete:
+            if url.startswith(base_url + '/uploads/'):  # Удаляем локальные файлы по ссылкам которые начинаются с текста base_url + '/uploads/'
                 await delete_image_by_url(db=db, image_url=url)
 
     # 4. Добавляем новые изображения в БД
@@ -286,30 +265,6 @@ async def update_knowledge(knowledge_id: int, knowledge_update: KnowledgesUpdate
     await db.refresh(db_knowledge)
     
     return db_knowledge
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -340,4 +295,5 @@ async def delete_knowledge(db: AsyncSession, knowledge_id: int) -> bool:
     return True
 
 
-# сделал запрос в дипсик, прочитал его только с фронта. Вроде норм. Читать бэк далее
+
+

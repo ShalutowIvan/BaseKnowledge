@@ -63,7 +63,7 @@ class KnowledgesSchemaFull(KnowledgesSchema):
     content: str
     created_at: datetime
     updated_at: datetime
-    images: Optional[list[ImageSchema]] = None
+    images: Optional[List[ImageBaseSchema]] = None    
     group_id: int
     free_access: bool
 

@@ -3,41 +3,9 @@ import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
 import { useParams, Link, useNavigate, useLoaderData, Await } from 'react-router-dom'
 import { GroupsAll } from "./GroupsAll"
-// import MDEditor from '@uiw/react-markdown-editor';//это посоветовал дипсик
-import MDEditor from '@uiw/react-md-editor';//это посоветовал чатгпт
-// import MDEditor from 'mdeditor';//это по совету гугла
-import rehypeRaw from 'rehype-raw';
+import MDEditor from '@uiw/react-markdown-editor';
 
-// плагины по совету чатагпт
-import remarkGfm from 'remark-gfm'; // поддержка GFM (checkboxes, tables и пр.)
-import rehypeHighlight from 'rehype-highlight'; // подсветка синтаксиса
-import 'highlight.js/styles/atom-one-dark.css'; // стили подсветки (можно выбрать любой другой)
-import { visit } from 'unist-util-visit';
-import remarkDirective from 'remark-directive';
 
-function imageAttributesPlugin() {
-  return (tree) => {
-    visit(tree, 'image', (node) => {
-      // Ищем width/height в alt-тексте как {width=300 height=200}
-      const match = /\{(.+?)\}$/.exec(node.alt || '');
-      if (match) {
-        const attrs = match[1].split(/\s+/);
-        node.data = node.data || {};
-        node.data.hProperties = node.data.hProperties || {};
-
-        attrs.forEach(attr => {
-          const [key, value] = attr.split('=');
-          if (key && value) {
-            node.data.hProperties[key] = value;
-          }
-        });
-
-        // Чистим alt-текст от {width=...}
-        node.alt = node.alt.replace(/\{.+\}$/, '').trim();
-      }
-    });
-  };
-}
 
 
 function KnowledgeOpen() {
@@ -62,13 +30,8 @@ function KnowledgeOpen() {
     const [loading, setLoading] = useState(false);
     
     //функция для изменения текста в контенте
-    // const handleTextChange = (e) => {
-    // setKnowledge({ ...knowledge, content: e.target.value });
-    // };
-
-    // Обработчик изменений для MDEditor. Это пока убрали, так как у МД есть свой проп onChange
-    const handleTextChange = (value) => {
-      setKnowledge({ ...knowledge, content: value || '' });
+    const handleTextChange = (e) => {
+    setKnowledge({ ...knowledge, content: e.target.value });
     };
 
 
@@ -78,7 +41,6 @@ function KnowledgeOpen() {
 
       try {
         // 1. Загружаем файл
-        setLoading(true);
         const formData = new FormData();
         formData.append('file', file);
 
@@ -92,26 +54,32 @@ function KnowledgeOpen() {
         });
 
         // 2. Вставляем Markdown-код изображения в текст. При вставке изображения оно происходит переход на следующую строку из-за \n        
-        const imageMarkdown = `\n![${file.name}](${response.data.url})\n`;
+        const imageMarkdown = `![${file.name}](${response.data.url})`;
         setKnowledge(prev => ({
           ...prev,
-          content: prev.content + imageMarkdown
+          content: `${prev.content}\n${imageMarkdown}`
         }));
 
       } catch (error) {
         console.error('Upload failed:', error);
-        // alert('Image upload failed');
-        setError('Image upload failed');
-      } finally {
-        setLoading(false);
+        alert('Image upload failed');
       }
     };
     
-        
+    // useEffect(() => {
+    // fetch(`http://127.0.0.1:8000/knowledges_open/${slug}`)
+    //   .then(res => res.json())
+    //   .then(data => setKnowledge(data))
+    //   .catch((error) => {
+    //       console.error('Error fetching state receipt:', error);
+    //         });
+    // }, [])
+  
+    
+    
     const handleSave = async () => {
     try {
       //тут идет отправка текста знания на сервер. Если ссылку на изображение удалить сервер удалит и изображение из БД и файл с сервера
-      setLoading(true);
       await axios.put(`http://127.0.0.1:8000/knowledges_update/${knowledge.id}`, {
             // title: knowledge.title,
             content: knowledge.content
@@ -120,11 +88,12 @@ function KnowledgeOpen() {
       setEditMode(false);
     } catch (error) {
       console.error('Error saving knowledge: ', error);
-      setError('Failed to save changes');
-    } finally {
-      setLoading(false);
-    }
+      }
     };
+
+
+
+
 
 
     const navigate = useNavigate();
@@ -160,101 +129,55 @@ function KnowledgeOpen() {
       {editMode ? (
         <div className="editor-section">
           <div className="editor-toolbar">
-            <button type="button" className="toolbar-button" onClick={() => setPreview(!preview)}>
+            <button type="button" onClick={() => setPreview(!preview)}>
               {preview ? 'Edit' : 'Preview'}
             </button>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            
             <label className="upload-button">
-              {loading ? 'Uploading...' : 'Upload Image'}
+              Upload Image
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
-                disabled={loading}
                 style={{ display: 'none' }}
               />
-            
             </label>
           </div>
 
-            {/*предпросмотр получившегося маркдаун*/}
-           {preview ? (
-            <div className="markdown-content">
-              <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-                {knowledge.content}
-              </ReactMarkdown>
+          {preview ? (
+            <div className="markdown-preview">
+              <ReactMarkdown>{knowledge.content}</ReactMarkdown>
             </div>
           ) : (
-            <MDEditor
+            <textarea
               value={knowledge.content}
               onChange={handleTextChange}
-              height={400}
-              preview="edit"            
+              rows={10}
             />
           )}
 
-
           <div className="editor-actions">
-            {/*кнопка сохранить*/}
-            <button 
-                onClick={handleSave} 
-                className="save-button"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </button>
-
-            {/*кнопка отменить*/}
+            <button onClick={handleSave} className="save-button">
+              Save
+            </button>
             <button onClick={() => {
-                setKnowledge(knowledge);
-                setEditMode(false);
-              }}
-              className="cancel-button"
-              disabled={loading}
-            >
+              setKnowledge(knowledge);
+              setEditMode(false);
+            }} className="cancel-button">
               Cancel
             </button>
           </div>
         </div>
       ) : (
-        
-        // отображение сохраненного контента
-        <div className="view-mode">         
-          <div className="markdown-content" data-color-mode="light">
-              <ReactMarkdown 
-                rehypePlugins={[rehypeRaw, rehypeHighlight]} 
-                
-                remarkPlugins={[remarkGfm, remarkDirective, imageAttributesPlugin]}
-                components={{
-    img: ({ node, ...props }) => (
-      <img
-        {...props}
-        style={{
-          width: props.width ? `${props.width}px` : '400px',
-          height: props.height ? `${props.height}px` : 'auto',
-          maxWidth: '100%',
-          display: 'block',
-          margin: '1rem auto',
-          borderRadius: '8px',
-          objectFit: 'cover'
-        }}
-      />
-    )
-  }}
-                >
-
-                {knowledge.content}
-              </ReactMarkdown>
-            </div>
-            <br/>
-            <button onClick={() => setEditMode(true)} className="toolbar-button">
-              Редактировать
-            </button>
-
+        <div className="view-mode">
+          <ReactMarkdown>{knowledge.content}</ReactMarkdown>
+          <button 
+            onClick={() => setEditMode(true)} 
+            className="edit-button"
+          >
+            Edit
+          </button>
         </div>
       )}
-      {error && <div className="error-message">{error}</div>}
     </div>
                     
                     
