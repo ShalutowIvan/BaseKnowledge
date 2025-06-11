@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
 import { useParams, Link, useNavigate, useLoaderData, Await } from 'react-router-dom'
@@ -14,6 +14,12 @@ import rehypeHighlight from 'rehype-highlight'; // подсветка синта
 import 'highlight.js/styles/atom-one-dark.css'; // стили подсветки (можно выбрать любой другой)
 import { visit } from 'unist-util-visit';
 import remarkDirective from 'remark-directive';
+import { markdownPlugins, markdownComponents } from './MDutils/UtilsImageMD';
+import { TextStyleToolbar } from './MDutils/TextStyleToolbar';
+
+
+
+
 
 function imageAttributesPlugin() {
   return (tree) => {
@@ -39,33 +45,18 @@ function imageAttributesPlugin() {
   };
 }
 
-
 function KnowledgeOpen() {
-    // const [title, setTitle] = useState("");
-    // const [description, setDescription] = useState("");
-    // const [content, setContent] = useState("");    
-    // const [created_at, setCreated_at] = useState("");    
-    // const [updated_at, setUpdated_at] = useState("");    
-    // const [free_access, setFree_access] = useState(false);    
-    // const [group_id, setGroup_id] = useState(null);    
-    // const [images, setImages] = useState("");
-
 
     const { knowledgeLoad } = useLoaderData();
     const [editMode, setEditMode] = useState(false);    
     const [preview, setPreview] = useState(false);
 
-    const {slug} = useParams();
+    // const {slug} = useParams();
     const [knowledge, setKnowledge] = useState(knowledgeLoad);
     
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     
-    //функция для изменения текста в контенте
-    // const handleTextChange = (e) => {
-    // setKnowledge({ ...knowledge, content: e.target.value });
-    // };
-
     // Обработчик изменений для MDEditor. Это пока убрали, так как у МД есть свой проп onChange
     const handleTextChange = (value) => {
       setKnowledge({ ...knowledge, content: value || '' });
@@ -81,18 +72,14 @@ function KnowledgeOpen() {
         setLoading(true);
         const formData = new FormData();
         formData.append('file', file);
-
        // Отправляем изображение на сервер через эндпоинт бэка в и БД запись, и файл грузим
         const response = await axios.post(`http://127.0.0.1:8000/upload-image/${knowledge.id}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
-
-
         });
-
         // 2. Вставляем Markdown-код изображения в текст. При вставке изображения оно происходит переход на следующую строку из-за \n        
-        const imageMarkdown = `\n![${file.name}](${response.data.url})\n`;
+        const imageMarkdown = `![${file.name}](${response.data.url})`;
         setKnowledge(prev => ({
           ...prev,
           content: prev.content + imageMarkdown
@@ -107,7 +94,7 @@ function KnowledgeOpen() {
       }
     };
     
-        
+    // сохранение после редактирования знания
     const handleSave = async () => {
     try {
       //тут идет отправка текста знания на сервер. Если ссылку на изображение удалить сервер удалит и изображение из БД и файл с сервера
@@ -115,8 +102,7 @@ function KnowledgeOpen() {
       await axios.put(`http://127.0.0.1:8000/knowledges_update/${knowledge.id}`, {
             // title: knowledge.title,
             content: knowledge.content
-          });
-      
+          });      
       setEditMode(false);
     } catch (error) {
       console.error('Error saving knowledge: ', error);
@@ -126,16 +112,66 @@ function KnowledgeOpen() {
     }
     };
 
-
     const navigate = useNavigate();
 
     const goBack = () => {
       return navigate(-1);
     }
 
+    // функции для изменения размера и стиля шрифта
 
-    // проверить ввод текста с библиотекой md которую импортировал выше
+    // Вставка текста в редактор
+    const insertAtCursor = (wrapperFn) => {
+      const textarea = document.querySelector('textarea');
+      if (!textarea) return;
+
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+
+      const before = knowledge.content.slice(0, start);
+      const selected = knowledge.content.slice(start, end);
+      const after = knowledge.content.slice(end);
+
+      // Получаем обернутый текст
+      const wrapped = wrapperFn(selected || 'ваш текст');
+
+      const updated = `${before}${wrapped}${after}`;
+
+      setKnowledge(prev => ({ ...prev, content: updated }));
+
+      setTimeout(() => {
+        textarea.focus();
+        // Курсор после вставки
+        textarea.selectionStart = textarea.selectionEnd = before.length + wrapped.length;
+      }, 0);
+    };
+
+
+    // Функции для вставки
+    const applyFontSize = (size) => {
+      if (!size) return;
+      insertAtCursor((text) => `<span style="font-size: ${size};">${text}</span>`);
+    };
+
+  const applyFontStyle = (style) => {
+      if (!style) return;
+
+      insertAtCursor((text) => {
+        if (style === 'bold') {
+          return `<span style="font-weight: bold;">${text}</span>`;
+        } else if (style === 'italic') {
+          return `<span style="font-style: italic;">${text}</span>`;
+        } else if (style === 'monospace') {
+          return `<span style="font-family: monospace;">${text}</span>`;
+        }
+        return text;
+      });
+    };
+
     
+
+
+        
   return (
     <>
       <GroupsAll />
@@ -145,7 +181,9 @@ function KnowledgeOpen() {
 
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         <br/>
-
+    <button onClick={() => insertText('<span style="font-size: 20px;">текст</span>')}>
+  Размер 20px
+</button>
           <h2>Название знания: {knowledge.title}</h2>  
           
           {/*<h2>Дата создания: {knowledge.created_at}</h2>  
@@ -178,20 +216,66 @@ function KnowledgeOpen() {
             </label>
           </div>
 
+           
+
             {/*предпросмотр получившегося маркдаун*/}
            {preview ? (
             <div className="markdown-content">
-              <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+              <ReactMarkdown 
+              remarkPlugins={markdownPlugins.remark}
+              rehypePlugins={markdownPlugins.rehype}
+              components={markdownComponents}
+              >
                 {knowledge.content}
               </ReactMarkdown>
             </div>
           ) : (
+            
+            <>
+            {/* размер и стили шрифта */}
+            <div style={{ marginBottom: '1rem', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <select onChange={(e) => applyFontSize(e.target.value)}>
+                <option value="">Размер шрифта</option>
+                <option value="12px">12px</option>
+                <option value="16px">16px</option>
+                <option value="20px">20px</option>
+                <option value="24px">24px</option>
+              </select>
+
+              <select onChange={(e) => applyFontStyle(e.target.value)}>
+                <option value="">Стиль шрифта</option>
+                <option value="bold">Жирный</option>
+                <option value="italic">Курсив</option>
+                <option value="monospace">Моноширинный</option>
+              </select>
+
+             
+            </div>
+
+            {/* <TextStyleToolbar onApplyStyle={(openTag, closeTag = openTag) => {
+                const textarea = document.querySelector('.w-md-editor-text-input'); // получаем textarea MDEditor
+                if (!textarea) return;
+
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const selected = textarea.value.slice(start, end);
+                const before = textarea.value.slice(0, start);
+                const after = textarea.value.slice(end);
+
+                const newText = `${before}${openTag}${selected}${closeTag}${after}`;
+
+                setKnowledge(prev => ({ ...prev, content: newText }));
+              }} /> */}
+
+
             <MDEditor
               value={knowledge.content}
               onChange={handleTextChange}
-              height={400}
+              height={500}
               preview="edit"            
             />
+
+            </>
           )}
 
 
@@ -222,28 +306,11 @@ function KnowledgeOpen() {
         // отображение сохраненного контента
         <div className="view-mode">         
           <div className="markdown-content" data-color-mode="light">
-              <ReactMarkdown 
-                rehypePlugins={[rehypeRaw, rehypeHighlight]} 
-                
-                remarkPlugins={[remarkGfm, remarkDirective, imageAttributesPlugin]}
-                components={{
-    img: ({ node, ...props }) => (
-      <img
-        {...props}
-        style={{
-          width: props.width ? `${props.width}px` : '400px',
-          height: props.height ? `${props.height}px` : 'auto',
-          maxWidth: '100%',
-          display: 'block',
-          margin: '1rem auto',
-          borderRadius: '8px',
-          objectFit: 'cover'
-        }}
-      />
-    )
-  }}
+              <ReactMarkdown
+                remarkPlugins={markdownPlugins.remark}
+                rehypePlugins={markdownPlugins.rehype}
+                components={markdownComponents}
                 >
-
                 {knowledge.content}
               </ReactMarkdown>
             </div>
@@ -261,10 +328,6 @@ function KnowledgeOpen() {
     </>
     )
 }
-
-
-
-
 
 
 async function getKnowledgeOpen(slug) { 
@@ -291,10 +354,6 @@ const KnowledgeOpenLoader = async ({params}) => {
   
   return {knowledgeLoad: await getKnowledgeOpen(slug)}
 }
-
-
-
-
 
 
 

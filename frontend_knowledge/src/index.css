@@ -297,7 +297,7 @@ visibility: hidden;
 }
 
 .markdown-content {
-  text-align: left; /* Выравнивание текста по левому краю */
+  text-align: left; /* Выравнивание текста по левому краю */  
   padding: 15px;
   border: 1px solid #eee;
   border-radius: 4px;
@@ -306,6 +306,15 @@ visibility: hidden;
   word-wrap: break-word;  /* Перенос длинных строк */
   white-space: normal;
 }
+
+
+
+/* 
+img[alt*="img-1000x800"] {
+  width: 1000px;
+  height: 800px;
+} */
+
 
 
 .markdown-content table {
