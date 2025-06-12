@@ -7,23 +7,25 @@ import rehypeRaw from 'rehype-raw';
 import rehypeHighlight from 'rehype-highlight';
 
 // 🌟 Плагин для извлечения атрибутов вида {width=300 height=200} из alt-текста
-export function imageAttributesPlugin() {
+function imageAttributesPlugin() {
+  
+
   return (tree) => {
     visit(tree, 'image', (node) => {
-      // Ищем параметры в alt-тексте: ![Описание{width=300 height=200}]
       const match = /\{(.+?)\}$/.exec(node.alt || '');
       if (match) {
         const attrs = match[1].split(/\s+/);
-        node.alt = node.alt.replace(/\{.+\}$/, '').trim(); // убираем {..} из alt
+        node.data = node.data || {};
+        node.data.hProperties = node.data.hProperties || {};
 
-        // Сохраняем в properties (именно сюда потом попадает)
-        node.properties = node.properties || {};
         attrs.forEach(attr => {
           const [key, value] = attr.split('=');
           if (key && value) {
-            node.properties[key] = value;
+            node.data.hProperties[key] = value;
           }
         });
+
+        node.alt = node.alt.replace(/\{.+\}$/, '').trim();
       }
     });
   };
@@ -38,6 +40,7 @@ export const markdownPlugins = {
 // 🌟 Кастомный компонент изображения
 export const markdownComponents = {
   img: ({ node, ...props }) => {
+    console.log(node)
     const { width, height } = node?.properties || {};
     return (
       <img

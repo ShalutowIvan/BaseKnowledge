@@ -20,7 +20,7 @@ function GroupsAll() {
 	
 	return (
 		<>
-			<aside>
+			
 			<h3><NavLink to="/knowledge/" className={setActive}>Все группы</NavLink></h3>
 
             {
@@ -30,7 +30,7 @@ function GroupsAll() {
                         </NavLink>
                     ))
             }
-			</aside>
+			
 		</>
 		)
 

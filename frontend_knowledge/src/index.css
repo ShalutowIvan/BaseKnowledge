@@ -70,14 +70,20 @@ header {
 
 
 main{
-  text-align: center; 
+  /*text-align: center; */
   /*background-color: seagreen;*/
-  width: 60%;
+  width: 100%; /*сколько занимает по ширине сайта*/
 /*  padding: 50px 0px 100px 0px;*/
   /* height: 100vh;*/
   padding: 2.5%;
   /*border-right: 5px solid slategrey;*/
-  margin-left: 20%;
+  
+  /*отступ слева*/
+  /*margin-left: 10%; */
+  
+  
+
+
   /*margin-bottom: 200px;*/
   /*padding-bottom: 150%;*/
   margin-bottom: -130px; /* Высота footer с минусом */
@@ -87,8 +93,10 @@ main{
 
 aside{
   float: left;
-  width: 20%;
+  width: 10%;
   padding: 2.5%;
+  /*height: 1200px;*/
+  height: 100%;
   
   }
 
@@ -169,12 +177,6 @@ visibility: hidden;
 }
 
 
-.product-image {
-    width: 300px;
-    height: 300px;
-    object-fit: cover;
-    border-radius: 4px;
-}
 
 
 /*стили для таблиц*/
@@ -234,11 +236,31 @@ visibility: hidden;
 
 
 /*стили для знаний*/
-.post-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
+
+.list-knowledge {
+  max-width: 60%;
+  margin-left: 15%;
+  /*margin: 0 auto;*/
+  /*auto;*/
+  /*padding: 20px;*/
+  /*padding: 2.5%;*/
 }
+
+.name-knowledge {
+  background-color: #2F4F4F;
+}
+
+
+
+.post-container {
+  max-width: 60%;
+  margin-left: 12.5%;
+  /*margin: 0 auto;*/
+  /*auto;*/
+  /*padding: 20px;*/
+  padding: 2.5%;
+}
+
 
 .editor-section {
   border: 1px solid #ddd;
@@ -346,7 +368,7 @@ img[alt*="img-1000x800"] {
   min-width: 130px; /* или ширину, которую занимает "Upload Image" */
   padding: 8px 12px;
   text-align: center;
-  background-color: #e0e0e0;
+  background-color: #2E8B57;
   border: 1px solid #ccc;
   border-radius: 6px;
   cursor: pointer;
@@ -357,6 +379,25 @@ img[alt*="img-1000x800"] {
 .toolbar-button:hover {
   background-color: #d5d5d5;
 }
+
+/*другого цвета кнопка*/
+/*.add-button {
+  min-width: 130px; 
+  padding: 8px 12px;
+  text-align: center;
+  background-color: #008B8B;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;  
+}
+
+.add-button:hover {
+  background-color: #d5d5d5;
+}
+
+*/
+
 
 /*
 .upload-button input[type="file"] {

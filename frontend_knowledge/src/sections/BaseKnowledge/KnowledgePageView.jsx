@@ -26,31 +26,46 @@ function KnowledgePageView() {
         fetchKnowledges()
 	}, [])
 
+
+	const navigate = useNavigate();
+
+  const create_group = () => {
+      return navigate("/group/create/");
+    }
 	
+	const create_knowledge = () => {
+      return navigate("/knowledge/create/");
+    }
 
 	return (
 		<>
-
+			<aside>
 		  <GroupsAll />
+			</aside>
 
+			<div className="list-knowledge">
 			<h1>База знаний</h1>
-				<button><NavLink to="/group/create/" className={setActive}>Добавить группу</NavLink></button>
+				{/*<button className="add-button"><NavLink to="/group/create/" className={setActive}>Добавить группу</NavLink></button>*/}
+				<button className="toolbar-button" onClick={create_group}>Добавить группу</button>
 				&nbsp;&nbsp;&nbsp;
-				<button><NavLink to="/knowledge/create/" className={setActive}>Добавить запись в базе знаний</NavLink></button>
+				<button className="toolbar-button" onClick={create_knowledge}>Добавить знание</button>
+				{/*<button className="add-button"><NavLink to="/knowledge/create/" className={setActive}>Добавить запись в базе знаний</NavLink></button>*/}
 				
 
 			{
                 knowledges?.map(knowledge => (
                 				<>
-                				<h1>Название знания: {knowledge.title}</h1>
+                				<h1 className="name-knowledge">{knowledge.title}</h1>
                         <h2>Описание: {knowledge.description}</h2>
                         <NavLink key={knowledge.id} to={`/knowledge/open/${knowledge.slug}`} className={setActive}>
-                            <button>Открыть</button>
+                            <button className="toolbar-button">Открыть</button>
                         </NavLink>
                             <p>_____________________________________________________________</p>
                         </>
                     ))
             }
+
+      </div>
 
 
 								

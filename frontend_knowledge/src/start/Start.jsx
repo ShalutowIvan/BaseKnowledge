@@ -57,25 +57,14 @@ export default function Start() {
       </header>
 
 
-      <aside>
+      {/*<aside>            
+      </aside>*/}
 
-          
-          
-
-            
-      </aside>
-
-      <main>
-            
-            
-          <h1>Добро пожаловать!</h1>  
-           
-            
-
-            <Outlet />
-        
-
+      <main>            
+          {/*<h1>Добро пожаловать!</h1>*/}
+          <Outlet />
       </main>
+      
       
       <footer className="footer">
         <h1>ТУТ ПОДВАЛ</h1>

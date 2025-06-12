@@ -21,31 +21,33 @@ import { TextStyleToolbar } from './MDutils/TextStyleToolbar';
 
 
 
-function imageAttributesPlugin() {
-  return (tree) => {
-    visit(tree, 'image', (node) => {
-      // Ищем width/height в alt-тексте как {width=300 height=200}
-      const match = /\{(.+?)\}$/.exec(node.alt || '');
-      if (match) {
-        const attrs = match[1].split(/\s+/);
-        node.data = node.data || {};
-        node.data.hProperties = node.data.hProperties || {};
+// function imageAttributesPlugin() {
+//   return (tree) => {
+//     visit(tree, 'image', (node) => {
+//       // Ищем width/height в alt-тексте как {width=300 height=200}
+//       const match = /\{(.+?)\}$/.exec(node.alt || '');
+//       if (match) {
+//         const attrs = match[1].split(/\s+/);
+//         node.data = node.data || {};
+//         node.data.hProperties = node.data.hProperties || {};
 
-        attrs.forEach(attr => {
-          const [key, value] = attr.split('=');
-          if (key && value) {
-            node.data.hProperties[key] = value;
-          }
-        });
+//         attrs.forEach(attr => {
+//           const [key, value] = attr.split('=');
+//           if (key && value) {
+//             node.data.hProperties[key] = value;
+//           }
+//         });
 
-        // Чистим alt-текст от {width=...}
-        node.alt = node.alt.replace(/\{.+\}$/, '').trim();
-      }
-    });
-  };
-}
+//         // Чистим alt-текст от {width=...}
+//         node.alt = node.alt.replace(/\{.+\}$/, '').trim();
+//       }
+//     });
+//   };
+// }
 
 function KnowledgeOpen() {
+
+    const textareaRef = useRef(null);//для вставки панели форматирования текста
 
     const { knowledgeLoad } = useLoaderData();
     const [editMode, setEditMode] = useState(false);    
@@ -61,6 +63,12 @@ function KnowledgeOpen() {
     const handleTextChange = (value) => {
       setKnowledge({ ...knowledge, content: value || '' });
     };
+
+
+    // const handleTextChange = (value) => {
+    //   setKnowledge((prev) => ({ ...prev, content: value }))
+    // };
+
 
 
     const handleImageUpload = async (e) => {
@@ -174,20 +182,21 @@ function KnowledgeOpen() {
         
   return (
     <>
+      <aside>
       <GroupsAll />
+      </aside>
 
       <h1>Содержание знания</h1>
-        <button onClick={goBack}>Назад</button>
+        <button onClick={goBack} className="toolbar-button">Назад</button>
 
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         <br/>
-    <button onClick={() => insertText('<span style="font-size: 20px;">текст</span>')}>
-  Размер 20px
-</button>
+    
           <h2>Название знания: {knowledge.title}</h2>  
-          
-          {/*<h2>Дата создания: {knowledge.created_at}</h2>  
           <h2>Описание: {knowledge.description}</h2>  
+
+          {/*<h2>Дата создания: {knowledge.created_at}</h2>  
+          
           <h2>Содержание: {knowledge.content}</h2>  
           <h2>Свободный доступ: 
           {!knowledge.free_access && <> Не разрешен</>}
@@ -196,7 +205,9 @@ function KnowledgeOpen() {
 
     <div className="post-container">
       {editMode ? (
+
         <div className="editor-section">
+          <h3>Редактор знания</h3>
           <div className="editor-toolbar">
             <button type="button" className="toolbar-button" onClick={() => setPreview(!preview)}>
               {preview ? 'Edit' : 'Preview'}
@@ -233,42 +244,39 @@ function KnowledgeOpen() {
             
             <>
             {/* размер и стили шрифта */}
-            <div style={{ marginBottom: '1rem', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            {/*смотреть как сделано в вик контура*/}
+            
+            {/*<div style={{ marginBottom: '1rem', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <select onChange={(e) => applyFontSize(e.target.value)}>
                 <option value="">Размер шрифта</option>
                 <option value="12px">12px</option>
                 <option value="16px">16px</option>
                 <option value="20px">20px</option>
                 <option value="24px">24px</option>
-              </select>
+              </select>             
+            </div>*/}
 
-              <select onChange={(e) => applyFontStyle(e.target.value)}>
-                <option value="">Стиль шрифта</option>
-                <option value="bold">Жирный</option>
-                <option value="italic">Курсив</option>
-                <option value="monospace">Моноширинный</option>
-              </select>
+            {/*предыдущий вариант тулбара*/}
+
+            <TextStyleToolbar onApplyStyle={(openTag, closeTag = openTag) => {
+              const textarea = document.querySelector('.w-md-editor-text-input'); // получаем textarea MDEditor
+              if (!textarea) return;
+
+              const start = textarea.selectionStart;
+              const end = textarea.selectionEnd;
+              const selected = textarea.value.slice(start, end);
+              const before = textarea.value.slice(0, start);
+              const after = textarea.value.slice(end);
+
+              const newText = `${before}${openTag}${selected}${closeTag}${after}`;
+
+              setKnowledge(prev => ({ ...prev, content: newText }));
+            }} />
 
              
-            </div>
 
-            {/* <TextStyleToolbar onApplyStyle={(openTag, closeTag = openTag) => {
-                const textarea = document.querySelector('.w-md-editor-text-input'); // получаем textarea MDEditor
-                if (!textarea) return;
-
-                const start = textarea.selectionStart;
-                const end = textarea.selectionEnd;
-                const selected = textarea.value.slice(start, end);
-                const before = textarea.value.slice(0, start);
-                const after = textarea.value.slice(end);
-
-                const newText = `${before}${openTag}${selected}${closeTag}${after}`;
-
-                setKnowledge(prev => ({ ...prev, content: newText }));
-              }} /> */}
-
-
-            <MDEditor
+              
+            <MDEditor              
               value={knowledge.content}
               onChange={handleTextChange}
               height={500}
