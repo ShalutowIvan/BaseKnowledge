@@ -28,7 +28,7 @@ function KnowledgeCreate() {
     useEffect(() => {
             fetch(`http://127.0.0.1:8000/groups_all/`)
                 .then(res => res.json())
-                .then(data => setGroups(data));        
+                .then(data => setGroups(data));
         }, [])
 
 
@@ -43,7 +43,8 @@ function KnowledgeCreate() {
 
     const navigate = useNavigate();
 
-    // const goHome = () => navigate("/");
+    const goBack = () => {
+      return navigate(-1);}
   
 
     const handleSubmit = async (event) => {
@@ -84,16 +85,29 @@ function KnowledgeCreate() {
         }
     
     };
+    
+
+    const buttonStyle = {
+    padding: '6px 10px',
+    fontSize: '14px',
+    border: '1px solid #ccc',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    background: 'white'
+    };
 
     
   return (
     <>
-
+        <aside>
         <GroupsAll />
-        
-    <h1>Создание знания</h1>
+        </aside>
 
-    <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
+        <div className="list-knowledge">
+            <h1>Создание знания</h1>
+            <button onClick={goBack} className="toolbar-button">Назад</button>
+            <br/><br/>
+            <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
                 
 
                 <label htmlFor="id_title">Заголовок знания: </label>
@@ -125,6 +139,7 @@ function KnowledgeCreate() {
                 
                 <label htmlFor="id_group">Группа: </label>                
                 <select
+                    style={buttonStyle}
                     name="group"
                     id="id_group"
                     // className="control"                        
@@ -142,7 +157,7 @@ function KnowledgeCreate() {
 
                 <br/><br/>
 
-                <button type="submit" disabled={loading}>                    
+                <button className="save-button" type="submit" disabled={loading}>                    
                     {loading ? 'Сохраняем...' : 'Добавить'}
                 </button>
                 <br/>
@@ -151,6 +166,7 @@ function KnowledgeCreate() {
                 {error && <p style={{ color: 'red'}}>{error}</p>}
 
             </form>
+        </div>
 
         </>
     )

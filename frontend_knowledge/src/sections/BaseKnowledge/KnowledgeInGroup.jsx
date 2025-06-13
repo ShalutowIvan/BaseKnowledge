@@ -21,16 +21,24 @@ function KnowledgeInGroup() {
 
 	return (
 		<>	
+		<aside>
 		<GroupsAll />
-			{
+		</aside>
+
+		<div className="list-knowledge">
+            {
                 	knowledges?.map(knowledge => (
-                        <NavLink key={knowledge.id} to={`/knowledge/open/${knowledge.slug}`} className={setActive}>
-                            <h1>Название знания: {knowledge.title}</h1>
-                            <h2>Описание: {knowledge.description}</h2>
-                            <p>_____________________________________________________________</p>
-                        </NavLink>
-                    	))
-            		}
+                				<>
+                				<h1 className="name-knowledge">{knowledge.title}</h1>
+		                        <h2>Описание: {knowledge.description}</h2>
+		                        <NavLink key={knowledge.id} to={`/knowledge/open/${knowledge.slug}`} className={setActive}>
+		                            <button className="toolbar-button">Открыть</button>
+		                        </NavLink>
+                            	<p>_____________________________________________________________</p>
+                        		</>
+                    ))
+            }
+        </div>
 		</>
 		)
 }

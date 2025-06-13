@@ -30,7 +30,8 @@ function GroupCreate() {
 
     const navigate = useNavigate();
 
-    // const goHome = () => navigate("/");  
+    const goBack = () => {
+      return navigate(-1);}
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -70,12 +71,15 @@ function GroupCreate() {
 
   return (
     <>
-
+        <aside>
         <GroupsAll />
-        
-    <h1>Создание группы</h1>
+        </aside>
 
-    <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
+        <div className="list-knowledge">
+            <h1>Создание группы</h1>
+            <button onClick={goBack} className="toolbar-button">Назад</button>
+            <br/><br/>
+            <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
                 
 
                 <label htmlFor="id_name_group">Название группы: </label>
@@ -91,7 +95,7 @@ function GroupCreate() {
 
                 <br/><br/>                
 
-                <button type="submit" disabled={loading}>                    
+                <button className="save-button" type="submit" disabled={loading}>                    
                     {loading ? 'Сохраняем...' : 'Добавить'}
                 </button>
                 <br/>
@@ -100,6 +104,7 @@ function GroupCreate() {
                 {error && <p style={{ color: 'red'}}>{error}</p>}
 
             </form>
+        </div>
         </>
     )
 

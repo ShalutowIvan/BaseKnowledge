@@ -250,15 +250,13 @@ visibility: hidden;
   background-color: #2F4F4F;
 }
 
-
-
 .post-container {
   max-width: 60%;
-  margin-left: 12.5%;
+  margin-left: 15%;
   /*margin: 0 auto;*/
   /*auto;*/
   /*padding: 20px;*/
-  padding: 2.5%;
+  /*padding: 2.5%;*/
 }
 
 
@@ -331,14 +329,6 @@ visibility: hidden;
 
 
 
-/* 
-img[alt*="img-1000x800"] {
-  width: 1000px;
-  height: 800px;
-} */
-
-
-
 .markdown-content table {
   border-collapse: collapse;
   width: 100%;
@@ -380,29 +370,37 @@ img[alt*="img-1000x800"] {
   background-color: #d5d5d5;
 }
 
-/*другого цвета кнопка*/
-/*.add-button {
+/*другого цвета кнопка удаления*/
+.delete-button {
   min-width: 130px; 
   padding: 8px 12px;
   text-align: center;
-  background-color: #008B8B;
+  background-color: #A52A2A;
   border: 1px solid #ccc;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;  
+  float: right;
 }
 
-.add-button:hover {
+.delete-button:hover {
   background-color: #d5d5d5;
 }
 
-*/
-
-
-/*
-.upload-button input[type="file"] {
-  display: none;
+.font-title {
+  font-weight: bold;
+  color: #5F9EA0;
+  font-size:24px
+  
 }
-*/
+
+.font-description {
+  /*font-weight: bold;*/
+  color: #E0FFFF;
+  font-size:18px
+}
 
 
+.no-wrap {
+  white-space: nowrap;
+}

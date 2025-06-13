@@ -86,39 +86,17 @@ async def get_knowledges_in_group(db: AsyncSession, slug) -> list[KnowledgesSche
 
 
 # открыть знание
-async def knowledges_open_service(db: AsyncSession, slug):
+async def knowledges_open_service(db: AsyncSession, kn_id: int):
     # query = select(Knowledges).where(Knowledges.slug == slug).options(selectinload(Knowledges.images))
     # query = select(Knowledges).options(joinedload(Knowledges.images)).where(Knowledges.slug == slug)
-    query = select(Knowledges).options(selectinload(Knowledges.images)).where(Knowledges.slug == slug)
+    query = select(Knowledges).options(selectinload(Knowledges.images)).where(Knowledges.id == kn_id)
     
     knowledge = await db.execute(query)
     
     return knowledge.scalar()
 
-    # result = await db.execute(
-    #     select(Knowledges)
-    #     .where(Knowledges.slug == slug)
-    #     .options(selectinload(Knowledges.images))
-    # )
-    # return result.scalar()
-
-    # неправильно указан был тип в связанном поле модели алхимии, указал лист и теперь все ок
-
-
-
-
 
 # для изображений
-
-# получение изображения
-# async def get_image(db: AsyncSession, image_id: int) -> schemas.Image | None:
-#     # Получаем информацию об изображении
-#     result = await db.execute(
-#         select(Image)
-#         .where(Image.id == image_id)
-#     )
-#     return result.scalars().first()
-
 
 # изображения начало тут!!!!
 #для добавления записи об изображении в БД
@@ -204,10 +182,6 @@ async def view_file_image_service(file_name: str):
     return FileResponse(file_path)
 
 
-
-
-
-
 #удаление картинки по ссылке из БД и файл с сервера
 async def delete_image_by_url(db: AsyncSession, image_url: str) -> bool:
     print("идет удаление, такую ссылку получили!!!!!!!!!!!!!!!", image_url)
@@ -218,8 +192,7 @@ async def delete_image_by_url(db: AsyncSession, image_url: str) -> bool:
     result = await db.execute(
         delete(Images)
         .where(Images.filename == filename)
-    )
-    
+    )    
     # 3. Удаляем файл с диска
     filepath = os.path.join(UPLOAD_FOLDER, filename)
     if os.path.exists(filepath):
@@ -231,7 +204,7 @@ async def delete_image_by_url(db: AsyncSession, image_url: str) -> bool:
 
 
 # сравнить с функцией выше. knowledge_update тут фул знание скорее всего. Но если что сделать отдельную схему в питоне для обновления знания
-async def update_knowledge(request: Request, knowledge_id: int, knowledge_update: KnowledgesUpdateSchema, db: AsyncSession):
+async def update_knowledge_service(request: Request, knowledge_id: int, knowledge_update: KnowledgesUpdateSchema, db: AsyncSession):
     # 1. Получаем текущий знание с изображениями
     db_knowledge = await get_knowledge(db=db, knowledge_id=knowledge_id)
     if not db_knowledge:
@@ -245,8 +218,6 @@ async def update_knowledge(request: Request, knowledge_id: int, knowledge_update
         
         # 3. Удаляем отсутствующие изображения
         images_to_delete = old_images - new_images
-        # print("11111111111111111111111")
-        # print("фото для удаления: ", images_to_delete)
         for url in images_to_delete:
             if url.startswith(base_url + '/uploads/'):  # Удаляем локальные файлы по ссылкам которые начинаются с текста base_url + '/uploads/'
                 await delete_image_by_url(db=db, image_url=url)
@@ -267,33 +238,56 @@ async def update_knowledge(request: Request, knowledge_id: int, knowledge_update
     return db_knowledge
 
 
+# удаление знания и изображений в нем. 
+async def delete_knowledge_service(db: AsyncSession, knowledge_id: int) -> bool:    
+    try:
+        # 1. Получаем знание с изображениями
+        knowledge = await get_knowledge(db, knowledge_id)
+        if not knowledge:
+            return False
+
+        # 2. Удаляем файлы связанных изображений
+        for image in knowledge.images:
+            filepath = os.path.join(UPLOAD_FOLDER, image.filename)
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+        
+        # 3. Удаляем само знание. Удаляется и знание и связанное поле изображения каскадно. 
+        await db.delete(knowledge)
+        
+        await db.commit()
+        return True
+
+    except Exception as ex:
+        print("Ошибка при удалении знания:", ex)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка при удалении знания: {str(e)}"
+        )
 
 
 
+async def update_knowledge_header_service(knowledge_id: int, knowledge_update: KnowledgesUpdateHeaderSchema, db: AsyncSession):
+    # 1. Получаем текущее знание 5-ю полями. А с фронта принимаем 3 поля.   
+    query = select(Knowledges.title, Knowledges.description, Knowledges.slug, Knowledges.free_access, Knowledges.updated_at).where(Knowledges.id == knowledge_id)
+    knowledge_header = await db.execute(query).scalar()
+    # knowledge_header = await db.execute(query).first()
 
-
-# удаление знания и изображений в нем. УРЛ в роутах еще не сделал
-async def delete_knowledge(db: AsyncSession, knowledge_id: int) -> bool:
-    # 1. Получаем пост с изображениями
-    knowledge = await get_knowledge(db, knowledge_id)
-    if not knowledge:
-        return False
-
-    # 2. Удаляем связанные изображения
-    for image in knowledge.images:
-        filepath = os.path.join(UPLOAD_FOLDER, image.filename)
-        if os.path.exists(filepath):
-            os.unlink(filepath)
+    if not knowledge_header:
+        raise HTTPException(status_code=404, detail="knowledge not found")
     
-    # 3. Удаляем сам пост
-    await db.execute(
-        delete(Knowledges)
-        .where(Knowledges.id == knowledge_id)
-    )
-    
+    # 2. Обновляем знание
+    slug = translit(knowledge_update.title, language_code='ru', reversed=True)
+
+    knowledge_header.title = knowledge_update.title
+    knowledge_header.description = knowledge_update.description
+    knowledge_header.free_access = knowledge_update.free_access
+    knowledge_header.slug = slug
+    knowledge_header.updated_at = datetime.utcnow()
     await db.commit()
-    return True
-
-
+    await db.refresh(knowledge_header)
+    
+    # возвращаем все 5 полей. Если название знания изменить, то выкинет в список знаний
+    return knowledge_header
 
 

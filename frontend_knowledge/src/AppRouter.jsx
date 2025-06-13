@@ -2,7 +2,7 @@ import { Route, createBrowserRouter, createRoutesFromElements } from "react-rout
 
 import { Start } from './start/Start';
 
-import { KnowledgePageView } from './sections/BaseKnowledge/KnowledgePageView';
+import { KnowledgePageView, KnowledgeListLoader } from './sections/BaseKnowledge/KnowledgePageView';
 import { KnowledgeInGroup } from './sections/BaseKnowledge/KnowledgeInGroup';
 import { GroupCreate } from './sections/BaseKnowledge/GroupCreate';
 import { KnowledgeCreate } from './sections/BaseKnowledge/KnowledgeCreate';
@@ -27,7 +27,7 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
          } >
             {/* база знаний */}
           <Route path="group/create/" element={<GroupCreate />}  />
-          <Route path="knowledge/" element={<KnowledgePageView />}  />
+          <Route path="knowledge/" element={<KnowledgePageView />} loader={KnowledgeListLoader}  />
           <Route path="knowledge/:slug" element={<KnowledgeInGroup />}  />       
           <Route path="knowledge/create/" element={<KnowledgeCreate />}  />
           {/*loader={KnowledgeOpenLoader}*/}

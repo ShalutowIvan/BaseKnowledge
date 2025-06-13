@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
-import { useParams, Link, useNavigate, useLoaderData, Await } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLoaderData, Await, redirect, useRevalidator } from 'react-router-dom'
 import { GroupsAll } from "./GroupsAll"
 // import MDEditor from '@uiw/react-markdown-editor';//это посоветовал дипсик
 import MDEditor from '@uiw/react-md-editor';//это посоветовал чатгпт
@@ -18,59 +18,42 @@ import { markdownPlugins, markdownComponents } from './MDutils/UtilsImageMD';
 import { TextStyleToolbar } from './MDutils/TextStyleToolbar';
 
 
-
-
-
-// function imageAttributesPlugin() {
-//   return (tree) => {
-//     visit(tree, 'image', (node) => {
-//       // Ищем width/height в alt-тексте как {width=300 height=200}
-//       const match = /\{(.+?)\}$/.exec(node.alt || '');
-//       if (match) {
-//         const attrs = match[1].split(/\s+/);
-//         node.data = node.data || {};
-//         node.data.hProperties = node.data.hProperties || {};
-
-//         attrs.forEach(attr => {
-//           const [key, value] = attr.split('=');
-//           if (key && value) {
-//             node.data.hProperties[key] = value;
-//           }
-//         });
-
-//         // Чистим alt-текст от {width=...}
-//         node.alt = node.alt.replace(/\{.+\}$/, '').trim();
-//       }
-//     });
-//   };
-// }
-
 function KnowledgeOpen() {
+    const revalidator = useRevalidator();    
 
-    const textareaRef = useRef(null);//для вставки панели форматирования текста
-
-    const { knowledgeLoad } = useLoaderData();
-    const [editMode, setEditMode] = useState(false);    
-    const [preview, setPreview] = useState(false);
+    const { knowledgeLoad } = useLoaderData();//лоадер знания
+    const [editMode, setEditMode] = useState(false);//это для редактирования контента знания
+    const [preview, setPreview] = useState(false);//предварительный просмотр при редактировании контента
+    
+    const [editModeHeader, setEditModeHeader] = useState(false);//это для редактирования шапки знания
 
     // const {slug} = useParams();
     const [knowledge, setKnowledge] = useState(knowledgeLoad);
     
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    
+
+        
     // Обработчик изменений для MDEditor. Это пока убрали, так как у МД есть свой проп onChange
     const handleTextChange = (value) => {
       setKnowledge({ ...knowledge, content: value || '' });
     };
 
+    //3 функции ниже для изменения шапки
+    const handleTextTitle = (value) => {
+      setKnowledge({ ...knowledge, title: value || '' });
+    };
 
-    // const handleTextChange = (value) => {
-    //   setKnowledge((prev) => ({ ...prev, content: value }))
-    // };
+    const handleTextDescription = (value) => {
+      setKnowledge({ ...knowledge, description: value || '' });
+    };
 
+    const handleFree_access = (value) => {
+      setKnowledge({ ...knowledge, free_access: value || '' });
+    };
 
-
+    
+    //это для загрузки фото
     const handleImageUpload = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -176,33 +159,167 @@ function KnowledgeOpen() {
       });
     };
 
+  
+  const deleteKnowledge = () => {
+    if (window.confirm('Вы уверены, что хотите удалить?')) {
+      // Действие при подтверждении
+      axios.delete(`http://127.0.0.1:8000/delete_knowledge/${knowledge.id}`)      
+      navigate("/knowledge/");
+      revalidator.revalidate();//принудительная перезагрузка лоадера после редиректа в списке знаний
+    }  
+  };
+  
     
-
-
-        
+      
   return (
     <>
       <aside>
       <GroupsAll />
       </aside>
 
-      <h1>Содержание знания</h1>
-        <button onClick={goBack} className="toolbar-button">Назад</button>
 
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <br/>
-    
-          <h2>Название знания: {knowledge.title}</h2>  
-          <h2>Описание: {knowledge.description}</h2>  
 
-          {/*<h2>Дата создания: {knowledge.created_at}</h2>  
+        <div className="post-container">
+        {/*это шапка знания*/}
+        <h1>Содержание знания</h1>
+        <button onClick={goBack} className="toolbar-button">Назад</button>          
+          {/*начало шапки*/}
+          {/*если не редачим шапку*/}
+          {editModeHeader ? (
+          <>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+            <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
+            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {knowledge.created_at}</span>
+          </div>
+
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>            
+            <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{knowledge.title}</span>
+            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {knowledge.updated_at}</span>
+          </div>
+          <br/>
           
-          <h2>Содержание: {knowledge.content}</h2>  
-          <h2>Свободный доступ: 
-          {!knowledge.free_access && <> Не разрешен</>}
-          {knowledge.free_access && <> Разрешен</>}
-          </h2>  */}
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+            <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>            
+              <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Свободный доступ: 
+              {!knowledge.free_access && <> Не разрешен</>}
+              {knowledge.free_access && <> Разрешен</>}</span>
+          </div>
 
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>            
+            <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{knowledge.description}</span>
+            
+            <button onClick={() => setEditModeHeader(true)} className="toolbar-button">
+              Редактировать шапку
+            </button>
+            
+          </div>
+          </>
+          ) : (
+          <>
+          {/*тут форма если редактируем шапку*/}
+
+          {/*начало формы*/}
+
+          <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>                
+                {/*первая строка без формы*/}
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
+                  <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {knowledge.created_at}</span>
+                </div>
+
+                {/*вторая строка с формой названия знания*/}
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>            
+                  {/*<label htmlFor="id_title">Название знания: </label>*/}
+                    <input 
+                        placeholder="введите назвнаие"
+                        name="title"
+                        type="text"
+                        id="id_title"
+                        className="control"                        
+                        value={knowledge.title}
+                        // onChange={(e) => setTitle(e.target.value)}   
+                        onChange={handleTextTitle}
+                    />
+                  <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {knowledge.updated_at}</span>
+                </div>
+                <br/>
+
+                {/*третья строка с чекбоксом*/}
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>          
+                  
+                  <input
+                    type="checkbox"
+                    checked={knowledge.free_access}
+                    onChange={handleFree_access}
+                  />
+                  <label>Выбрать</label>
+                </div>
+
+                {/*четвертая строка с формой описания знания*/}
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <input 
+                    placeholder="введите описание"
+                    name="description"
+                    type="text"
+                    id="id_description"
+                    className="control"                        
+                    value={knowledge.description}
+                    onChange={handleTextDescription}   
+                  />
+                
+                  <>
+                  <button className="save-button" type="submit" disabled={loading}>                    
+                    {loading ? 'Сохраняем...' : 'Сохранить'}
+                  </button>
+                  
+                  <button 
+                    onClick={() => {setKnowledge(knowledge); setEditMode(false);}}
+                    className="cancel-button"
+                    disabled={loading}>Отмена</button>
+                  </>                  
+                </div>
+                {/*конец четвертой строки*/}
+              {error && <p style={{ color: 'red'}}>{error}</p>}
+            </form>
+
+          {/*конец формы*/}
+
+
+
+          {/*<div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+            <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
+            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {knowledge.created_at}</span>
+          </div>*/}
+
+          {/*<div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>            
+            <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{knowledge.title}</span>
+            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {knowledge.updated_at}</span>
+          </div>
+          <br/>*/}
+          
+          {/*<div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+            <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>          
+            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Свободный доступ: 
+              {!knowledge.free_access && <> Не разрешен</>}
+              {knowledge.free_access && <> Разрешен</>}</span>
+          </div>*/}
+
+
+          {/*<div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>            
+            <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{knowledge.description}</span>
+            <button>Редактировать</button>
+          </div>*/}
+          </>
+            )
+          }
+        
+
+        </div>
+
+    <br/>
+
+    {/*ниже редактор контента знания*/}
     <div className="post-container">
       {editMode ? (
 
@@ -244,20 +361,6 @@ function KnowledgeOpen() {
             
             <>
             {/* размер и стили шрифта */}
-            {/*смотреть как сделано в вик контура*/}
-            
-            {/*<div style={{ marginBottom: '1rem', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              <select onChange={(e) => applyFontSize(e.target.value)}>
-                <option value="">Размер шрифта</option>
-                <option value="12px">12px</option>
-                <option value="16px">16px</option>
-                <option value="20px">20px</option>
-                <option value="24px">24px</option>
-              </select>             
-            </div>*/}
-
-            {/*предыдущий вариант тулбара*/}
-
             <TextStyleToolbar onApplyStyle={(openTag, closeTag = openTag) => {
               const textarea = document.querySelector('.w-md-editor-text-input'); // получаем textarea MDEditor
               if (!textarea) return;
@@ -272,10 +375,7 @@ function KnowledgeOpen() {
 
               setKnowledge(prev => ({ ...prev, content: newText }));
             }} />
-
-             
-
-              
+            
             <MDEditor              
               value={knowledge.content}
               onChange={handleTextChange}
@@ -324,8 +424,10 @@ function KnowledgeOpen() {
             </div>
             <br/>
             <button onClick={() => setEditMode(true)} className="toolbar-button">
-              Редактировать
+              Редактировать знание
             </button>
+
+            <button onClick={deleteKnowledge} className="delete-button">Удалить знание</button>
 
         </div>
       )}

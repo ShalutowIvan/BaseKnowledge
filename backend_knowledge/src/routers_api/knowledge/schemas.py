@@ -38,11 +38,11 @@ class GroupShemaFull(GroupShema):
         from_attributes = True
 
 
-#это вывода списка знаний. Открыть их по слагу, чтобы была ссылка
+#это вывода списка знаний. Открыть их по ID, чтобы была ссылка
 class KnowledgesSchema(BaseModel):
     title: str
     description: str
-    slug: str
+    id: int
 
 
 class KnowledgesCreateSchema(BaseModel):
@@ -55,6 +55,19 @@ class KnowledgesUpdateSchema(BaseModel):
     # title: str
     content: str
     
+
+class KnowledgesUpdateHeaderSchema(BaseModel):
+    title: str
+    description: str
+    free_access: bool
+
+
+class KnowledgesUpdateHeaderResponseSchema(BaseModel):
+    title: str
+    description: str
+    free_access: bool
+    updated_at: datetime
+    slug: str
 
 
 

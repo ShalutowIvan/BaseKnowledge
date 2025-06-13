@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import *
 from .schemas import *
-from .services import group_create_service, get_knowledges, get_knowledge, knowledges_create_service, upload_image_service, update_knowledge, get_group_service, get_knowledges_in_group, knowledges_open_service, view_file_image_service
+from .services import group_create_service, get_knowledges, get_knowledge, knowledges_create_service, upload_image_service, update_knowledge_service, get_group_service, get_knowledges_in_group, knowledges_open_service, view_file_image_service, delete_knowledge_service
 # from src.regusers.models import User
 # from src.regusers.secure import test_token_expire, access_token_decode
 
@@ -62,10 +62,10 @@ async def knowledges_create(knowledge: KnowledgesCreateSchema, session: AsyncSes
     return await knowledges_create_service(db=session, knowledge=knowledge)
 
 
-# открыть знание, тут фильтр по слагу знания
-@router_knowledge_api.get("/knowledges_open/{slug}", response_model=KnowledgesSchemaFull)
-async def knowledges_open(slug: str, session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchemaFull:    
-    return await knowledges_open_service(db=session, slug=slug)
+# открыть знание, тут фильтр по ID знания. Возможно переделаю на UUID
+@router_knowledge_api.get("/knowledges_open/{kn_id}", response_model=KnowledgesSchemaFull)
+async def knowledges_open(kn_id: int, session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchemaFull:    
+    return await knowledges_open_service(db=session, kn_id=kn_id)
 
 
 #создание знания. После создания оно сразу открывается для заполнения. Поэтму тут схема ответа фул знания. Редактирование тела знания будет при открытии знания. При создании мы пишем название и описание знания и валидация идет по KnowledgesSchema. Потом оно открывается, и его заполняем - редактируем по остальным полям.
@@ -79,8 +79,6 @@ async def upload_image(request: Request, knowledge_id: int, file: UploadFile = F
     return await upload_image_service(request=request, knowledge_id=knowledge_id, file=file, db=session)
 
 
-
-
 # Эндпоинт для отображения на фронте загруженных файлов изображений, то есть чтобы можно было по ссылке обратиться и отобразить файл на фронте. Логику перенести в сервисные функции. В дипсике функция называется serve_file
 @router_knowledge_api.get("/uploads/{file_name}")
 async def view_file_image(file_name: str):
@@ -89,20 +87,28 @@ async def view_file_image(file_name: str):
 
 #изменение знания. Меняется и изображение и текст
 @router_knowledge_api.put("/knowledges_update/{kn_id}", response_model=KnowledgesSchemaFull)
-async def knowledge_update(request: Request, knowledge: KnowledgesUpdateSchema, kn_id: int, session: AsyncSession = Depends(get_async_session)):
-    # Получаем текущие изображения поста
-    # current_knowledge = await get_knowledge(db=session, knowledge_id=kn_id)
-    # current_images = [img.filepath for img in current_knowledge.images]
-    
-    return await update_knowledge(
+async def knowledge_update(request: Request, knowledge: KnowledgesUpdateSchema, kn_id: int, session: AsyncSession = Depends(get_async_session)):    
+    return await update_knowledge_service(
         request=request,
         knowledge_id=kn_id,
         knowledge_update=knowledge,
-        db=session
-        # current_images=current_images
+        db=session        
     )
 
-# knowledge_update работает с горем пополам... Загрузка фото плохо работает и потом знание с ним не открывается, после загрузки фото. Посмотреть схемы ответа и как у меня фото грузится с сервака и как на фронте принимается...
+
+@router_knowledge_api.delete("/delete_knowledge/{knowledge_id}")
+async def delete_knowledge(knowledge_id: int, session: AsyncSession = Depends(get_async_session)):
+    return await delete_knowledge_service(knowledge_id=knowledge_id, db=session)
+
+
+# обновление шапки знания
+@router_knowledge_api.put("/knowledge_update_header/{kn_id}", response_model=KnowledgesUpdateHeaderResponseSchema)
+async def knowledge_update_header(kn_id: int, knowledge_update: KnowledgesUpdateHeaderSchema, session: AsyncSession = Depends(get_async_session)):    
+    return await update_knowledge_header_service(        
+        knowledge_id=kn_id,
+        knowledge_update=knowledge_update,
+        db=session        
+    )
 
 
 
