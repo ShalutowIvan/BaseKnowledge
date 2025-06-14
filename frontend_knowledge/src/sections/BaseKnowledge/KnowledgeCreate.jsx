@@ -72,7 +72,7 @@ function KnowledgeCreate() {
             if (response.statusText==='OK') {            
                 
                 //если все ок, то открываем знание для заполнения
-                navigate(`/knowledge/open/${response.data["slug"]}`);
+                navigate(`/knowledge/open/${response.data["id"]}`);
 
             } else {
                 const errorData = await response.data
@@ -157,7 +157,7 @@ function KnowledgeCreate() {
 
                 <br/><br/>
 
-                <button className="save-button" type="submit" disabled={loading}>                    
+                <button className="save-button" type="submit" disabled={loading}>
                     {loading ? 'Сохраняем...' : 'Добавить'}
                 </button>
                 <br/>

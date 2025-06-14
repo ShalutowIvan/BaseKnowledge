@@ -6,7 +6,7 @@ import os
 
 
 from routers_api.knowledge.router_api import router_knowledge_api
-# from .routers_api.regusers.router_api import router_reg_api
+from routers_api.regusers.router_api import router_reg_api
 
 
 app = FastAPI(title="База знаний", debug=True)#debug=True это для того чтобы в документации выводилсь ошибки как в консоли. 
@@ -23,7 +23,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 #роутеры
 app.include_router(router_knowledge_api)
-# app.include_router(router_reg_api)
+app.include_router(router_reg_api)
 
 origins = [
     "http://localhost:5173",  
@@ -34,7 +34,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    # allow_credentials=True,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

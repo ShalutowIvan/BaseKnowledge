@@ -4,13 +4,13 @@ from starlette.status import HTTP_404_NOT_FOUND, HTTP_401_UNAUTHORIZED
 from sqlalchemy import insert, select, text
 from pydantic import BaseModel, Field, EmailStr, validator, UUID4
 
-from src.db import get_async_session
+from db_api import get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.settings import templates, EXPIRE_TIME, KEY, KEY2, ALG, EXPIRE_TIME_REFRESH, KEY3, KEY4, EXPIRE_TIME_CLIENT_TOKEN, CLIENT_ID
+from settings import EXPIRE_TIME, KEY, KEY2, ALG, EXPIRE_TIME_REFRESH, KEY3, KEY4, EXPIRE_TIME_CLIENT_TOKEN, CLIENT_ID
+
 
 from .models import *
-from src.showcase.models import *
-from src.showcase.router import base_requisites
+# from src.showcase.router import base_requisites
 from typing import Annotated
 
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, OAuth2PasswordRequestFormStrict
@@ -73,6 +73,7 @@ async def api_registration_post(request: Request, formData: UserRegShema, sessio
         
         return {"message": "Все супер!"}
     except Exception as ex:
+        print("Ошибка при регистрации: ", ex)
         return {"Error": ex}
 
 
@@ -98,16 +99,16 @@ async def api_activate_user(request: Request, token: str, session: AsyncSession 
         payload = jwt.decode(token, KEY3, algorithms=[ALG])#в acces_token передается просто строка
         
         user_id = payload.get("sub")#у меня тут user_id
-        if user_id is None:
-            context = await base_requisites(db=session, request=request)
-            return templates.TemplateResponse("showcase/user_not_found.html", context)
+        # if user_id is None:
+        #     context = await base_requisites(db=session, request=request)
+        #     return templates.TemplateResponse("showcase/user_not_found.html", context)
             
     
     except Exception as ex:
-        # print("!!!!!!!!!!!!!!!!!!!!!!!!!")
-        # print(ex)
-        context = await base_requisites(db=session, request=request)
-        return templates.TemplateResponse("showcase/user_not_found.html", context)
+        
+        print(ex)
+        # context = await base_requisites(db=session, request=request)
+        # return templates.TemplateResponse("showcase/user_not_found.html", context)
     
 
     user = await session.scalar(select(User).where(User.id == int(user_id)))

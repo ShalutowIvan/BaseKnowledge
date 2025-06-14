@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, Link, useNavigate, NavLink } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import axios from "axios"
-
+import { API } from '../../apiAxios/apiAxios'
 
 
 
@@ -10,12 +10,36 @@ function GroupsAll() {
 	
 	const setActive = ({isActive}) => isActive ? 'active-link' : '';	
 	const [groups, setGroups] = useState([]);
-	
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState(null);
+
 	useEffect(() => {
-		fetch(`http://127.0.0.1:8000/groups_all/`)
-            .then(res => res.json())
-            .then(data => setGroups(data));        
+		// fetch(`http://127.0.0.1:8000/groups_all/`)
+        //     .then(res => res.json())
+        //     .then(data => setGroups(data));        
+
+		const fetchData = async () => {
+		try {
+			const response = await API.get('/groups_all/');
+			setGroups(response.data);
+			setLoading(false);
+		} catch (err) {
+			setError(err);
+			setLoading(false);
+		}
+		};
+
+		fetchData();
+
 	}, [])
+
+	if (loading) {
+    return <p>Загрузка...</p>;
+  	}
+
+	if (error) {
+    return <p>Ошибка: {error.message}</p>;
+  	}
 
 	
 	return (

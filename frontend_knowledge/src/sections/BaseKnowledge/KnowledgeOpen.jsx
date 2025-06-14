@@ -6,14 +6,9 @@ import { GroupsAll } from "./GroupsAll"
 // import MDEditor from '@uiw/react-markdown-editor';//это посоветовал дипсик
 import MDEditor from '@uiw/react-md-editor';//это посоветовал чатгпт
 // import MDEditor from 'mdeditor';//это по совету гугла
-import rehypeRaw from 'rehype-raw';
 
-// плагины по совету чатагпт
-import remarkGfm from 'remark-gfm'; // поддержка GFM (checkboxes, tables и пр.)
-import rehypeHighlight from 'rehype-highlight'; // подсветка синтаксиса
 import 'highlight.js/styles/atom-one-dark.css'; // стили подсветки (можно выбрать любой другой)
-import { visit } from 'unist-util-visit';
-import remarkDirective from 'remark-directive';
+
 import { markdownPlugins, markdownComponents } from './MDutils/UtilsImageMD';
 import { TextStyleToolbar } from './MDutils/TextStyleToolbar';
 
@@ -39,18 +34,7 @@ function KnowledgeOpen() {
       setKnowledge({ ...knowledge, content: value || '' });
     };
 
-    //3 функции ниже для изменения шапки
-    const handleTextTitle = (value) => {
-      setKnowledge({ ...knowledge, title: value || '' });
-    };
-
-    const handleTextDescription = (value) => {
-      setKnowledge({ ...knowledge, description: value || '' });
-    };
-
-    const handleFree_access = (value) => {
-      setKnowledge({ ...knowledge, free_access: value || '' });
-    };
+    
 
     
     //это для загрузки фото
@@ -109,57 +93,7 @@ function KnowledgeOpen() {
       return navigate(-1);
     }
 
-    // функции для изменения размера и стиля шрифта
-
-    // Вставка текста в редактор
-    const insertAtCursor = (wrapperFn) => {
-      const textarea = document.querySelector('textarea');
-      if (!textarea) return;
-
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-
-      const before = knowledge.content.slice(0, start);
-      const selected = knowledge.content.slice(start, end);
-      const after = knowledge.content.slice(end);
-
-      // Получаем обернутый текст
-      const wrapped = wrapperFn(selected || 'ваш текст');
-
-      const updated = `${before}${wrapped}${after}`;
-
-      setKnowledge(prev => ({ ...prev, content: updated }));
-
-      setTimeout(() => {
-        textarea.focus();
-        // Курсор после вставки
-        textarea.selectionStart = textarea.selectionEnd = before.length + wrapped.length;
-      }, 0);
-    };
-
-
-    // Функции для вставки
-    const applyFontSize = (size) => {
-      if (!size) return;
-      insertAtCursor((text) => `<span style="font-size: ${size};">${text}</span>`);
-    };
-
-  const applyFontStyle = (style) => {
-      if (!style) return;
-
-      insertAtCursor((text) => {
-        if (style === 'bold') {
-          return `<span style="font-weight: bold;">${text}</span>`;
-        } else if (style === 'italic') {
-          return `<span style="font-style: italic;">${text}</span>`;
-        } else if (style === 'monospace') {
-          return `<span style="font-family: monospace;">${text}</span>`;
-        }
-        return text;
-      });
-    };
-
-  
+      
   const deleteKnowledge = () => {
     if (window.confirm('Вы уверены, что хотите удалить?')) {
       // Действие при подтверждении
@@ -168,8 +102,65 @@ function KnowledgeOpen() {
       revalidator.revalidate();//принудительная перезагрузка лоадера после редиректа в списке знаний
     }  
   };
-  
-    
+
+
+  // Обработчики изменений для полей шапки. Тут в зависимости от имени поля в input поле в jsx вставится значение из этого поля в нужное поле
+  const handleHeaderChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setKnowledge(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const validateForm = () => {
+        if (!knowledge.title || !knowledge.description ) {
+            setError("Есть пустые поля, заполните, пожалуйста!");
+            return false;
+        }
+        setError('');
+        return true;
+    }
+
+  //функция для формы
+  const saveHeaderChanges = async (event) => {
+        event.preventDefault();
+        if (!validateForm()) return;
+        try {            
+            setLoading(true);
+            const response = await axios.patch(
+                `http://127.0.0.1:8000/knowledge_update_header/${knowledge.id}`,
+                {                 
+                  title: knowledge.title,
+                  description: knowledge.description,
+                  free_access: knowledge.free_access,
+                  group_id: knowledge.group_id
+                }                
+                );
+            setEditModeHeader(false)            
+            if (response.statusText==='OK') {
+                setKnowledge({ ...knowledge, updated_at: response.data.updated_at});
+                setKnowledge({ ...knowledge, group: response.data.group});                
+                console.log("Update complete!")                
+            } else {
+                const errorData = await response.data
+                console.log(errorData, 'тут ошибка')     
+            }
+        } catch (error) {            
+            console.log(error)
+            setError('что-то пошло не так');            
+        } finally {
+          setLoading(false);
+        }    
+    };
+
+  const [groups, setGroups] = useState([]);
+
+  useEffect(() => {
+            fetch(`http://127.0.0.1:8000/groups_all/`)
+                .then(res => res.json())
+                .then(data => setGroups(data));
+        }, [])
       
   return (
     <>
@@ -178,15 +169,18 @@ function KnowledgeOpen() {
       </aside>
 
 
-
-        <div className="post-container">
+      <br/><br/>
+      <button onClick={goBack} className="toolbar-button">Назад</button>          
+      <br/><br/>
+      <div className="post-container header-section">
         {/*это шапка знания*/}
-        <h1>Содержание знания</h1>
-        <button onClick={goBack} className="toolbar-button">Назад</button>          
-          {/*начало шапки*/}
-          {/*если не редачим шапку*/}
-          {editModeHeader ? (
+        
+        
+        {/*начало шапки*/}
+        {/*если не редачим шапку отображаются поля шапки*/}
+        {!editModeHeader ? (
           <>
+          <p>Группа: {knowledge.group.name_group}</p>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
             <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
             <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {knowledge.created_at}</span>
@@ -216,11 +210,28 @@ function KnowledgeOpen() {
           </>
           ) : (
           <>
-          {/*тут форма если редактируем шапку*/}
-
+          {/*отображаются поля формы если редактируем шапку*/}
           {/*начало формы*/}
+          
+          <form onSubmit={saveHeaderChanges} style={{ marginBottom: '1rem' }}>
 
-          <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>                
+                <label htmlFor="id_group">Группа: </label>                
+                <select
+                    // className="control"
+                    name="group_id"                
+                    // value={knowledge.group.name_group}
+                    value={knowledge.group_id}
+                    onChange={handleHeaderChange}
+                    // required
+                >
+                    {/* <option value="">{knowledge.group.name_group}</option> */}
+                    {groups?.map(group => (
+                        <option key={group.id} value={group.id}>
+                            {group.name_group}
+                        </option>
+                    ))}
+                </select>
+
                 {/*первая строка без формы*/}
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                   <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
@@ -233,14 +244,12 @@ function KnowledgeOpen() {
                     <input 
                         placeholder="введите назвнаие"
                         name="title"
-                        type="text"
-                        id="id_title"
-                        className="control"                        
-                        value={knowledge.title}
-                        // onChange={(e) => setTitle(e.target.value)}   
-                        onChange={handleTextTitle}
-                    />
-                  <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {knowledge.updated_at}</span>
+                        type="text"                        
+                        value={knowledge.title}                        
+                        onChange={handleHeaderChange}
+                        disabled={loading}
+                    />                
+                    <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {knowledge.updated_at}</span>
                 </div>
                 <br/>
 
@@ -248,91 +257,70 @@ function KnowledgeOpen() {
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                   <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>          
                   
-                  <input
-                    type="checkbox"
-                    checked={knowledge.free_access}
-                    onChange={handleFree_access}
-                  />
-                  <label>Выбрать</label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      name="free_access"
+                      checked={knowledge.free_access}
+                      onChange={handleHeaderChange}
+                      disabled={loading}
+                    />
+                    Свободный доступ
+                  </label>
                 </div>
 
                 {/*четвертая строка с формой описания знания*/}
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <input 
+                  <textarea
                     placeholder="введите описание"
                     name="description"
-                    type="text"
-                    id="id_description"
-                    className="control"                        
                     value={knowledge.description}
-                    onChange={handleTextDescription}   
+                    onChange={handleHeaderChange}
+                    disabled={loading}
+                    rows={2}
                   />
                 
-                  <>
+                  <div>
                   <button className="save-button" type="submit" disabled={loading}>                    
                     {loading ? 'Сохраняем...' : 'Сохранить'}
                   </button>
-                  
+                  &nbsp;&nbsp;
                   <button 
-                    onClick={() => {setKnowledge(knowledge); setEditMode(false);}}
+                    onClick={() => {setKnowledge(knowledgeLoad); setEditModeHeader(false);}}
                     className="cancel-button"
                     disabled={loading}>Отмена</button>
-                  </>                  
+                  </div>                  
                 </div>
                 {/*конец четвертой строки*/}
               {error && <p style={{ color: 'red'}}>{error}</p>}
             </form>
 
           {/*конец формы*/}
-
-
-
-          {/*<div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-            <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
-            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {knowledge.created_at}</span>
-          </div>*/}
-
-          {/*<div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>            
-            <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{knowledge.title}</span>
-            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {knowledge.updated_at}</span>
-          </div>
-          <br/>*/}
-          
-          {/*<div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-            <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>          
-            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Свободный доступ: 
-              {!knowledge.free_access && <> Не разрешен</>}
-              {knowledge.free_access && <> Разрешен</>}</span>
-          </div>*/}
-
-
-          {/*<div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>            
-            <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{knowledge.description}</span>
-            <button>Редактировать</button>
-          </div>*/}
+        
           </>
             )
           }
         
 
-        </div>
+      </div>
 
     <br/>
-
+    
     {/*ниже редактор контента знания*/}
     <div className="post-container">
+      <h1>Содержание знания</h1>
       {editMode ? (
 
         <div className="editor-section">
           <h3>Редактор знания</h3>
           <div className="editor-toolbar">
             <button type="button" className="toolbar-button" onClick={() => setPreview(!preview)}>
-              {preview ? 'Edit' : 'Preview'}
+              {preview ? 'Редактировать' : 'Предварительный просмотр'}
             </button>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             
             <label className="upload-button">
-              {loading ? 'Uploading...' : 'Upload Image'}
+              {loading ? 'Загрузка...' : 'Загрузить изображение'}
               <input
                 type="file"
                 accept="image/*"
@@ -394,7 +382,7 @@ function KnowledgeOpen() {
                 className="save-button"
                 disabled={loading}
               >
-                {loading ? 'Saving...' : 'Save'}
+                {loading ? 'Сохранение...' : 'Сохранить'}
               </button>
 
             {/*кнопка отменить*/}
@@ -405,7 +393,7 @@ function KnowledgeOpen() {
               className="cancel-button"
               disabled={loading}
             >
-              Cancel
+              Отмена
             </button>
           </div>
         </div>

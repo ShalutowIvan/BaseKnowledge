@@ -51,15 +51,15 @@ class KnowledgesCreateSchema(BaseModel):
     group_id: int
 
 
-class KnowledgesUpdateSchema(BaseModel):
-    # title: str
+class KnowledgesUpdateSchema(BaseModel):        
     content: str
     
 
 class KnowledgesUpdateHeaderSchema(BaseModel):
-    title: str
-    description: str
-    free_access: bool
+    title: Optional[str] = None
+    description: Optional[str] = None    
+    free_access: Optional[bool] = None
+    group_id: int
 
 
 class KnowledgesUpdateHeaderResponseSchema(BaseModel):
@@ -68,6 +68,7 @@ class KnowledgesUpdateHeaderResponseSchema(BaseModel):
     free_access: bool
     updated_at: datetime
     slug: str
+    group: GroupShema
 
 
 
@@ -77,9 +78,12 @@ class KnowledgesSchemaFull(KnowledgesSchema):
     created_at: datetime
     updated_at: datetime
     images: Optional[List[ImageBaseSchema]] = None    
-    group_id: int
+    group_id: int    
     free_access: bool
 
     
     class Config:
         from_attributes = True
+
+class KnowledgesSchemaOpen(KnowledgesSchemaFull):
+    group: Optional[GroupShema] = None    

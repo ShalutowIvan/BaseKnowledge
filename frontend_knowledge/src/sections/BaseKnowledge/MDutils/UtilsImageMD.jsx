@@ -40,7 +40,7 @@ export const markdownPlugins = {
 // 🌟 Кастомный компонент изображения
 export const markdownComponents = {
   img: ({ node, ...props }) => {
-    console.log(node)
+    // console.log(node)
     const { width, height } = node?.properties || {};
     return (
       <img

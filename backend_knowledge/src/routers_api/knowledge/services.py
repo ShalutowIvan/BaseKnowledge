@@ -1,7 +1,7 @@
 from fastapi import HTTPException, Request, UploadFile, File
 from fastapi.responses import FileResponse
 from sqlalchemy import select, update, delete
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.orm import selectinload, joinedload, load_only
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from .models import *
@@ -78,18 +78,16 @@ async def get_knowledges(db: AsyncSession) -> list[KnowledgesSchema]:
     return knowledges.scalars().all()
     
 
-#полкчение знаний по фильтру группы
+#получение знаний по фильтру группы
 async def get_knowledges_in_group(db: AsyncSession, slug) -> list[KnowledgesSchema]:    
-    query = select(Knowledges.title, Knowledges.description, Knowledges.slug).join(Knowledges.group).where(Group.slug == slug)        
+    query = select(Knowledges.title, Knowledges.description, Knowledges.id).join(Knowledges.group).where(Group.slug == slug)        
     knowledges_gr = await db.execute(query)
     return knowledges_gr.all()
-
+# scalars().
 
 # открыть знание
-async def knowledges_open_service(db: AsyncSession, kn_id: int):
-    # query = select(Knowledges).where(Knowledges.slug == slug).options(selectinload(Knowledges.images))
-    # query = select(Knowledges).options(joinedload(Knowledges.images)).where(Knowledges.slug == slug)
-    query = select(Knowledges).options(selectinload(Knowledges.images)).where(Knowledges.id == kn_id)
+async def knowledges_open_service(db: AsyncSession, kn_id: int):    
+    query = select(Knowledges).options(selectinload(Knowledges.images), selectinload(Knowledges.group)).where(Knowledges.id == kn_id)
     
     knowledge = await db.execute(query)
     
@@ -268,21 +266,30 @@ async def delete_knowledge_service(db: AsyncSession, knowledge_id: int) -> bool:
 
 
 async def update_knowledge_header_service(knowledge_id: int, knowledge_update: KnowledgesUpdateHeaderSchema, db: AsyncSession):
-    # 1. Получаем текущее знание 5-ю полями. А с фронта принимаем 3 поля.   
-    query = select(Knowledges.title, Knowledges.description, Knowledges.slug, Knowledges.free_access, Knowledges.updated_at).where(Knowledges.id == knowledge_id)
-    knowledge_header = await db.execute(query).scalar()
-    # knowledge_header = await db.execute(query).first()
+    # 1. Получаем текущее знание 5-ю полями. А с фронта принимаем 3 поля. Включая связанное поле. И возвращаем ответ со связанным полем
+    query = (select(Knowledges).where(Knowledges.id == knowledge_id).options(
+                selectinload(Knowledges.group),
+                load_only(
+                Knowledges.title,
+                Knowledges.description,
+                Knowledges.slug,
+                Knowledges.free_access,
+                Knowledges.updated_at,
+                Knowledges.group_id
+                )
+            ))    
+    result = await db.execute(query)
+    knowledge_header = result.scalar_one_or_none()
 
     if not knowledge_header:
         raise HTTPException(status_code=404, detail="knowledge not found")
     
-    # 2. Обновляем знание
-    slug = translit(knowledge_update.title, language_code='ru', reversed=True)
-
+    # # 2. Обновляем знание
     knowledge_header.title = knowledge_update.title
     knowledge_header.description = knowledge_update.description
     knowledge_header.free_access = knowledge_update.free_access
-    knowledge_header.slug = slug
+    knowledge_header.slug = translit(knowledge_update.title, language_code='ru', reversed=True)
+    knowledge_header.group_id = knowledge_update.group_id    
     knowledge_header.updated_at = datetime.utcnow()
     await db.commit()
     await db.refresh(knowledge_header)

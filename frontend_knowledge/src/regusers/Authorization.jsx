@@ -17,8 +17,8 @@ export default function Authorization() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    // const [name, setName] = useState("")
-    // const history = useHistory();
+    
+    
 
     const { login } = useAuth();
 
@@ -35,13 +35,6 @@ export default function Authorization() {
 
     // const goHome = () => navigate("/");
 	
-
-    // const [form, setForm] = useState({        
-    //     email: "",
-    //     password: "",        
-    //     hasError: false,
-    // })
-
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -104,72 +97,63 @@ export default function Authorization() {
             console.log(error)
             setError('аутентификация не прошла, попробуйте еще раз');            
         }
-
-    
-    // return redirect('/')
+   
 
     };
 
-    // function TestCookie() {
-    //     const token = Cookies.get("Authorization");
-    //     console.log(token);
-    // }
 
 	return (
 		<>
-		<h1>Вход</h1>
+		<h1 style={{ textAlign: 'center' }}>Вход</h1>
+        <div className='registration-section'>
+        
+            <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>                    
 
-		<form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
-                
+                    <label htmlFor="id_username" className='label-style'>Электронная почта: </label>
+                    <br/>
+                    <input 
+                        placeholder="e-mail"
+                        name="username"                    
+                        type="email"
+                        id="id_username"
+                        className="input-text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}   
+                    />
 
-                <label htmlFor="id_username">Электронная почта: </label>
-                <input 
-                    placeholder="e-mail"
-                    name="username"                    
-                    type="email"
-                    id="id_username"
-                    className="control"                        
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}   
-                />
+                    <br/><br/>
 
-                <br/><br/>
+                    <label htmlFor="id_password" className='label-style'>Пароль: </label>
+                    <br/>
+                    <input 
+                        placeholder="Введите пароль"
+                        name="password"
+                        type="password"
+                        id="id_password"
+                        className="input-text"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}      
+                    />
 
-                <label htmlFor="id_password">Пароль: </label>
-                <input 
-                    placeholder="Введите пароль"
-                    name="password"
-                    type="password"
-                    id="id_password"
-                    className="control"                     
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}      
-                />
+                    <br/><br/>
 
-                
+                    <button type="submit" disabled={loading} className="save-button">
+                        {loading ? 'Входим в...' : 'Вход'}
+                    </button>
+                    <br/>
 
-                <br/><br/>
-
-                <button type="submit" disabled={loading}>                    
-                    {loading ? 'Входим в...' : 'Вход'}
-                </button>
-                <br/>
-
-                {/*если ошибка error отображаем ее в параграфе ниже*/}
-                {error && <p style={{ color: 'red'}}>{error}</p>}
+                    {/*если ошибка error отображаем ее в параграфе ниже*/}
+                    {error && <p style={{ color: 'red'}}>{error}</p>}
 
             </form>
 
-            <h2><NavLink to="/regusers/registration/">Регистрация</NavLink></h2>
+            <h3><NavLink to="/regusers/registration/">Регистрация</NavLink></h3>
 
-            <h2><NavLink to="/regusers/forgot_password/">Забыли пароль</NavLink></h2>
+            <h3><NavLink to="/regusers/forgot_password/">Забыли пароль</NavLink></h3>
 
-
-            <h1>{username}</h1>
-            <h1>{password}</h1>
-
-            {/*<button onClick={TestCookie}>Тест куки</button>*/}
-
+        </div>
+           
+        
 		</>
 		)
 

@@ -13,12 +13,12 @@ from .models import User, Token, Code_verify_client
 from fastapi.security import APIKeyHeader, APIKeyCookie, OAuth2PasswordBearer
 from passlib.context import CryptContext
 from jose import JWTError, jwt
-from src.settings import KEY, KEY2, ALG, EXPIRE_TIME, EXPIRE_TIME_REFRESH, KEY3, KEY4, KEY5, EXPIRE_TIME_CLIENT_TOKEN
+from settings import KEY, KEY2, ALG, EXPIRE_TIME, EXPIRE_TIME_REFRESH, KEY3, KEY4, KEY5, EXPIRE_TIME_CLIENT_TOKEN
 from datetime import datetime, timedelta
 from jose.exceptions import ExpiredSignatureError
 
 #импорты для отправки почты
-from src.settings import PORT, HOST, HOST_USER, HOST_PASSWORD, DEFAULT_EMAIL
+from settings import PORT, HOST, HOST_USER, HOST_PASSWORD, DEFAULT_EMAIL
 from ssl import create_default_context
 from email.mime.text import MIMEText
 from smtplib import SMTP

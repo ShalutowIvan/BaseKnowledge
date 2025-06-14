@@ -4,11 +4,14 @@ from sqlalchemy import insert, select, text
 # from sqlalchemy.orm import joinedload
 
 from db_api import get_async_session
+from routers_api.regusers.verify_user import verify_user_service
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import *
 from .schemas import *
-from .services import group_create_service, get_knowledges, get_knowledge, knowledges_create_service, upload_image_service, update_knowledge_service, get_group_service, get_knowledges_in_group, knowledges_open_service, view_file_image_service, delete_knowledge_service
+from .services import group_create_service, get_knowledges, knowledges_create_service, upload_image_service, update_knowledge_service, get_group_service, get_knowledges_in_group, knowledges_open_service, view_file_image_service, delete_knowledge_service, update_knowledge_header_service
+
 # from src.regusers.models import User
 # from src.regusers.secure import test_token_expire, access_token_decode
 
@@ -40,13 +43,17 @@ async def group_create(group: GroupShema, session: AsyncSession = Depends(get_as
 
 #получение всех групп
 @router_knowledge_api.get("/groups_all/", response_model=list[GroupShemaFull])
-async def groups_all(request: Request, session: AsyncSession = Depends(get_async_session)) -> GroupShemaFull:    
+async def groups_all(request: Request, session: AsyncSession = Depends(get_async_session)) -> GroupShemaFull:
+    # проверка пользователя
+    user_id = await verify_user_service(request=request)
+
     return await get_group_service(db=session)
 
 
 # получение всех знаний, только список с заголовками и описанием.
 @router_knowledge_api.get("/knowledge_all/", response_model=list[KnowledgesSchema])
-async def knowledges_all(session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:    
+async def knowledges_all(request: Request, session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:
+
     return await get_knowledges(db=session)
 
 
@@ -63,7 +70,7 @@ async def knowledges_create(knowledge: KnowledgesCreateSchema, session: AsyncSes
 
 
 # открыть знание, тут фильтр по ID знания. Возможно переделаю на UUID
-@router_knowledge_api.get("/knowledges_open/{kn_id}", response_model=KnowledgesSchemaFull)
+@router_knowledge_api.get("/knowledges_open/{kn_id}", response_model=KnowledgesSchemaOpen)
 async def knowledges_open(kn_id: int, session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchemaFull:    
     return await knowledges_open_service(db=session, kn_id=kn_id)
 
@@ -96,13 +103,14 @@ async def knowledge_update(request: Request, knowledge: KnowledgesUpdateSchema, 
     )
 
 
+#удаление знания
 @router_knowledge_api.delete("/delete_knowledge/{knowledge_id}")
 async def delete_knowledge(knowledge_id: int, session: AsyncSession = Depends(get_async_session)):
     return await delete_knowledge_service(knowledge_id=knowledge_id, db=session)
 
 
 # обновление шапки знания
-@router_knowledge_api.put("/knowledge_update_header/{kn_id}", response_model=KnowledgesUpdateHeaderResponseSchema)
+@router_knowledge_api.patch("/knowledge_update_header/{kn_id}", response_model=KnowledgesUpdateHeaderResponseSchema)
 async def knowledge_update_header(kn_id: int, knowledge_update: KnowledgesUpdateHeaderSchema, session: AsyncSession = Depends(get_async_session)):    
     return await update_knowledge_header_service(        
         knowledge_id=kn_id,

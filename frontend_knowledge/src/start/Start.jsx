@@ -8,7 +8,7 @@ import axios from "axios";
 // import { getRefreshToken, getAccessToken } from "../regusers/AuthService"
 // import { jwtDecode } from 'jwt-decode'
 
-// import { useAuth } from "../regusers/AuthProvider"
+import { useAuth } from "../regusers/AuthProvider"
 
 // import { API } from "../apiAxios/apiAxios"
 
@@ -16,7 +16,7 @@ import axios from "axios";
 
 export default function Start() {
 	const setActive = ({isActive}) => isActive ? 'active-link' : '';
-      // const { user, logout } = useAuth();
+  const { user, logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
     
@@ -34,7 +34,12 @@ export default function Start() {
          
     // }, [])
 
-    
+  const removeCookie = () => {
+          Cookies.remove("RT");
+          Cookies.remove("Authorization");
+          logout()
+          console.log("All Cookie has been removed!");
+      }
     
 
 	return (
@@ -50,8 +55,19 @@ export default function Start() {
 
 
             <p>Информация о пользователе ></p>
-            <h1>Привет</h1>
-            
+            {/* <h1>Привет</h1> */}
+            { !user && 
+            <>
+            <h3>Не авторизован</h3>
+            <h2><NavLink to="/regusers/authorization/" className={setActive}>Войти</NavLink></h2> 
+            </>
+            }
+
+            { user && 
+            <><h1>{user.fullName}</h1>
+            <br/>
+            <button onClick={removeCookie}>ВЫХОД</button></>
+            }
 
 
       </header>
@@ -62,6 +78,14 @@ export default function Start() {
 
       <main>            
           {/*<h1>Добро пожаловать!</h1>*/}
+          { !user && <h2 style={{ textAlign: 'center' }}>Для работы с базой данных нужно зарегистрироваться. Перейдите на вкладку "Войти".</h2> }
+
+            { user && 
+            <>
+            <h1 style={{ textAlign: 'center' }}>Добро пожаловать!</h1>
+            </>
+            }
+
           <Outlet />
       </main>
       

@@ -1,56 +1,40 @@
 import { useState, useRef } from 'react'
 import axios from "axios";
-
-
-
+import { useNavigate } from 'react-router-dom'
 
 
 
 
 export default function Registration() {
-
+    // состояния для формы
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password1, setPassword1] = useState("");
     const [password2, setPassword2] = useState("");
+
+    //состояния ошибки и загрузки
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
     
+    const navigate = useNavigate();
 
-	// const [form, setForm] = useState({
-    //     name: "",
-    //     email: "",
-    //     password1: "",
-    //     password2: "",        
-    // })
-    // hasError: false,
+    const goBack = () => {
+      return navigate(-1);}
 
-	// function handleNameChange(event) {
-        
-    //     setForm((prev) => ({
-    //         ...prev,
-    //         name: event.target.value,
-    //         hasError: event.target.value.trim().length === 0,
-    //     })
-
-    //         )
-    // }
-
-    
-    // const handleRegister = async (e) => {
-    //     e.preventDefault();
-    //     try {
-    //         const response = await axios.post("http://127.0.0.1:8000/api/regusers/registration", { 
-    //             name: form.name, 
-    //             email: form.email, 
-    //             password1: form.password1, 
-    //             password2: form.password2, });
-    //     console.log("Registration successful:", response.data);
-    //     } catch (error) {
-    //     console.error("Registration failed:", error.response.data);
-    //     }
-    // };
+    const validateForm = () => {
+        if (!name || !email || !password1 || !password2) {
+            setError("Есть пустые поля, заполните, пожалуйста!");
+            return false;
+        }
+        setError('');
+        return true;
+    }
 
     const handleRegister = async (e) => {
         e.preventDefault();
+        if (!validateForm()) return;
+        setLoading(true);
+
         try {            
             const response = await axios.post("http://127.0.0.1:8000/api/regusers/registration", { 
                 name, 
@@ -58,79 +42,87 @@ export default function Registration() {
                 password1, 
                 password2, });
         console.log("Registration successful:", response.data);
+        setLoading(false);
+
+        if (response.statusText==='OK') {            
+                
+                //если все ок, то открываем знание для заполнения
+                navigate('/');
+
+            } else {
+                const errorData = await response.data
+                console.log(errorData, 'тут ошибка')     
+            }
+
+
         } catch (error) {
         console.error("Registration failed:", error.response.data);
+        } finally {
+            setLoading(false);
         }
     };
 
 
 
-
-// onChange={ handleNameChange }     
-// style={{
-//                         border: form.hasError ? '2px solid red' : null,
-//                     }}              
-
-
-
-// Ошибка
-// ←[32mINFO←[0m:     127.0.0.1:63981 - "←[1mPOST /api/regusers/registration HTTP/1.1←[0m" ←[31m422 Unprocessable Entity←[0m
-
-
-
 	return (
 		<>
-		<h1>Регистрация</h1>
-
-		<form onSubmit={handleRegister} style={{ marginBottom: '1rem' }}>
-                <label htmlFor="id_name">Ваше имя: </label>
+        <h1 style={{ textAlign: 'center' }}>Регистрация</h1>
+        <div className='registration-section'>
+		
+        
+		<form onSubmit={handleRegister} style={{ marginBottom: '1rem'}}>
+                <label htmlFor="id_name" className='label-style'>Ваше имя: </label>
+                <br/>
                 <input 
                 	placeholder="введите ФИО"
                 	name="name"
                     type="text"
                     id="id_name"
-                    className="control"
+                    className="input-text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                         
                     
                 />
 
-                <br/>
+                <br/><br/>
 
-                <label htmlFor="id_email">Электронная почта: </label>
+                <label htmlFor="id_email" className='label-style'>Электронная почта: </label>
+                <br/>
                 <input 
                 	placeholder="e-mail"
                 	name="email"                	
                     type="email"
                     id="id_email"
-                    className="control"                        
+                    className="input-text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}   
                 />
 
-                <br/>
+                <br/><br/>
 
-                <label htmlFor="id_password1">Пароль: </label>
+                <label htmlFor="id_password1" className='label-style'>Пароль: </label>
+                <br/>
                 <input 
                 	placeholder="Придумайте пароль"
                 	name="password1"
                     type="password"
                     id="id_password1"
-                    className="control"                     
+                    className="input-text"
                     value={password1}
                     onChange={(e) => setPassword1(e.target.value)}      
                 />
 
-                <br/>
+                <br/><br/>
 
-                <label htmlFor="id_password2">Повторите пароль: </label>
+                <label htmlFor="id_password2" className='label-style'>Повторите пароль: </label>
+                <br/>
                 <input 
                 	placeholder="Повторите пароль"
                 	name="password2"
                     type="password"
                     id="id_password2"
-                    className="control"
+                    className="input-text"
                     value={password2}
                     onChange={(e) => setPassword2(e.target.value)}                
                             
@@ -138,42 +130,25 @@ export default function Registration() {
 
                 <br/><br/>
 
-                <button type="submit">
-                    Зарегистрироваться
+                <button className="save-button" type="submit" disabled={loading}>
+                    {loading ? 'Загрузка...' : 'Зарегистрироваться'}
                 </button>
+                <br/><br/><br/><br/>
+                <button onClick={goBack} className="toolbar-button">Назад</button>
 
             </form>
-
-            {/*
-            <h1>{name}</h1>
-            <h1>{email}</h1>
-            <h1>{password1}</h1>
-            <h1>{password2}</h1>*/}
-
-
-
-
+        {error && <p style={{ color: 'red'}}>{error}</p>}
+         </div>
 
 		</>
 		)
 
 }
 
-// у меня пока что проверка на пустое поле работает только на поле имени name остальные поля не валидируются. Пока так оставил.
-
-//нужно сделать увед что нужно перейти на почту и перейти по ссылке. И сделать так, чтобы ссылка для верификации работала на реакте
-// ссылка с бэка на почту должна отплавляться на роутер фронта, а фронт должен обработать ее и сделать запрос на бэк
-
-// disabled={form.hasError} это было в кнопке button
-// isActive={!form.hasError} это там же
 
 
-// это ончейнж с объектом setForm
-                // onChange={
-                //         (e) => {
-                //         setForm ( (prev) => ({
-                //         password2: e.target.value
-                //         })
-                //         )
-                //             }
-                //     } 
+
+
+
+
+
