@@ -11,19 +11,39 @@ import { useAuth } from './AuthProvider'
 
 
 export default function Authorization() {
-    // const [email, setEmail] = useState("");
-    const [username, setUsername] = useState("");
-    //username - это почта
-    const [password, setPassword] = useState("");
+    // поля формы
+    // const [username, setUsername] = useState("");
+    // //username - это почта
+    // const [password, setPassword] = useState("");
+    
+    // для валидации
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     
-    
+        
+    // переделал под стандартную схему из фастапи OAuth2PasswordRequestForm
+    const [formData, setFormData] = useState({
+        username: '',
+        password: ''
+        });
+
+
+
 
     const { login } = useAuth();
 
+    // const validateForm = () => {
+    //     if (!username || !password) {
+    //         setError("не введены логин или пароль");
+    //         return false;
+    //     }
+    //     setError('');
+    //     return true;
+    // }
+
+    // для схемы OAuth2PasswordRequestForm
     const validateForm = () => {
-        if (!username || !password) {
+        if (!formData.username || !formData.password) {
             setError("не введены логин или пароль");
             return false;
         }
@@ -41,18 +61,37 @@ export default function Authorization() {
         if (!validateForm()) return;
         setLoading(true);
 
-        try {            
-            const response = await axios.post(
-                "http://127.0.0.1:8000/api/regusers/auth",
-                {                 
-                username, 
-                password,
-                },
-                    { withCredentials: true }
-                );
+        try {        
+
+            // Важно: используем FormData для совместимости с OAuth2PasswordRequestForm
+            const data = new FormData();
+            data.append('username', formData.username);
+            data.append('password', formData.password);
+            // ост тут...
+
+            //вариант с моей схемой
+            // const response = await axios.post("http://127.0.0.1:8000/api/regusers/auth",
+            //     {                 
+            //     username, 
+            //     password,
+            //     },
+            //         { withCredentials: true }
+            //     );
+
+            //вариант с схемой OAuth2PasswordRequestForm
+            const response = await axios.post("http://127.0.0.1:8000/api/regusers/auth", data, {
+                    headers: {
+                      'Content-Type': 'multipart/form-data'
+                    }
+                    }
+                    // { withCredentials: true }
+                    );            
+
+
             setLoading(false);
             
-            if (response.statusText==='OK') {                
+            if (response.statusText==='OK') {
+                console.log("Все хорошо")          
                 setAccessToken(response.data["Authorization"])
                 // Cookies.set("Authorization", response.data["Authorization"], {
                 // expires: 0.0005, // Кука истечет через 30 дней, тут указывается колво дней
@@ -74,14 +113,15 @@ export default function Authorization() {
                 login(response.data["Authorization"]);
 
                 // navigate("/", { state: { fullName: decoded.user_name } });
+                
                 navigate("/");
-
-            } else {
-                const errorData = await response.data
-                console.log(errorData, 'тут ошибка после ввода кредов')
-                // setError(errorData.detail || 'аутентификация не прошла');
-            }
-    
+            } 
+            // else {
+            //     const errorData = await response.data
+            //     console.log(errorData, 'тут ошибка после ввода кредов')
+            //     setError(errorData.detail || 'аутентификация не прошла');
+            // }
+        
         // const token = Cookies.get("theme");
         // console.log(document.cookie)
 
@@ -102,6 +142,16 @@ export default function Authorization() {
     };
 
 
+    // для схемы OAuth2PasswordRequestForm
+    const handleChange = (e) => {
+        setFormData({
+          ...formData,
+          [e.target.name]: e.target.value
+        });
+      };
+
+
+
 	return (
 		<>
 		<h1 style={{ textAlign: 'center' }}>Вход</h1>
@@ -117,8 +167,10 @@ export default function Authorization() {
                         type="email"
                         id="id_username"
                         className="input-text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}   
+                        // value={username}
+                        value={formData.username}
+                        // onChange={(e) => setUsername(e.target.value)}   
+                        onChange={handleChange}
                     />
 
                     <br/><br/>
@@ -131,8 +183,10 @@ export default function Authorization() {
                         type="password"
                         id="id_password"
                         className="input-text"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}      
+                        // value={password}
+                        value={formData.password}
+                        // onChange={(e) => setPassword(e.target.value)}      
+                        onChange={handleChange}
                     />
 
                     <br/><br/>
@@ -143,9 +197,11 @@ export default function Authorization() {
                     <br/>
 
                     {/*если ошибка error отображаем ее в параграфе ниже*/}
-                    {error && <p style={{ color: 'red'}}>{error}</p>}
+                    
 
             </form>
+
+            {error && <p style={{ color: 'red'}}>{error}</p>}
 
             <h3><NavLink to="/regusers/registration/">Регистрация</NavLink></h3>
 

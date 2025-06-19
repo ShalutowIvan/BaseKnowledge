@@ -14,6 +14,12 @@ export default function Registration_verify() {
 // http://127.0.0.1:8000/api/regusers/verification/check_user/
 // ост тут, делаю переход по ссылке с бэка в юзэффекте, а на почту будет отправляться роут с фронта
 	
+	// const navigate = useNavigate();
+
+    // const goEnter = () => {
+    //   return navigate("/regusers/authorization/");
+  	// }
+
 
 	// try {
 	// useEffect(() => {
@@ -30,11 +36,13 @@ export default function Registration_verify() {
     async function activ() {
     	try {
     		await fetch(`http://127.0.0.1:8000/api/regusers/verification/check_user/${token}`)
-    		console.log("Успешно");
-    		setRes("Успешно")
+    		console.log("Пользователь активирован успешно");
+    		setRes("Пользователь активирован. Перейдите на страницу входа. ")
+
+
     		} catch (error) {
       		console.error("Плохо");
-      		setRes("Все плохо")
+      		setRes(`Ошибка при активации пользователя: ${error}`)
     		}
     }
 
@@ -43,12 +51,16 @@ export default function Registration_verify() {
 
 	return (
 		<>
+		<br/>
+		<div className='registration-section'>
 		<h1>Завершение регистрации</h1>
 
-		<button onClick={activ}>РЕГА</button>
+		<br/>
+		<button onClick={activ} className="save-button">Подтвердить регистрацию</button>
 
 		<h2>{res}</h2>
 		
+		</div>
 
 		</>
 		)

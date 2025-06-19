@@ -55,7 +55,7 @@ export default function Start() {
 
 
             <p>Информация о пользователе ></p>
-            {/* <h1>Привет</h1> */}
+            
             { !user && 
             <>
             <h3>Не авторизован</h3>
@@ -64,9 +64,11 @@ export default function Start() {
             }
 
             { user && 
-            <><h1>{user.fullName}</h1>
-            <br/>
-            <button onClick={removeCookie}>ВЫХОД</button></>
+            <>
+            <h1>{user.fullName}</h1>
+            
+            <button onClick={removeCookie} className="cancel-button">ВЫХОД</button>
+            </>
             }
 
 

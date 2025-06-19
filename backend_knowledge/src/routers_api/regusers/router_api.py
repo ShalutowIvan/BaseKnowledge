@@ -21,12 +21,13 @@ from .schemas import *
 from .secure import pwd_context, create_access_token, create_refresh_token, update_tokens, send_email_verify, send_email_restore_password, create_client_token
 
 import uuid
-
-from jose import JWTError, jwt
+# вместо jose теперь юзаю PyJWT
+# from jose import JWTError, jwt
+import jwt
 
 from datetime import datetime, timedelta
 
-from jose.exceptions import ExpiredSignatureError
+# from jose.exceptions import ExpiredSignatureError
 
 
 
@@ -76,6 +77,8 @@ async def api_registration_post(request: Request, formData: UserRegShema, sessio
         print("Ошибка при регистрации: ", ex)
         return {"Error": ex}
 
+# (trapped) error reading bcrypt version 
+# AttributeError: module 'bcrypt' has no attribute '__about__'
 
 
 #это просто подсказка, о том что нужно зайти на почту и перейти по ссылке
@@ -213,13 +216,15 @@ async def api_restore_password_user(request: Request, token: str, formData: Forg
 #     return response
 
 
-# form_data: OAuth2PasswordRequestForm = Depends()
+
+# 2 схемы для преимки формы из аутха с фронта. Работает только моя, из фастапи не пашет, хз почему
+# formData: OAuth2PasswordRequestForm = Depends()
 # formData: AuthShema
-# узнать как прокидывать куки............... пока не знаю как это сделать. Смотреть GPT, там вроде есть инфа
-# , response_model=TokenSheme
+# спросить у дипсик какую схему надо тут выбирать и зачем OAuth2PasswordRequestForm.... ост тут
+
 #функция post авторизации
 @router_reg_api.post("/auth")
-async def auth_user(response: Response, formData: AuthShema, session: AsyncSession = Depends(get_async_session)):
+async def auth_user(response: Response, formData: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_async_session)):
 
     email = formData.username#тут у меня почта
     password = formData.password
@@ -228,13 +233,16 @@ async def auth_user(response: Response, formData: AuthShema, session: AsyncSessi
     user: User = await session.scalar(select(User).where(User.email == email))#ищем пользователя по емейл
     
     if not user:        
-        return {"message": "Пользователь не зарегистрирован!"}
+        # return {"message": "Пользователь не зарегистрирован!"}
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username")
     
     if not pwd_context.verify(password, user.hashed_password):#сверка пароля с БД                       
-        return {"message": "Неверный пароль!"}
+        # return {"message": "Неверный пароль!"}
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password")
         
     if user.is_active != True:        
-        return {"message": "Пользователь не активирован! Перейдите по ссылке из письма, которое пришло вам на почту для активации!"}
+        # return {"message": "Пользователь не активирован! Перейдите по ссылке из письма, которое пришло вам на почту для активации!"}
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user")
 
     
     refresh_token: Token = await session.scalar(select(Token).where(Token.user_id == user.id))
@@ -246,7 +254,7 @@ async def auth_user(response: Response, formData: AuthShema, session: AsyncSessi
     except Exception as ex:#если истек рефреш то его просто удаляем, и нужно заново логиниться
         print("РЕФРЕШ ТОКЕН ИСТЕК")
         print(ex)
-        if type(ex) == ExpiredSignatureError:            
+        if type(ex) == jwt.ExpiredSignatureError:            
             await session.delete(refresh_token)
             await session.commit()
             refresh_token = None
@@ -297,6 +305,7 @@ async def auth_user(response: Response, formData: AuthShema, session: AsyncSessi
     # response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
 
     return {"Authorization": access_token_jwt, "RT": refresh_token_jwt, "token_type": "bearer"}
+
 
 
 
@@ -375,7 +384,7 @@ async def verify_access_token(acces_token: str):#проверка аксес т�
                 
     except Exception as ex:
                 
-        if type(ex) == ExpiredSignatureError:#если время действия токена истекло, то вывод принта. Можно тут написать логику что будет если аксес токен истекает
+        if type(ex) == jwt.ExpiredSignatureError:#если время действия токена истекло, то вывод принта. Можно тут написать логику что будет если аксес токен истекает
             
             print("ОШИБКА АКСЕС ТУТ")
             print(ex)

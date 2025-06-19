@@ -19,7 +19,7 @@ export default function Registration() {
     const navigate = useNavigate();
 
     const goBack = () => {
-      return navigate(-1);}
+      return navigate("/regusers/authorization/");}
 
     const validateForm = () => {
         if (!name || !email || !password1 || !password2) {

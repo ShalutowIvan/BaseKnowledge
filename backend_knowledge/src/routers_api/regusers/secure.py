@@ -11,11 +11,16 @@ from .models import User, Token, Code_verify_client
 
 
 from fastapi.security import APIKeyHeader, APIKeyCookie, OAuth2PasswordBearer
+
 from passlib.context import CryptContext
-from jose import JWTError, jwt
+# from passlib.hash import argon2
+
+# вместо jose теперь юзаю PyJWT
+# from jose import JWTError, jwt
+import jwt#это PyJWT
 from settings import KEY, KEY2, ALG, EXPIRE_TIME, EXPIRE_TIME_REFRESH, KEY3, KEY4, KEY5, EXPIRE_TIME_CLIENT_TOKEN
 from datetime import datetime, timedelta
-from jose.exceptions import ExpiredSignatureError
+# from jose.exceptions import ExpiredSignatureError
 
 #импорты для отправки почты
 from settings import PORT, HOST, HOST_USER, HOST_PASSWORD, DEFAULT_EMAIL
@@ -25,7 +30,42 @@ from smtplib import SMTP
 from pydantic import EmailStr
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+#вариант хеширования с passlib с bcrypt
+# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# вариант с новой схемой хеширования. Он более удобен и безопасен. Тоже можно настривать "Соль"
+# pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto", 
+	argon2__time_cost=3,      # Количество итераций
+    argon2__memory_cost=65536, # 64MB памяти
+    argon2__parallelism=4,     # 4 потока
+)
+
+
+#вариант хеширования и проверки пароля с passlib с argon2 через прямой доступ к from passlib.hash import argon2
+# Хеширование пароля
+# def hash_password(password: str) -> str:
+#     # Аргументы (можно настроить под свои нужды):
+#     # time_cost – количество итераций (по умолчанию 3)
+#     # memory_cost – использование памяти в KiB (по умолчанию 65536)
+#     # parallelism – количество потоков (по умолчанию 4)
+#     hashed = argon2.hash(
+#         password,
+#         time_cost=3,       # Увеличивайте для большей безопасности (но медленнее)
+#         memory_cost=65536, # 64MB
+#         parallelism=4      # Количество ядер
+#     )
+#     return hashed
+
+# # Проверка пароля
+# def verify_password(plain_password: str, hashed_password: str) -> bool:
+#     try:
+#         return argon2.verify(plain_password, hashed_password)
+#     except Exception as e:
+#         print(f"Ошибка проверки пароля: {e}")
+#         return False
+
+
 
 # apikey_scheme = APIKeyCookie(name="Authorization")
 
@@ -73,7 +113,6 @@ def create_client_token(data: dict, expires_delta: timedelta | None = None):
 
 
 
-
 async def update_tokens(RT, db):#передаем сюда рефреш токен и сессию с ДБ
 	#расшифровка рефреш токена
 	try:
@@ -86,7 +125,7 @@ async def update_tokens(RT, db):#передаем сюда рефреш токе
 	except Exception as ex:#если истек рефреш то его просто удаляем, и нужно заново логиниться
 		print("ОШИБКА ОБНОВЛЕНИЯ РЕФРЕШ ТОКЕНА ТУТ!!!!!!!!!")
 		print(ex)
-		if type(ex) == ExpiredSignatureError:
+		if type(ex) == jwt.ExpiredSignatureError:
 			us_token: Token = await db.scalar(select(Token).where(Token.refresh_token == RT))
 			if us_token:
 				await db.delete(us_token)
@@ -140,9 +179,6 @@ async def update_tokens(RT, db):#передаем сюда рефреш токе
 
 
 
-
-
-
 #функция для обновления аксес по рефрешу, без обновления рефреш
 async def update_acces_token(RT, db):#передаем сюда рефреш токен и сессию с ДБ
 	#расшифровка рефреш токена
@@ -153,7 +189,7 @@ async def update_acces_token(RT, db):#передаем сюда рефреш т�
 	except Exception as ex:#если истек рефреш то его просто удаляем, и нужно заново логиниться
 		print("ОШИБКА ОБНОВЛЕНИЯ ТУТ!!!!!!!!!")
 		print(ex)
-		if type(ex) == ExpiredSignatureError:
+		if type(ex) == jwt.ExpiredSignatureError:
 			us_token: Token = await db.scalar(select(Token).where(Token.refresh_token == RT))
 			if us_token:
 				await db.delete(us_token)
@@ -213,7 +249,7 @@ async def access_token_decode(acces_token: str):#проверка аксес т�
                 
     except Exception as ex:
                 
-        if type(ex) == ExpiredSignatureError:#если время действия токена истекло, то вывод принта. Можно тут написать логику что будет если аксес токен истекает
+        if type(ex) == jwt.ExpiredSignatureError:#если время действия токена истекло, то вывод принта. Можно тут написать логику что будет если аксес токен истекает
             
             print("ОШИБКА АКСЕС ТУТ")
             print(ex)
