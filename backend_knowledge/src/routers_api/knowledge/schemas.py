@@ -24,6 +24,14 @@ class ImageSchema(ImageBaseSchema):
 
 
 
+
+
+
+class DeleteGroupRequest(BaseModel):
+    move_to_group: Optional[int] = None
+
+
+
 # схема групп знаний
 
 class GroupShema(BaseModel):

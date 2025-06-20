@@ -2,6 +2,8 @@ import { Route, createBrowserRouter, createRoutesFromElements } from "react-rout
 
 import { Start } from './start/Start';
 
+//знания
+import { KnowledgeLayout } from './sections/BaseKnowledge/KnowledgeLayout';
 import { KnowledgePageView, KnowledgeListLoader } from './sections/BaseKnowledge/KnowledgePageView';
 import { KnowledgeInGroup } from './sections/BaseKnowledge/KnowledgeInGroup';
 import { GroupCreate } from './sections/BaseKnowledge/GroupCreate';
@@ -9,7 +11,8 @@ import { KnowledgeCreate } from './sections/BaseKnowledge/KnowledgeCreate';
 import { KnowledgeOpen, KnowledgeOpenLoader } from './sections/BaseKnowledge/KnowledgeOpen';
 
 
-import { ProjectManagement } from './sections/ProjectManagement/ProjectManagement';
+//проекты
+import { ProjectManagementView } from './sections/ProjectManagement/ProjectManagementView';
 import { RoadMap } from './sections/RoadMap/RoadMap';
 
 
@@ -44,25 +47,32 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
             <Route path="regusers/forgot_password/" element={<Forgot_password />} />
             <Route path="regusers/forgot_password_verify/:token" element={<Forgot_password_verify />} />
 
-            {/* база знаний */}
-          <Route path="group/create/" element={<GroupCreate />}  />
-          <Route path="knowledge/" element={<KnowledgePageView />} loader={KnowledgeListLoader}  />
-          <Route path="knowledge/:slug" element={<KnowledgeInGroup />}  />       
-          <Route path="knowledge/create/" element={<KnowledgeCreate />}  />
-          {/*loader={KnowledgeOpenLoader}*/}
-          <Route path="knowledge/open/:slug" element={<KnowledgeOpen />} loader={KnowledgeOpenLoader} />
-          
+          {/* база знаний */}                    
+
+          <Route path="knowledges" element={<KnowledgeLayout />}>
+            {/* Основные маршруты знаний */}
+            <Route index element={<KnowledgePageView />} loader={KnowledgeListLoader} />
+            <Route path=":slug" element={<KnowledgeInGroup />} />
+            <Route path="create/" element={<KnowledgeCreate />} />
+            <Route path="open/:slug" element={<KnowledgeOpen />} loader={KnowledgeOpenLoader} />
+            <Route path="group/create/" element={<GroupCreate />}  />
+          </Route>
+
+
           {/* проекты */}
-          <Route path="ProjectManagement/" element={<ProjectManagement />}  />
+          <Route path="projects/" element={<ProjectManagementView />}  />
+
+          <Route path=":slug" element={<KnowledgeInGroup />} />
+          <Route path="create/" element={<KnowledgeCreate />} />
+          <Route path="open/:slug" element={<KnowledgeOpen />} loader={KnowledgeOpenLoader} />
+          <Route path="group/create/" element={<GroupCreate />}  />
           
           
           {/* дорожные карты */}
           <Route path="RoadMap/" element={<RoadMap />}  />
         
 
-        </Route>
-
-        
+        </Route>       
 
 
 	))

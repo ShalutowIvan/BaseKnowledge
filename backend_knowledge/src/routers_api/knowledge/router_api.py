@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import *
 from .schemas import *
-from .services import group_create_service, get_knowledges, knowledges_create_service, upload_image_service, update_knowledge_service, get_group_service, get_knowledges_in_group, knowledges_open_service, view_file_image_service, delete_knowledge_service, update_knowledge_header_service
+from .services import group_create_service, get_knowledges, knowledges_create_service, upload_image_service, update_knowledge_service, get_group_service, get_knowledges_in_group, knowledges_open_service, view_file_image_service, delete_knowledge_service, update_knowledge_header_service, delete_group_service
 
 # from src.regusers.models import User
 # from src.regusers.secure import test_token_expire, access_token_decode
@@ -41,11 +41,32 @@ async def group_create(group: GroupShema, session: AsyncSession = Depends(get_as
     return await group_create_service(db=session, group=group)
 
 
+# удаление группы
+# @router_knowledge_api.delete("/group_delete/{group_id}")
+# async def group_delete(group_id: int, session: AsyncSession = Depends(get_async_session)):
+#     return await delete_group_service(group_id=group_id, db=session)
+
+ # = Body(...)
+# move_to_group: DeleteGroupRequest = Body(...) - ЭТО РАБОЧИЙ ВАРИАНТ
+# move_to_group: Optional[int] = Body(...)
+# удаление группы
+@router_knowledge_api.delete("/group_delete/{group_id}")
+async def group_delete(group_id: int, move_to_group: DeleteGroupRequest, session: AsyncSession = Depends(get_async_session)):
+    # тут все ООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООчень КРИВО
+    a = move_to_group
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    print(a)
+    return await delete_group_service(group_id=group_id, db=session, move_to_group=a)
+
+# смотреть ответ дипсик по Body параметру чем он отличается от обычно параметра с указанием схемы Pydantic
+
+
+
 #получение всех групп
 @router_knowledge_api.get("/groups_all/", response_model=list[GroupShemaFull])
 async def groups_all(request: Request, session: AsyncSession = Depends(get_async_session)) -> GroupShemaFull:
     # проверка пользователя
-    user_id = await verify_user_service(request=request)
+    # user_id = await verify_user_service(request=request)
 
     return await get_group_service(db=session)
 

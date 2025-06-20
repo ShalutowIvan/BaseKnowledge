@@ -98,7 +98,7 @@ function KnowledgeOpen() {
     if (window.confirm('Вы уверены, что хотите удалить?')) {
       // Действие при подтверждении
       axios.delete(`http://127.0.0.1:8000/delete_knowledge/${knowledge.id}`)      
-      navigate("/knowledges/");
+      navigate("/knowledge/");
       revalidator.revalidate();//принудительная перезагрузка лоадера после редиректа в списке знаний
     }  
   };

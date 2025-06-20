@@ -72,7 +72,7 @@ function KnowledgeCreate() {
             if (response.statusText==='OK') {            
                 
                 //если все ок, то открываем знание для заполнения
-                navigate(`/knowledges/open/${response.data["id"]}`);
+                navigate(`/knowledge/open/${response.data["id"]}`);
 
             } else {
                 const errorData = await response.data

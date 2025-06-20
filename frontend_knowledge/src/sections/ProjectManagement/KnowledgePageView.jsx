@@ -5,9 +5,6 @@ import Cookies from "js-cookie";
 import axios from "axios"
 import { GroupsAll } from "./GroupsAll"
 
-
-// сделать гдето тут кнопку для удаления группы и наверно надо еще переимнование сделать
-
 function KnowledgePageView() {
 	const setActive = ({isActive}) => isActive ? 'active-link' : '';
 	const {knowledgeLoad} = useLoaderData()
@@ -15,15 +12,31 @@ function KnowledgePageView() {
 	const [knowledges, setKnowledges] = useState(knowledgeLoad);
 	const [loading, setLoading] = useState(false);
 
-	
+	// const fetchKnowledges = async () => {
+  //   setLoading(true);
+  //   try {      
+  //     const response = await axios.get("http://127.0.0.1:8000/knowledge_all/");
+  //     setKnowledges(response.data)
+  //   } catch (err) {
+  //     setError(err.message);      
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // 	};
+
+	// useEffect(() => {	    
+  //       fetchKnowledges()
+	// }, [])
+
+
 	const navigate = useNavigate();
 
   const create_group = () => {
-      return navigate("/knowledges/group/create/");
+      return navigate("/knowledge/group/create/");
     }
 	
 	const create_knowledge = () => {
-      return navigate("/knowledges/create/");
+      return navigate("/knowledge/create/");
     }
 
 	return (
@@ -46,7 +59,7 @@ function KnowledgePageView() {
                 				<>
                 				<h1 className="name-knowledge">{knowledge.title}</h1>
                         <h2>Описание: {knowledge.description}</h2>
-                        <NavLink key={knowledge.id} to={`/knowledges/open/${knowledge.id}`} className={setActive}>
+                        <NavLink key={knowledge.id} to={`/knowledge/open/${knowledge.id}`} className={setActive}>
                             <button className="toolbar-button">Открыть</button>
                         </NavLink>
                             <p>_____________________________________________________________</p>

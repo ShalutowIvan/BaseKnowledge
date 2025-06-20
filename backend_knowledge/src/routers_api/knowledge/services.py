@@ -1,4 +1,4 @@
-from fastapi import HTTPException, Request, UploadFile, File
+from fastapi import HTTPException, Request, UploadFile, File, Body
 from fastapi.responses import FileResponse
 from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload, joinedload, load_only
@@ -264,7 +264,6 @@ async def delete_knowledge_service(db: AsyncSession, knowledge_id: int) -> bool:
         )
 
 
-
 async def update_knowledge_header_service(knowledge_id: int, knowledge_update: KnowledgesUpdateHeaderSchema, db: AsyncSession):
     # 1. Получаем текущее знание 5-ю полями. А с фронта принимаем 3 поля. Включая связанное поле. И возвращаем ответ со связанным полем
     query = (select(Knowledges).where(Knowledges.id == knowledge_id).options(
@@ -296,5 +295,63 @@ async def update_knowledge_header_service(knowledge_id: int, knowledge_update: K
     
     # возвращаем все 5 полей. Если название знания изменить, то выкинет в список знаний
     return knowledge_header
+
+
+
+# async def delete_group_service(db: AsyncSession, group_id: int) -> bool:    
+#     try:        
+#         query = await db.execute(select(Group).where(Group.id == group_id))
+
+#         group = query.scalar()
+
+#         if not group:            
+#             return False
+                    
+#         await db.delete(group)        
+#         await db.commit()
+#         return True
+
+#     except Exception as ex:
+#         print("Ошибка при удалении группы:", ex)
+#         raise HTTPException(
+#             status_code=500,
+#             detail=f"Ошибка при удалении группы: {str(e)}"
+#         )
+
+
+
+
+
+# Body - наверно схема, прописать... ост туту
+async def delete_group_service(group_id: int, db: AsyncSession, move_to_group):
+    
+    # move_to_group = move_to_group.get("move_to_group")
+
+
+
+    # Проверяем существование группы
+    group = await db.get(Group, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Если указана группа для переноса - проверяем её
+    if move_to_group:
+        target_group = await db.get(Group, move_to_group)
+        if not target_group:
+            raise HTTPException(status_code=400, detail="Target group not found")
+        
+        # Переносим знания
+        await db.execute(
+            update(Knowledges)
+            .where(Knowledges.group_id == group_id)
+            .values(group_id=move_to_group)
+        )
+    
+    # Удаляем группу
+    await db.delete(group)
+    await db.commit()
+    
+    return {"status": "success"}
+
 
 

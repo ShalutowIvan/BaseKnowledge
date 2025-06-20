@@ -49,9 +49,9 @@ export default function Start() {
             <h2><NavLink to="/" className={setActive}>Start</NavLink></h2>
 
             <p>Разделы ></p>
-            <h2><NavLink to="/knowledge/" className={setActive}>База знаний</NavLink></h2>
-            <h2><NavLink to="/projectmanagement/" className={setActive}>Управление проектами</NavLink></h2>
-            <h2><NavLink to="/roadmap/" className={setActive}>Путь развития</NavLink></h2>
+            <h2><NavLink to="/knowledges/" className={setActive}>База знаний</NavLink></h2>
+            <h2><NavLink to="/projects/" className={setActive}>Управление проектами</NavLink></h2>
+            <h2><NavLink to="/roadmaps/" className={setActive}>Путь развития</NavLink></h2>
 
 
             <p>Информация о пользователе ></p>

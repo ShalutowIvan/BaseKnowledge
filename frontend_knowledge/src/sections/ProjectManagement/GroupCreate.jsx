@@ -51,7 +51,7 @@ function GroupCreate() {
             if (response.statusText==='OK') {            
                 
                 //если все ок, то переходим в список товаров                
-                navigate("/knowledges/");
+                navigate("/knowledge/");
 
             } else {
                 const errorData = await response.data
