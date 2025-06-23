@@ -51,7 +51,11 @@ function GroupCreate() {
             if (response.statusText==='OK') {            
                 
                 //если все ок, то переходим в список товаров                
-                navigate("/knowledges/");
+                // navigate("/knowledges/");
+                navigate('/knowledges', { 
+                  state: { needsRefresh: true } // Флаг для обновления
+                });
+                
 
             } else {
                 const errorData = await response.data

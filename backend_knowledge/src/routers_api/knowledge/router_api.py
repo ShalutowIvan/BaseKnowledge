@@ -51,12 +51,8 @@ async def group_create(group: GroupShema, session: AsyncSession = Depends(get_as
 # move_to_group: Optional[int] = Body(...)
 # удаление группы
 @router_knowledge_api.delete("/group_delete/{group_id}")
-async def group_delete(group_id: int, move_to_group: DeleteGroupRequest, session: AsyncSession = Depends(get_async_session)):
-    # тут все ООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООчень КРИВО
-    a = move_to_group
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    print(a)
-    return await delete_group_service(group_id=group_id, db=session, move_to_group=a)
+async def group_delete(group_id: int, data: DeleteGroupRequest = Body(...), session: AsyncSession = Depends(get_async_session)):    
+    return await delete_group_service(group_id=group_id, db=session, move_to_group=data.move_to_group)
 
 # смотреть ответ дипсик по Body параметру чем он отличается от обычно параметра с указанием схемы Pydantic
 

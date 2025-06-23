@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLoaderData, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import axios from "axios"
 // import { API } from '../../apiAxios/apiAxios'
@@ -6,7 +6,8 @@ import { DeleteGroupModal } from './DeleteGroupModal'
 
 
 function GroupsAll() {
-	
+	// const {groupsLoad} = useLoaderData()
+
 	const setActive = ({isActive}) => isActive ? 'active-link' : '';	
 	const [groups, setGroups] = useState([]);
 
@@ -17,6 +18,10 @@ function GroupsAll() {
 	const [modalOpen, setModalOpen] = useState(false);
 	const [selectedGroup, setSelectedGroup] = useState(null);
 
+	const navigate = useNavigate();
+	const location = useLocation();
+
+	//передаем объект группы в компонент модального окна. 
 	const handleDeleteClick = (group) => {
 	    setSelectedGroup(group);	    
 	    setModalOpen(true);
@@ -40,9 +45,18 @@ function GroupsAll() {
 		}
 		};
 
-		fetchData();
+		// fetchData();
 
-	}, [])
+		// Проверяем флаг из навигации или при первом рендере
+		  if (!location.state?.needsRefresh) {
+		    fetchData();
+		  } else {
+		    // Если был флаг, обновляем и удаляем его
+		    fetchData();
+		    navigate(location.pathname, { replace: true, state: {} });
+		  }
+
+	}, [location.state?.needsRefresh, navigate, location.pathname])
 
 	if (loading) {
     return <p>Загрузка...</p>;
@@ -89,6 +103,27 @@ function GroupsAll() {
 
 }
 
+
+// async function getGroupsList() { 
+//   const res = await fetch("http://127.0.0.1:8000/groups_all/")
+
+//   // try {
+//   //       const res = await API.get(`/api/checkout_list/orders/${id}`)     
+//   //  return res.data
+//   //     } catch (error) {
+//   //      //если ошибка, то выдаем ошибку
+//   //       console.error("Error here: ", error);
+//   //       // setError("Failed to fetch user data. Please try again.");
+//   //       return "error"
+//   //     }
+
+//   return res.json()
+// }
+
+
+// const GroupsListLoader = async () => {  
+//   return {groupsLoad: await getGroupsList()}
+// }
 
 
 export { GroupsAll }

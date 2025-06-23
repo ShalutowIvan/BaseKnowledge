@@ -31,7 +31,7 @@ function KnowledgeInGroup() {
                 				<>
                 				<h1 className="name-knowledge">{knowledge.title}</h1>
 		                        <h2>Описание: {knowledge.description}</h2>
-		                        <NavLink key={knowledge.id} to={`/knowledge/open/${knowledge.id}`} className={setActive}>
+		                        <NavLink key={knowledge.id} to={`/knowledges/open/${knowledge.id}`} className={setActive}>
 		                            <button className="toolbar-button">Открыть</button>
 		                        </NavLink>
                             	<p>_____________________________________________________________</p>

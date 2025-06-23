@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
+import './CSS/DeleteGroup.css'
 
 
 
@@ -15,6 +16,10 @@ function DeleteGroupModal({
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
 
+
+  const navigate = useNavigate();
+
+
   // Проверяем есть ли знания в группе и загружаем другие группы
   useEffect(() => {
     const checkGroup = async () => {
@@ -25,11 +30,11 @@ function DeleteGroupModal({
         
         setHasKnowledge(knowledgeRes.data.length > 0);
         
-        // Загружаем список всех групп (кроме текущей)
+        // Загружаем список всех групп (кроме текущей) в состояние
         const groupsRes = await axios.get('http://127.0.0.1:8000/groups_all/');
         setGroups(groupsRes.data.filter(g => g.id !== groupToDelete.id));
         
-        // Устанавливаем первую группу как выбранную по умолчанию
+        // Устанавливаем первую группу как выбранную по умолчанию в select поле
         if (groupsRes.data.length > 1) {
           setTargetGroupId(groupsRes.data.find(g => g.id !== groupToDelete.id)?.id || '');
         }
@@ -53,12 +58,13 @@ function DeleteGroupModal({
 
     try {
       await axios.delete(`http://127.0.0.1:8000/group_delete/${groupToDelete.id}`, {
-        // data: {
+        data: {
           move_to_group: hasKnowledge ? targetGroupId : null
-        // }
+        }
       });
       onSuccess();
       onClose();
+      navigate(`/knowledges/`);
     } catch (err) {
       setError('Ошибка при удалении группы');
       console.error(err);
@@ -71,7 +77,8 @@ function DeleteGroupModal({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content">
+
+      <div className="modal-content">        
         <h3>Удаление группы "{groupToDelete.name_group}"</h3>
         
         {hasKnowledge ? (
@@ -98,19 +105,21 @@ function DeleteGroupModal({
 
         <div className="modal-actions">
           <button 
-            onClick={onClose} 
-            disabled={isDeleting}
-            className="cancel-btn"
-          >
-            Отмена
-          </button>
-          <button 
             onClick={handleDelete}
             disabled={isDeleting || (hasKnowledge && !targetGroupId)}
-            className="delete-btn"
+            className="save-button"
           >
             {isDeleting ? 'Удаление...' : 'Удалить'}
           </button>
+
+          <button 
+            onClick={onClose} 
+            disabled={isDeleting}
+            className="cancel-button"
+          >
+            Отмена
+          </button>
+          
         </div>
       </div>
     </div>

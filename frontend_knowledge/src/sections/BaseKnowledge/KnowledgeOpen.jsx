@@ -90,7 +90,7 @@ function KnowledgeOpen() {
     const navigate = useNavigate();
 
     const goBack = () => {
-      return navigate(-1);
+      return navigate('/knowledges/');
     }
 
       

@@ -326,8 +326,8 @@ async def update_knowledge_header_service(knowledge_id: int, knowledge_update: K
 async def delete_group_service(group_id: int, db: AsyncSession, move_to_group):
     
     # move_to_group = move_to_group.get("move_to_group")
-
-
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    print(move_to_group)
 
     # Проверяем существование группы
     group = await db.get(Group, group_id)
