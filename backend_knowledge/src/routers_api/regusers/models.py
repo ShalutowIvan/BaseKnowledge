@@ -20,11 +20,18 @@ class User(Base):
 
     #связи
     knowledge_user: Mapped["Knowledges"] = relationship(back_populates="user")
-    tokens: Mapped["Token"] = relationship(back_populates="user")
-    # basket: Mapped["Basket"] = relationship(back_populates="user")
-    # order_list: Mapped["Order_list"] = relationship(back_populates="user")
-    # # order_counter: Mapped["Order_counter"] = relationship(back_populates="user")
+    tokens: Mapped["Token"] = relationship(back_populates="user")    
     client_generate: Mapped["Code_verify_client"] = relationship(back_populates="user")
+
+    # Связь с проектами через ассоциативную таблицу
+    projects: Mapped[list["ProjectUserAssociation"]] = relationship(back_populates="user")
+
+
+    def create_project(self, title, description):
+        """Создаёт проект и автоматически добавляет создателя как администратора."""
+        project = Projects(title=title, description=description)
+        project.add_user(self, role="admin")  # Создатель = администратор
+        return project
 
 
 class Token(Base):
