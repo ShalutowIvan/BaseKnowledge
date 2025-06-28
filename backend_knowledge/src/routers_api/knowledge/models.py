@@ -8,9 +8,9 @@ from ..regusers.models import User
 
 from db_api import Base
 
-class Knowledges(Base):
-    __tablename__ = "knowledges"
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+class Knowledge(Base):
+    __tablename__ = "knowledge"
+    id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(default="_", nullable=False)
     description: Mapped[str] = mapped_column(default="_")
     slug: Mapped[str] = mapped_column(unique=True, nullable=False)
@@ -21,14 +21,14 @@ class Knowledges(Base):
     free_access: Mapped[bool] = mapped_column(default=False)
     # связи
     # группы
-    group_id: Mapped[int] = mapped_column(ForeignKey("groups.id", ondelete="RESTRICT"))#ссылаемся на таблицу group на ее элемент id
+    group_id: Mapped[int] = mapped_column(ForeignKey("group.id", ondelete="RESTRICT"))#ссылаемся на таблицу group на ее элемент id
     group: Mapped["Group"] = relationship(back_populates="knowledge")
     # юзеры
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
     user: Mapped["User"] = relationship(back_populates="knowledge_user")
     
     # изображения. тут определил список изображений, а не одно изображение - [List["Images"]]
-    images: Mapped[List["Images"]] = relationship(
+    images: Mapped[List["Image"]] = relationship(
         back_populates="knowledge", # Ссылка на обратное отношение в Images
         cascade="all, delete-orphan", # Автоматическое удаление связанных изображений
         lazy="selectin" # Жадная загрузка при использовании selectinload
@@ -36,25 +36,25 @@ class Knowledges(Base):
 
     
 class Group(Base):
-    __tablename__ = "groups"
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    __tablename__ = "group"
+    id: Mapped[int] = mapped_column(primary_key=True)
     name_group: Mapped[str] = mapped_column(nullable=False)
-    slug: Mapped[str] = mapped_column(nullable=False)
+    slug: Mapped[str] = mapped_column(unique=True, nullable=False)
     # связи
-    knowledge: Mapped["Knowledges"] = relationship(back_populates="group")
+    knowledge: Mapped["Knowledge"] = relationship(back_populates="group")
 
 
-class Images(Base):
-    __tablename__ = "images"
+class Image(Base):
+    __tablename__ = "image"
 
-    # Поля таблицы images
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    # Поля таблицы image
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
     filepath: Mapped[str] = mapped_column(String(512), nullable=False)    
     created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
     #связи. В полях таблицы Images будет указываться к какому знанию принадлежит изображение
-    knowledge_id: Mapped[int] = mapped_column(ForeignKey("knowledges.id", ondelete="CASCADE"))
-    knowledge: Mapped["Knowledges"] = relationship(back_populates="images")
+    knowledge_id: Mapped[int] = mapped_column(ForeignKey("knowledge.id", ondelete="CASCADE"))
+    knowledge: Mapped["Knowledge"] = relationship(back_populates="images")
 
 
 

@@ -28,17 +28,10 @@ from db_api import Base
 # импорты моделей из папок с роутами по разделам
 from routers_api.regusers.models import *
 from routers_api.knowledge.models import *
-
-
-# sys.path.append(os.path.join(sys.path[0], "src/settings/"))
+from routers_api.projects.models import *
 
 
 load_dotenv()
-
-
-# sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-# sys.path.append(str(Path(__file__).parent.parent))
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 # this is the Alembic Config object, which provides

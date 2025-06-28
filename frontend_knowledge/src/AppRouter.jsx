@@ -12,7 +12,12 @@ import { KnowledgeOpen, KnowledgeOpenLoader } from './sections/BaseKnowledge/Kno
 
 
 //проекты
-import { ProjectManagementView } from './sections/ProjectManagement/ProjectManagementView';
+import { ProjectPageView, ProjectListLoader } from './sections/ProjectManagement/ProjectPageView';
+
+
+
+
+
 import { RoadMap } from './sections/RoadMap/RoadMap';
 
 
@@ -20,11 +25,12 @@ import { RoadMap } from './sections/RoadMap/RoadMap';
 import Authorization from './regusers/Authorization';
 import Registration from './regusers/Registration';
 import Registration_verify from './regusers/Registration_verify';
-
 import Forgot_password from './regusers/Forgot_password';
 import Forgot_password_verify from './regusers/Forgot_password_verify';
 import { AuthProvider } from "./regusers/AuthProvider";
 import { Private } from "./regusers/Private";
+import { Registration_after } from "./regusers/Registration_after";
+
 
 
 
@@ -40,12 +46,15 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
             <Route path="regusers/authorization/" element={<Authorization />} />
           
             <Route path="regusers/registration/" element={<Registration />} />
+            <Route path="regusers/registration/check_mail/" element={<Registration_after />} />
             <Route path="regusers/registration_verify/:token"
                   element={<Registration_verify />}                 
             />
 
             <Route path="regusers/forgot_password/" element={<Forgot_password />} />
             <Route path="regusers/forgot_password_verify/:token" element={<Forgot_password_verify />} />
+
+
 
           {/* база знаний */}                    
 
@@ -60,7 +69,7 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
 
 
           {/* проекты */}
-          <Route path="projects/" element={<ProjectManagementView />}  />
+          <Route path="projects/" element={<ProjectPageView />}  loader={ProjectListLoader} />
 
           <Route path=":slug" element={<KnowledgeInGroup />} />
           <Route path="create/" element={<KnowledgeCreate />} />

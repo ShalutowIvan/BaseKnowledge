@@ -42,9 +42,9 @@ async def get_group_service(db: AsyncSession) -> GroupShemaFull:
 async def get_knowledge(db: AsyncSession, knowledge_id: int) -> KnowledgesSchemaFull | None:
     # Получаем пост с подгрузкой связанных изображений
     result = await db.execute(
-        select(Knowledges)
-        .options(selectinload(Knowledges.images))
-        .where(Knowledges.id == knowledge_id)        
+        select(Knowledge)
+        .options(selectinload(Knowledge.images))
+        .where(Knowledge.id == knowledge_id)        
     )
     return result.scalar()
 
@@ -53,7 +53,7 @@ async def knowledges_create_service(db: AsyncSession, knowledge: KnowledgesCreat
     # Создаем новое знание
     fake_user = 1
     slug = translit(knowledge.title, language_code='ru', reversed=True)    
-    new_knowledge = Knowledges(title=knowledge.title, description=knowledge.description, group_id=knowledge.group_id, slug=slug, user_id=fake_user)
+    new_knowledge = Knowledge(title=knowledge.title, description=knowledge.description, group_id=knowledge.group_id, slug=slug, user_id=fake_user)
     db.add(new_knowledge)
     await db.commit()
     await db.refresh(new_knowledge)
@@ -74,20 +74,20 @@ async def knowledges_create_service(db: AsyncSession, knowledge: KnowledgesCreat
 
 # получение всех знаний, пока без пагинации
 async def get_knowledges(db: AsyncSession) -> list[KnowledgesSchema]:
-    knowledges = await db.execute(select(Knowledges).order_by(Knowledges.created_at.desc()))    
+    knowledges = await db.execute(select(Knowledge).order_by(Knowledge.created_at.desc()))    
     return knowledges.scalars().all()
     
 
 #получение знаний по фильтру группы
 async def get_knowledges_in_group(db: AsyncSession, slug) -> list[KnowledgesSchema]:    
-    query = select(Knowledges.title, Knowledges.description, Knowledges.id).join(Knowledges.group).where(Group.slug == slug)        
+    query = select(Knowledge.title, Knowledge.description, Knowledge.id).join(Knowledge.group).where(Group.slug == slug)        
     knowledges_gr = await db.execute(query)
     return knowledges_gr.all()
 # scalars().
 
 # открыть знание
 async def knowledges_open_service(db: AsyncSession, kn_id: int):    
-    query = select(Knowledges).options(selectinload(Knowledges.images), selectinload(Knowledges.group)).where(Knowledges.id == kn_id)
+    query = select(Knowledge).options(selectinload(Knowledge.images), selectinload(Knowledge.group)).where(Knowledge.id == kn_id)
     
     knowledge = await db.execute(query)
     
@@ -266,15 +266,15 @@ async def delete_knowledge_service(db: AsyncSession, knowledge_id: int) -> bool:
 
 async def update_knowledge_header_service(knowledge_id: int, knowledge_update: KnowledgesUpdateHeaderSchema, db: AsyncSession):
     # 1. Получаем текущее знание 5-ю полями. А с фронта принимаем 3 поля. Включая связанное поле. И возвращаем ответ со связанным полем
-    query = (select(Knowledges).where(Knowledges.id == knowledge_id).options(
-                selectinload(Knowledges.group),
+    query = (select(Knowledge).where(Knowledge.id == knowledge_id).options(
+                selectinload(Knowledge.group),
                 load_only(
-                Knowledges.title,
-                Knowledges.description,
-                Knowledges.slug,
-                Knowledges.free_access,
-                Knowledges.updated_at,
-                Knowledges.group_id
+                Knowledge.title,
+                Knowledge.description,
+                Knowledge.slug,
+                Knowledge.free_access,
+                Knowledge.updated_at,
+                Knowledge.group_id
                 )
             ))    
     result = await db.execute(query)
@@ -342,8 +342,8 @@ async def delete_group_service(group_id: int, db: AsyncSession, move_to_group):
         
         # Переносим знания
         await db.execute(
-            update(Knowledges)
-            .where(Knowledges.group_id == group_id)
+            update(Knowledge)
+            .where(Knowledge.group_id == group_id)
             .values(group_id=move_to_group)
         )
     

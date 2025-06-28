@@ -15,6 +15,8 @@ export default function Registration() {
     //состояния ошибки и загрузки
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+
+    
     
     const navigate = useNavigate();
 
@@ -45,10 +47,9 @@ export default function Registration() {
         setLoading(false);
 
         if (response.statusText==='OK') {            
-                
-                //если все ок, то открываем знание для заполнения
-                navigate('/');
-
+                console.log('Registration successful')
+                //здесь должна переадресация на страницу с описанием дальнейших действий, а не просто уведомление или переход на стартовую страницу... ост тут
+                navigate("/regusers/registration/check_mail/", { state: { message: email } })
             } else {
                 const errorData = await response.data
                 console.log(errorData, 'тут ошибка')     
@@ -133,9 +134,12 @@ export default function Registration() {
                 <button className="save-button" type="submit" disabled={loading}>
                     {loading ? 'Загрузка...' : 'Зарегистрироваться'}
                 </button>
-                <br/><br/><br/><br/>
+                <br/><br/><br/>
                 <button onClick={goBack} className="toolbar-button">Назад</button>
-
+                
+                <br/>
+                
+                    
             </form>
         {error && <p style={{ color: 'red'}}>{error}</p>}
          </div>

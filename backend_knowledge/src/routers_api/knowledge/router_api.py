@@ -23,8 +23,6 @@ import os
 import sys
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-
-
 # from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, OAuth2PasswordRequestFormStrict
 # from src.settings import templates, EXPIRE_TIME, KEY, KEY2, ALG, EXPIRE_TIME_REFRESH, KEY3, KEY4, CLIENT_ID
 
@@ -41,14 +39,6 @@ async def group_create(group: GroupShema, session: AsyncSession = Depends(get_as
     return await group_create_service(db=session, group=group)
 
 
-# удаление группы
-# @router_knowledge_api.delete("/group_delete/{group_id}")
-# async def group_delete(group_id: int, session: AsyncSession = Depends(get_async_session)):
-#     return await delete_group_service(group_id=group_id, db=session)
-
- # = Body(...)
-# move_to_group: DeleteGroupRequest = Body(...) - ЭТО РАБОЧИЙ ВАРИАНТ
-# move_to_group: Optional[int] = Body(...)
 # удаление группы
 @router_knowledge_api.delete("/group_delete/{group_id}")
 async def group_delete(group_id: int, data: DeleteGroupRequest = Body(...), session: AsyncSession = Depends(get_async_session)):    
@@ -70,7 +60,6 @@ async def groups_all(request: Request, session: AsyncSession = Depends(get_async
 # получение всех знаний, только список с заголовками и описанием.
 @router_knowledge_api.get("/knowledge_all/", response_model=list[KnowledgesSchema])
 async def knowledges_all(request: Request, session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:
-
     return await get_knowledges(db=session)
 
 

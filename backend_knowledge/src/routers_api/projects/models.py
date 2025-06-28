@@ -1,15 +1,18 @@
-from enum import Enum
+# from enum import Enum, unique
+import enum
 from sqlalchemy import Enum as SQLAlchemyEnum
-from sqlalchemy import Integer, String, TIMESTAMP, ForeignKey, Float, Boolean, Text, Table, Column, JSON, text, Enum, func
+from sqlalchemy import Integer, String, TIMESTAMP, ForeignKey, Float, Boolean, Text, Table, Column, JSON, text, Enum, func, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Annotated, Optional
 from datetime import datetime
-from ..regusers.models import User
+# from ..regusers.models import User
 
 from db_api import Base
 
 
-class Role(Enum):
+@enum.unique
+class Role(enum.Enum):
+    """Роли пользователей в проекте"""
     ADMIN = "admin"#полные права на все, включая роли
     EDITOR = "editor"#только изменение и добавление чего либо в проекте и удаление задачи, удаление раздела. Не может удалить проект, не может менять роли
     VIEWER = "viewer"#только просмотр всех разделов
@@ -21,12 +24,13 @@ class ProjectUserAssociation(Base):
     __tablename__ = "project_user_association"
 
     # Составной первичный ключ (без отдельного id)
-    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("project.id"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), primary_key=True)
     
-    role: Mapped[Role] = mapped_column(nullable=False)# Enum-роль
+    role: Mapped[Role] = mapped_column(SQLAlchemyEnum(Role))# Enum-роль
 
-    # Обратные связи
+
+    # Обратные связи, они не тип лист тут, а один объект, в самих таблицах листы. 
     project: Mapped["Project"] = relationship(back_populates="users")
     user: Mapped["User"] = relationship(back_populates="projects")
 
@@ -36,9 +40,9 @@ class ProjectUserAssociation(Base):
 
 
 #в таблице Projects указывается связь с пользователем, и в зависимости от роли пользователя ему будет доступны те или иные действия. Номер проекта (id) можно будет подтянуть при открытии созданного проекта и запросить всю инфу о пользаке из таблицы ProjectUserAssociation, так как там обратная связь и с проектом и с юзером. 
-class Projects(Base):
-    __tablename__ = "projects"
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)#это как бы номер проекта в который будут включаться секции. В таблице секций будет номер проекта указываться который соответствует номеру проекта
+class Project(Base):
+    __tablename__ = "project"
+    id: Mapped[int] = mapped_column(primary_key=True)#это как бы номер проекта в который будут включаться секции. В таблице секций(разделы) будет номер проекта указываться который соответствует номеру проекта
     title: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str] = mapped_column(default="_")
     created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))    
@@ -46,7 +50,7 @@ class Projects(Base):
     
     # связи
     users: Mapped[list["ProjectUserAssociation"]] = relationship(back_populates="project")# Связь с пользователями через ассоциативную таблицу
-    sections: Mapped[list["Sections"]] = relationship(back_populates="project")
+    sections: Mapped[list["Section"]] = relationship(back_populates="project", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
 
 
     def add_user(self, user, role="guest"):
@@ -55,41 +59,42 @@ class Projects(Base):
         return association  # Возвращает объект для дальнейшей работы
 
 
-class Sections(Base):
-    __tablename__ = "sections"
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+class Section(Base):
+    __tablename__ = "section"
+    id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str] = mapped_column(default="_")
     created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
     
-    # первичный ключ на указание проекта
-    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    # первичный ключ на указания номера проекта
+    project_id: Mapped[int] = mapped_column(ForeignKey("project.id", ondelete="CASCADE"))
     # Связи
-    project: Mapped["Projects"] = relationship(back_populates="sections", cascade="all, delete-orphan", lazy="selectin")
-    tasks: Mapped[list["Tasks"]] = relationship(back_populates="section")
+    project: Mapped["Project"] = relationship(back_populates="sections")
+    tasks: Mapped[list["Task"]] = relationship(back_populates="section", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
 
 
-
-class StatesTasks(Enum):
+@enum.unique
+class StatesTask(enum.Enum):
+    """Статусы задач"""
     NEW = "new"
     AT_WORK = "at_work"
     COMPLETED = "completed"
 
 
-class Tasks(Base):
-    __tablename__ = "tasks"
+class Task(Base):
+    __tablename__ = "task"
+    id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str] = mapped_column(default="_")
     content: Mapped[str] = mapped_column(Text, default="_")
     slug: Mapped[str] = mapped_column(unique=True, nullable=False)    
-    created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=text("TIMEZONE('utc', now())"), server_onupdate=text("TIMEZONE('utc', now())"))
-    state: Mapped[StatesTasks] = mapped_column(nullable=False)#состояние, сделать enum: не в работе, в работе, готова
+    created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))    
+    updated_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"), server_onupdate=text("TIMEZONE('utc', now())"))
+    state: Mapped[StatesTask] = mapped_column(SQLAlchemyEnum(StatesTask), nullable=False)#состояние, сделать enum: не в работе, в работе, готова
 
     # связи
-    section_id: Mapped[int] = mapped_column(ForeignKey("sections.id", ondelete="CASCADE"))
-    section: Mapped["Sections"] = relationship(back_populates="tasks", cascade="all, delete-orphan", lazy="selectin")
-    # юзеры
+    section_id: Mapped[int] = mapped_column(ForeignKey("section.id", ondelete="CASCADE"))
+    section: Mapped["Section"] = relationship(back_populates="tasks")
     
     
 # Иерархия связей:
