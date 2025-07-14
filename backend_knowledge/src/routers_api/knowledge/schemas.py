@@ -80,8 +80,7 @@ class KnowledgesUpdateHeaderResponseSchema(BaseModel):
 
 
 
-class KnowledgesSchemaFull(KnowledgesSchema):
-    id: int
+class KnowledgesSchemaFull(KnowledgesSchema):    
     content: str
     created_at: datetime
     updated_at: datetime

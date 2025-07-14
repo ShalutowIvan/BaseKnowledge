@@ -47,7 +47,7 @@ function KnowledgeOpen() {
         setLoading(true);
         const formData = new FormData();
         formData.append('file', file);
-       // Отправляем изображение на сервер через эндпоинт бэка в и БД запись, и файл грузим
+       // Отправляем изображение на сервер через эндпоинт бэка в папку и БД запись, и файл грузим
         const response = await axios.post(`http://127.0.0.1:8000/upload-image/${knowledge.id}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
@@ -164,17 +164,13 @@ function KnowledgeOpen() {
       
   return (
     <>
-      {/*<aside>
-      <GroupsAll />
-      </aside>*/}
-
-
+      
       <br/><br/>
       <button onClick={goBack} className="toolbar-button">Назад</button>          
       <br/><br/>
       <div className="post-container header-section">
-        {/*это шапка знания*/}
         
+        {/*это шапка знания*/}        
         
         {/*начало шапки*/}
         {/*если не редачим шапку отображаются поля шапки*/}

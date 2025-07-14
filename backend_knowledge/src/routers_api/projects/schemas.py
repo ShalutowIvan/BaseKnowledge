@@ -1,15 +1,16 @@
 # Схемы Pydantic для валидации данных
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr, UUID4, validator
 from typing import List, Optional
 from datetime import datetime
+from .models import *
 
 
 
 #это вывода списка знаний. Открыть их по ID, чтобы была ссылка
 class ProjectsSchema(BaseModel):
-    title: str
-    description: str
     id: int
+    title: str
+    description: str    
     created_at: datetime
 
 
@@ -19,93 +20,90 @@ class ProjectsCreateSchema(BaseModel):
     description: str
 
 
+class SectionsSchema(BaseModel):
+    id: int
+    title: str
+    description: str    
+    created_at: datetime
+    project_id: int
 
 
-# class ProjectsSchemaFull(ProjectsSchema):
-#     id: int
-#     content: str
-#     created_at: datetime
-#     updated_at: datetime
-#     images: Optional[List[ImageBaseSchema]] = None    
-#     group_id: int    
-#     free_access: bool
+class SectionsCreateSchema(BaseModel):
+    title: str
+    description: str
 
 
 
+class ProjectsUpdateSchema(BaseModel):    
+    title: Optional[str] = None
+    description: Optional[str] = None    
 
 
-# class KnowledgesUpdateSchema(BaseModel):        
-#     content: str
+class TasksSchema(BaseModel):
+    id: int
+    title: str
+    description: str    
+    created_at: datetime
+    updated_at: datetime
+    state: StatesTask
+    section_id: int
+
+
+class TaskCreateSchema(BaseModel):
+    title: str
+    description: str
+
+
+class TaskOpenSchema(TasksSchema):
+    content: str
+
+
+class TaskUpdateSchema(BaseModel):        
+    content: str
+
+
+class TaskUpdateHeaderSchema(TaskCreateSchema):
+    updated_at: datetime
+
+
+class TaskStateSchema(BaseModel):
+    state: StatesTask
     
 
-# class KnowledgesUpdateHeaderSchema(BaseModel):
-#     title: Optional[str] = None
-#     description: Optional[str] = None    
-#     free_access: Optional[bool] = None
-#     group_id: int
+class TaskStateSchemaR(TaskStateSchema):    
+    updated_at: datetime
 
 
-# class KnowledgesUpdateHeaderResponseSchema(BaseModel):
-#     title: str
-#     description: str
-#     free_access: bool
-#     updated_at: datetime
-#     slug: str
-#     group: GroupShema
+class UserSchema(BaseModel):
+    name: str    
+    email: EmailStr
+    id: int    
 
 
+# это валидация словаря для поиска пользователя
+class UsersSearchSchema(BaseModel):
+    user: UserSchema
+    invite: bool
 
 
-
-    
-#     class Config:
-#         from_attributes = True
-
-# class KnowledgesSchemaOpen(KnowledgesSchemaFull):
-#     group: Optional[GroupShema] = None    
+class User_invite_to_project_schema(BaseModel):    
+    project_id: int
+    user_id: int
 
 
+class User_in_project_schema(UserSchema):
+    role: Role
 
 
+class User_role_change_schema(User_invite_to_project_schema):        
+    role: Role
 
 
-# # схемы изображений
-# class ImageBaseSchema(BaseModel):
-#     filename: str
-#     filepath: str
+class User_role_schema(BaseModel):
+    role: Role
 
 
-# class ImageCreateSchema(ImageBaseSchema):
-#     pass
-
-
-# class ImageSchema(ImageBaseSchema):
-#     id: int
-#     created_at: datetime
-    
-#     class Config:
-#         from_attributes = True
-
-
-
-
-
-
-# class DeleteGroupRequest(BaseModel):
-#     move_to_group: Optional[int] = None
-
-
-
-# # схема групп знаний
-
-# class GroupShema(BaseModel):
-#     name_group: str = Field(max_length=255)
-
-
-# class GroupShemaFull(GroupShema):
-#     id: int    
-#     slug: str = Field(max_length=255)
-
-#     class Config:
-#         from_attributes = True
-
+class User_project_role_schema(BaseModel):
+    project_id: int
+    # user_id: int
+    # role: Role

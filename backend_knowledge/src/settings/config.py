@@ -29,6 +29,7 @@ KEY4 = os.environ.get("KEY4")#для токена при сброе пароля
 KEY5 = os.environ.get("KEY5")#для токена при генерации токена клиента
 
 CLIENT_ID = os.environ.get("CLIENT_ID")#клиент ид, сгенерировал его сам
+PROJECT_KEY = os.environ.get("PROJECT_KEY")#ключ для ролей проекта
 
 ALG = os.environ.get("ALGORITHM")
 
@@ -36,7 +37,7 @@ ALG = os.environ.get("ALGORITHM")
 EXPIRE_TIME = os.environ.get("ACCESS_TOKEN_EXPIRE_TIME")
 EXPIRE_TIME_REFRESH = os.environ.get("REFRESH_TOKEN_EXPIRE_TIME")
 EXPIRE_TIME_CLIENT_TOKEN = os.environ.get("CLIENT_TOKEN_EXPIRE_TIME")
-
+EXPIRE_TIME_PROJECT_TOKEN = os.environ.get("PROJECT_TOKEN_EXPIRE_TIME")
 
 
 

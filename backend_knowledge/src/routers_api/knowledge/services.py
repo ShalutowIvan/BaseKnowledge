@@ -83,7 +83,7 @@ async def get_knowledges_in_group(db: AsyncSession, slug) -> list[KnowledgesSche
     query = select(Knowledge.title, Knowledge.description, Knowledge.id).join(Knowledge.group).where(Group.slug == slug)        
     knowledges_gr = await db.execute(query)
     return knowledges_gr.all()
-# scalars().
+
 
 # открыть знание
 async def knowledges_open_service(db: AsyncSession, kn_id: int):    
@@ -100,7 +100,7 @@ async def knowledges_open_service(db: AsyncSession, kn_id: int):
 #для добавления записи об изображении в БД
 async def add_record_image_in_base(db: AsyncSession, filename: str, filepath: str, knowledge_id: int) -> ImageSchema:
     # Создаем запись об изображении в БД
-    db_image = Images(
+    db_image = Image(
         filename=filename,
         filepath=filepath,
         knowledge_id=knowledge_id
@@ -297,38 +297,9 @@ async def update_knowledge_header_service(knowledge_id: int, knowledge_update: K
     return knowledge_header
 
 
-
-# async def delete_group_service(db: AsyncSession, group_id: int) -> bool:    
-#     try:        
-#         query = await db.execute(select(Group).where(Group.id == group_id))
-
-#         group = query.scalar()
-
-#         if not group:            
-#             return False
-                    
-#         await db.delete(group)        
-#         await db.commit()
-#         return True
-
-#     except Exception as ex:
-#         print("Ошибка при удалении группы:", ex)
-#         raise HTTPException(
-#             status_code=500,
-#             detail=f"Ошибка при удалении группы: {str(e)}"
-#         )
-
-
-
-
-
 # Body - наверно схема, прописать... ост туту
 async def delete_group_service(group_id: int, db: AsyncSession, move_to_group):
-    
-    # move_to_group = move_to_group.get("move_to_group")
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    print(move_to_group)
-
+            
     # Проверяем существование группы
     group = await db.get(Group, group_id)
     if not group:

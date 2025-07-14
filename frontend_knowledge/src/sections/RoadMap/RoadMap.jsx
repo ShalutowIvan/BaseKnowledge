@@ -10,12 +10,12 @@ function RoadMap() {
 
 
 	return (
-		<>
+		<div className='list-knowledge'>
 			<h1>Путь развития</h1>
 
 			
 								
-		</>
+		</div>
 		)
 }
 

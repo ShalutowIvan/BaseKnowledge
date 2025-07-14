@@ -3,9 +3,10 @@ from fastapi.responses import FileResponse
 from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload, joinedload, load_only
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime
+from datetime import datetime, timedelta
 from .models import *
 from .schemas import *
+
 import os
 import uuid
 import aiofiles
@@ -14,6 +15,8 @@ from transliterate import translit
 
 from routers_api.regusers.verify_user import verify_user_service
 from routers_api.regusers.models import User
+import jwt #это PyJWT
+from settings import PROJECT_KEY, EXPIRE_TIME_PROJECT_TOKEN, ALG
 
 
 # для проектов
@@ -31,338 +34,333 @@ async def get_projects(db: AsyncSession) -> list[ProjectsSchema]:
 
 async def project_create_service(request: Request, db: AsyncSession, project: ProjectsCreateSchema) -> ProjectsSchema:
     # Создаем новый проект. Создание проекта идет через метод из объекта пользователя, именно его юзаем для создания проекта
-    # user_id = await verify_user_service(request=request)
-    user_id = 3
+    # ищем пользователя по токену
+    user_id = await verify_user_service(request=request)
 
     query = await db.execute(select(User).where(User.id == user_id))
     user = query.scalar()
-    print(dir(user))#в объекте user есть метод create_project, его можно юзать тут. То есть мы авторизовались, взяли пользака и юзаем метод из него для создания проекта. Но надо это тестировать...
+    # print(dir(user))#в объекте user есть метод create_project, его можно юзать тут. То есть мы авторизовались, взяли пользака и юзаем метод из него для создания проекта. Но надо это тестировать...
     
-    # slug = translit(knowledge.title, language_code='ru', reversed=True)    
-
-    # new_project = Project(title=project.title, description=project.description)
-    # db.add(new_knowledge)
-    # await db.commit()
-    # await db.refresh(new_knowledge)
-    return user
-
-
-
-
-
-
-
-
-
-# #создание группы
-# async def group_create_service(db: AsyncSession, group: GroupShema) -> GroupShemaFull:
-#     # Создаем новую группу    
-#     slug = translit(group.name_group, language_code='ru', reversed=True)    
-#     new_group = Group(name_group=group.name_group, slug=slug)
-#     db.add(new_group)
-#     await db.commit()
-#     await db.refresh(new_group)
-#     return new_group
-
-
-# #получение списка групп
-# async def get_group_service(db: AsyncSession) -> GroupShemaFull:
-#     query = await db.execute(select(Group))
-#     groups = query.scalars().all()
+    new_project = user.create_project(title=project.title, description=project.description)
     
-#     # query = select(Group)
-#     # groups = await db.scalars(query)
-#     return groups
+    db.add(new_project)
+    await db.commit()
+    await db.refresh(new_project)
+    return new_project
 
 
-# # получение одного знания по ИД. Используется в других функциях
-# async def get_knowledge(db: AsyncSession, knowledge_id: int) -> KnowledgesSchemaFull | None:
-#     # Получаем пост с подгрузкой связанных изображений
-#     result = await db.execute(
-#         select(Knowledge)
-#         .options(selectinload(Knowledge.images))
-#         .where(Knowledge.id == knowledge_id)        
-#     )
-#     return result.scalar()
+async def get_project_open(project_id: int, db: AsyncSession) -> ProjectsSchema:
+    project = await db.execute(select(Project).where(Project.id == project_id))    
+    return project.scalars().first()
 
 
+async def get_sections_project(project_id: int, db: AsyncSession) -> SectionsSchema:
+    sections = await db.execute(select(Section).where(Section.project_id == project_id))    
+    return sections.scalars().all()
 
 
-
-# #получение знаний по фильтру группы
-# async def get_knowledges_in_group(db: AsyncSession, slug) -> list[KnowledgesSchema]:    
-#     query = select(Knowledge.title, Knowledge.description, Knowledge.id).join(Knowledge.group).where(Group.slug == slug)        
-#     knowledges_gr = await db.execute(query)
-#     return knowledges_gr.all()
-# # scalars().
-
-# # открыть знание
-# async def knowledges_open_service(db: AsyncSession, kn_id: int):    
-#     query = select(Knowledge).options(selectinload(Knowledge.images), selectinload(Knowledge.group)).where(Knowledge.id == kn_id)
-    
-#     knowledge = await db.execute(query)
-    
-#     return knowledge.scalar()
+async def section_create_service(project_id: int, db: AsyncSession, section: SectionsCreateSchema) -> SectionsSchema:    
+    new_section = Section(title=section.title, description=section.description, project_id=project_id)    
+    db.add(new_section)
+    await db.commit()
+    await db.refresh(new_section)
+    return new_section
 
 
-# # для изображений
-
-# # изображения начало тут!!!!
-# #для добавления записи об изображении в БД
-# async def add_record_image_in_base(db: AsyncSession, filename: str, filepath: str, knowledge_id: int) -> ImageSchema:
-#     # Создаем запись об изображении в БД
-#     db_image = Images(
-#         filename=filename,
-#         filepath=filepath,
-#         knowledge_id=knowledge_id
-#     )
-#     db.add(db_image)
-#     await db.commit()
-#     await db.refresh(db_image)
-#     return db_image
-
-
-
-# #функции для загрузки файла фото. Берем папку с сервера, потом делаем расширение файла и название файла, и склеиваем папку и имя файла с расширением. Далее загружаем файл асинхронно. Другими словами грузим файл тут!
-# async def save_uploaded_file(file, upload_dir: str) -> tuple[str, str]:
-#     if not os.path.exists(upload_dir):
-#         os.makedirs(upload_dir)
-    
-#     file_ext = file.filename.split(".")[-1]
-#     filename = f"{uuid.uuid4()}.{file_ext}"
-#     filepath = os.path.join(upload_dir, filename)
-    
-#     #использую тут библиотеку aiofiles, можно и без нее, но с ней лучше
-#     async with aiofiles.open(filepath, "wb") as buffer:
-#         await buffer.write(await file.read())
-
-#     # # Асинхронное сохранение файла. Вариант без aiofiles
-#     # contents = await file.read()
-#     # with open(filepath, "wb") as buffer:
-#     #     buffer.write(contents)
-    
-#     return filename, filepath
-
-
-
-# # файл фото грузится, но  фронт выдает ошибку. Пока не понял почему, разбирать функцию надо... может и на фронте проблема. Ошибка не выдается, но файл не грузится на сервер, а ссылка в посте сохраняется....
-
-# # вторая функция тоже относится к загрузке файла фото. Тут вроде бы все готово
-# async def upload_image_service(request: Request, knowledge_id: int, db: AsyncSession, file: UploadFile = File(...)):
-#     try:
-
-#         # 1. Сохраняем файл на сервере
-#         filename, filepath = await save_uploaded_file(file=file, upload_dir=UPLOAD_FOLDER)
+# измененние шапки
+async def update_project_header_service(project_id: int, project_update: ProjectsCreateSchema, db: AsyncSession):
+    # 1. Получаем текущий проект
+    query = select(Project).where(Project.id == project_id)
         
-#         # 2. Формируем полный URL
-#         base_url = str(request.base_url)  # Получаем базовый URL сервера
-#         # print("тут базовый урл при загрузке изображения")
-#         # print(base_url)
-#         image_url = f"{base_url}uploads/{filename}".replace("//uploads", "/uploads")#это полный урл фото. Тут мы почему-то не используем полученный ранее filepath, а делаем такой путь повторно.
+    result = await db.execute(query)
+    project_header = result.scalar()
         
-#         # 3. Создаем запись в БД (сохраняем относительный путь)
-#         db_image = await add_record_image_in_base(
-#             db=db,
-#             filename=filename,
-#             filepath=f"/uploads/{filename}", # Сохраняем относительный путь
-#             knowledge_id=knowledge_id
-#         )
+    if not project_header:
+        raise HTTPException(status_code=404, detail="project not found")
+    
+    # 2. Обновляем проект
+    project_header.title = project_update.title
+    project_header.description = project_update.description
+    
+    await db.commit()
+    await db.refresh(project_header)
         
-#         # 4. Возвращаем ответ с полным URL
-#         return {
-#             "id": db_image.id,
-#             "filename": db_image.filename,
-#             "url": image_url,  # Полный URL для клиента
-#             "created_at": db_image.created_at
-#         }
+    return project_header
+
+
+async def update_section_header_service(section_id: int, section_update: SectionsCreateSchema, db: AsyncSession):
+    # 1. Получаем текущий проект
+    query = select(Section).where(Section.id == section_id)
         
-#     except Exception as e:
-#         raise HTTPException(
-#             status_code=500,
-#             detail=f"Image upload failed: {str(e)}"
-#         )
-
-
-# #функция для возврата ссылки на файл изображения
-# async def view_file_image_service(file_name: str):
-#     file_path = os.path.join(UPLOAD_FOLDER, file_name)
-#     if not os.path.exists(file_path):
-#         raise HTTPException(status_code=404, detail="File not found")
-#     return FileResponse(file_path)
-
-
-# #удаление картинки по ссылке из БД и файл с сервера
-# async def delete_image_by_url(db: AsyncSession, image_url: str) -> bool:
-#     print("идет удаление, такую ссылку получили!!!!!!!!!!!!!!!", image_url)
-#     # 1. Извлекаем имя файла из URL
-#     filename = image_url.split('/')[-1]
-    
-#     # 2. Удаляем запись из БД
-#     result = await db.execute(
-#         delete(Images)
-#         .where(Images.filename == filename)
-#     )    
-#     # 3. Удаляем файл с диска
-#     filepath = os.path.join(UPLOAD_FOLDER, filename)
-#     if os.path.exists(filepath):
-#         os.unlink(filepath)
-    
-#     await db.commit()
-#     return result.rowcount > 0
-
-
-
-# # сравнить с функцией выше. knowledge_update тут фул знание скорее всего. Но если что сделать отдельную схему в питоне для обновления знания
-# async def update_knowledge_service(request: Request, knowledge_id: int, knowledge_update: KnowledgesUpdateSchema, db: AsyncSession):
-#     # 1. Получаем текущий знание с изображениями
-#     db_knowledge = await get_knowledge(db=db, knowledge_id=knowledge_id)
-#     if not db_knowledge:
-#         raise HTTPException(status_code=404, detail="knowledge not found")
-
-#     # 2. Анализируем изображения
-#     if db_knowledge.images != None:
-#         base_url = str(request.base_url)[:-1]
-#         old_images = {f'{base_url}{img.filepath}' for img in db_knowledge.images}        
-#         new_images = set(re.findall(r'!\[.*?\]\((.*?)\)', knowledge_update.content))
+    result = await db.execute(query)
+    section_header = result.scalar()
         
-#         # 3. Удаляем отсутствующие изображения
-#         images_to_delete = old_images - new_images
-#         for url in images_to_delete:
-#             if url.startswith(base_url + '/uploads/'):  # Удаляем локальные файлы по ссылкам которые начинаются с текста base_url + '/uploads/'
-#                 await delete_image_by_url(db=db, image_url=url)
-
-#     # 4. Добавляем новые изображения в БД
-#     # for url in new_images - old_images:
-#     #     if url.startswith('/uploads/'):
-#     #         filename = url.split('/')[-1]
-#     #         await upload_image_service(db, filename, post_id)#!!!!!!!!!!!!!! ост тут assign_to_post. Это скорее всего не нужно, так как у нас идет автоматическая загрузка на сервер при вставке изображения в посте. Как я понял тут файл не загрузится, так как он автоматом грузится при вставке, и тут мы файл передать не сможем. Это пока не надо
-
-#     # 5. Обновляем пост
-#     db_knowledge.updated_at = datetime.utcnow()
-#     # db_knowledge.title = knowledge_update.title
-#     db_knowledge.content = knowledge_update.content
-#     await db.commit()
-#     await db.refresh(db_knowledge)
+    if not section_header:
+        raise HTTPException(status_code=404, detail="section not found")
     
-#     return db_knowledge
-
-
-# # удаление знания и изображений в нем. 
-# async def delete_knowledge_service(db: AsyncSession, knowledge_id: int) -> bool:    
-#     try:
-#         # 1. Получаем знание с изображениями
-#         knowledge = await get_knowledge(db, knowledge_id)
-#         if not knowledge:
-#             return False
-
-#         # 2. Удаляем файлы связанных изображений
-#         for image in knowledge.images:
-#             filepath = os.path.join(UPLOAD_FOLDER, image.filename)
-#             if os.path.exists(filepath):
-#                 os.unlink(filepath)
+    # 2. Обновляем проект
+    section_header.title = section_update.title
+    section_header.description = section_update.description
+    
+    await db.commit()
+    await db.refresh(section_header)
         
-#         # 3. Удаляем само знание. Удаляется и знание и связанное поле изображения каскадно. 
-#         await db.delete(knowledge)
+    return section_header
+
+
+async def get_tasks_section(section_id: int, db: AsyncSession) -> TasksSchema:
+    tasks = await db.execute(select(Task).where(Task.section_id == section_id))    
+    return tasks.scalars().all()
+
+
+async def get_section_open(section_id: int, db: AsyncSession) -> SectionsSchema:
+    section = await db.execute(select(Section).where(Section.id == section_id))    
+    return section.scalars().first()
+
+
+async def task_create_service(section_id: int, db: AsyncSession, task: TaskCreateSchema) -> TasksSchema:
+    slug = translit(task.title, language_code='ru', reversed=True)    
+    new_task = Task(title=task.title, description=task.description, section_id=section_id, slug=slug)
+    db.add(new_task)
+    await db.commit()
+    await db.refresh(new_task)
+    return new_task
+
+
+# открыть знание
+async def task_open_service(db: AsyncSession, task_id: int):    
+    query = select(Task).where(Task.id == task_id)    
+    task = await db.execute(query)        
+    return task.scalar()
+
+
+async def update_task_service(task_id: int, task_update: TaskUpdateSchema, db: AsyncSession):
+    # 1. Получаем текущую задачу с изображениями.
+    query = await db.execute(select(Task).where(Task.id == task_id))    
+    db_task = query.scalar()
+    if not db_task:
+        raise HTTPException(status_code=404, detail="task not found")
+    
+    # 2. Обновляем задачу
+    db_task.updated_at = datetime.utcnow()    
+    db_task.content = task_update.content
+    await db.commit()
+    await db.refresh(db_task)
+    
+    return db_task
+
+
+# обновление шапки таски, переделать под таску
+async def update_task_header_service(task_id: int, task_update: TaskCreateSchema, db: AsyncSession):
+    # 1. Получаем текущую таску 3-мя полями. А с фронта принимаем 2 поля. И возвращаем ответ
+    query = await db.execute(select(Task).where(Task.id == task_id).options(
+                load_only(
+                Task.title,
+                Task.description,
+                Task.updated_at                
+                )
+            ))    
+    task_header = query.scalar_one_or_none()
+
+    if not task_header:
+        raise HTTPException(status_code=404, detail="task not found")
+    
+    # # 2. Обновляем задачу
+    task_header.title = task_update.title
+    task_header.description = task_update.description
+    task_header.updated_at = datetime.utcnow()
+    await db.commit()
+    await db.refresh(task_header)
+    
+    # возвращаем все 3 поля.
+    return task_header
+
+
+async def delete_task_service(db: AsyncSession, task_id: int) -> bool:    
+    try:
+        # 1. Получаем знание с изображениями
+        query = await db.execute(select(Task).where(Task.id == task_id))    
+        db_task = query.scalar()
+        if not db_task:
+            return False
+
+        # 2. Удаляем задачу. 
+        await db.delete(db_task)
         
-#         await db.commit()
-#         return True
+        await db.commit()
+        return True
 
-#     except Exception as ex:
-#         print("Ошибка при удалении знания:", ex)
-#         raise HTTPException(
-#             status_code=500,
-#             detail=f"Ошибка при удалении знания: {str(e)}"
-#         )
+    except Exception as ex:
+        print("Ошибка при удалении задачи:", ex)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка при удалении задачи: {str(e)}"
+        )
 
 
-# async def update_knowledge_header_service(knowledge_id: int, knowledge_update: KnowledgesUpdateHeaderSchema, db: AsyncSession):
-#     # 1. Получаем текущее знание 5-ю полями. А с фронта принимаем 3 поля. Включая связанное поле. И возвращаем ответ со связанным полем
-#     query = (select(Knowledge).where(Knowledge.id == knowledge_id).options(
-#                 selectinload(Knowledge.group),
-#                 load_only(
-#                 Knowledge.title,
-#                 Knowledge.description,
-#                 Knowledge.slug,
-#                 Knowledge.free_access,
-#                 Knowledge.updated_at,
-#                 Knowledge.group_id
-#                 )
-#             ))    
-#     result = await db.execute(query)
-#     knowledge_header = result.scalar_one_or_none()
+async def task_state_change_service(task_id: int, task_state: TaskStateSchema, db: AsyncSession):
+    # 1. Получаем текущую таску 3-мя полями. А с фронта принимаем 2 поля. И возвращаем ответ
+    query = await db.execute(select(Task).where(Task.id == task_id).options(
+                load_only(
+                Task.state,
+                Task.updated_at
+                )
+            ))    
+    task = query.scalar_one_or_none()
 
-#     if not knowledge_header:
-#         raise HTTPException(status_code=404, detail="knowledge not found")
+    if not task:
+        raise HTTPException(status_code=404, detail="task not found")
     
-#     # # 2. Обновляем знание
-#     knowledge_header.title = knowledge_update.title
-#     knowledge_header.description = knowledge_update.description
-#     knowledge_header.free_access = knowledge_update.free_access
-#     knowledge_header.slug = translit(knowledge_update.title, language_code='ru', reversed=True)
-#     knowledge_header.group_id = knowledge_update.group_id    
-#     knowledge_header.updated_at = datetime.utcnow()
-#     await db.commit()
-#     await db.refresh(knowledge_header)
+    # # 2. Обновляем задачу    
+    task.state = task_state.state
+    task.updated_at = datetime.utcnow()
+    await db.commit()
+    await db.refresh(task)
     
-#     # возвращаем все 5 полей. Если название знания изменить, то выкинет в список знаний
-#     return knowledge_header
+    # возвращаем 2 поля.
+    return task
 
 
+async def search_user_service(email_user: EmailStr, project_id: int, db: AsyncSession):
+    try:
+        query = await db.execute(select(User).where(User.email == email_user).options(
+                load_only(
+                User.name,
+                User.email,
+                User.id
+                )
+            ))
+        db_user = query.scalar()
 
-# # async def delete_group_service(db: AsyncSession, group_id: int) -> bool:    
-# #     try:        
-# #         query = await db.execute(select(Group).where(Group.id == group_id))
+        query_user_project = await db.execute(
+                (select(ProjectUserAssociation)
+                .where(ProjectUserAssociation.user_id == db_user.id)
+                .where(ProjectUserAssociation.project_id == project_id)
+                ))
+        user_project = query_user_project.scalar_one_or_none()
+        if user_project == None:
+            invite = True
+        elif user_project != None:
+            invite = False
 
-# #         group = query.scalar()
-
-# #         if not group:            
-# #             return False
-                    
-# #         await db.delete(group)        
-# #         await db.commit()
-# #         return True
-
-# #     except Exception as ex:
-# #         print("Ошибка при удалении группы:", ex)
-# #         raise HTTPException(
-# #             status_code=500,
-# #             detail=f"Ошибка при удалении группы: {str(e)}"
-# #         )
+        return {"user": db_user, "invite": invite}
+    except Exception as ex:
+        print("Ошибка валидации!!!!!!!!!!!!!")
+        print(ex)
+        raise HTTPException(status_code=400, detail=f"Ошибка при поиске пользователя: {str(ex)}")
 
 
+async def invite_to_project_service(user_invite: User_invite_to_project_schema, db: AsyncSession):
+    try:
+        # запросили пользователя
+        query_user = await db.execute(select(User).where(User.id == user_invite.user_id))    
+        db_user = query_user.scalar()
+        # запросили проект
+        query_project = await db.execute(select(Project).where(Project.id == user_invite.project_id))    
+        db_project = query_project.scalar()
+        # создали связь пользователя с проектом с ролью гость
+        association = db_project.add_user(db_user)
+        db.add(association)
+        await db.commit()
+        await db.refresh(association)
+
+        return {"Ответ": "Все отлично!"}
+    except Exception as ex:
+        print("Ошибка при добавлении пользователя в проект ниже!!!")
+        print(ex)
+        raise HTTPException(status_code=400, detail=f"Ошибка при добавлении пользователя в проект: {str(ex)}")
 
 
+async def exclude_from_project_service(request: Request, user_exclude: User_invite_to_project_schema, db: AsyncSession):
+    try:
+        current_user_id = await verify_user_service(request=request)
 
-# # Body - наверно схема, прописать... ост туту
-# async def delete_group_service(group_id: int, db: AsyncSession, move_to_group):
-    
-#     # move_to_group = move_to_group.get("move_to_group")
-#     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-#     print(move_to_group)
+        # query_current_user = await db.execute(select(User).where(User.id == current_user_id))
+        # current_user = query_current_user.scalar()
+        # тут проверяем токены пользака из токена и токен которого удаляем
+        if current_user_id == user_exclude.user_id:
+            return {"answer": "Нельзя удалить себя!"}
 
-#     # Проверяем существование группы
-#     group = await db.get(Group, group_id)
-#     if not group:
-#         raise HTTPException(status_code=404, detail="Group not found")
-    
-#     # Если указана группа для переноса - проверяем её
-#     if move_to_group:
-#         target_group = await db.get(Group, move_to_group)
-#         if not target_group:
-#             raise HTTPException(status_code=400, detail="Target group not found")
+
+        query_user_project = await db.execute(
+                (select(ProjectUserAssociation)
+                .where(ProjectUserAssociation.user_id == user_exclude.user_id)
+                .where(ProjectUserAssociation.project_id == user_exclude.project_id)
+                ))
+        user_project = query_user_project.scalar_one_or_none()
         
-#         # Переносим знания
-#         await db.execute(
-#             update(Knowledge)
-#             .where(Knowledge.group_id == group_id)
-#             .values(group_id=move_to_group)
-#         )
+        await db.delete(user_project)
+        
+        await db.commit()
+        return True        
+    except Exception as ex:
+        print("Ошибка при удалении пользователя из проекта ниже!!!")
+        print(ex)
+        raise HTTPException(status_code=400, detail=f"Ошибка при исключении пользователя из проекта: {str(ex)}")
+
+
+async def all_current_users_project_service(project_id: int, db: AsyncSession):
+    try:
+        query = (
+            select(User.name, User.email, User.id, ProjectUserAssociation.role)
+            .join(ProjectUserAssociation, User.id == ProjectUserAssociation.user_id)
+            .where(ProjectUserAssociation.project_id == project_id)
+        )
+        users_project = await db.execute(query)        
+        return users_project        
+    except Exception as ex:
+        print("Ошибка валидации!!!!!!!!!!!!!")
+        print(ex)
+        raise HTTPException(status_code=400, detail=f"Ошибка при запросе пользователей: {str(ex)}")
     
-#     # Удаляем группу
-#     await db.delete(group)
-#     await db.commit()
+
+async def role_project_change_service(user_role: User_role_change_schema, db: AsyncSession):
     
-#     return {"status": "success"}
+    # 1. Получаем текущую таску 3-мя полями. А с фронта принимаем 2 поля. И возвращаем ответ
+    query_user_project = await db.execute(
+                (select(ProjectUserAssociation)
+                .where(ProjectUserAssociation.user_id == user_role.user_id)
+                .where(ProjectUserAssociation.project_id == user_role.project_id)
+                ))
+    user_project = query_user_project.scalar_one_or_none()
+
+    if not user_project:
+        raise HTTPException(status_code=404, detail="task not found")
+    
+    # 2. Обновляем роль
+    user_project.role = user_role.role    
+    await db.commit()
+    await db.refresh(user_project)
+    
+    # возвращаем роль.
+    return user_project
+
+
+
+async def create_project_token_service(request: Request, project_id: User_project_role_schema, db: AsyncSession, expires_delta: timedelta | None = None):
+    current_user_id = await verify_user_service(request=request)
+    query_user_project = await db.execute(
+                (select(ProjectUserAssociation)
+                .where(ProjectUserAssociation.user_id == current_user_id)
+                .where(ProjectUserAssociation.project_id == project_id.project_id)
+                ))
+    user_project = query_user_project.scalar_one_or_none()
+    if not user_project:
+        raise HTTPException(status_code=404, detail="Вы не добавлены в проект! Нет доступа!")
+    
+    
+    data = {"project_id": user_project.project_id , "user_id": user_project.user_id, "role": user_project.role.value}
+
+    to_encode = data.copy()
+    if expires_delta:#если задано время истекания токена, то к текущему времени мы добавляем время истекания
+        expire = datetime.utcnow() + expires_delta
+    #expires_delta это если делать какую-то
+    else:#иначе задаем время истекания также 30 мин
+        expire = datetime.utcnow() + timedelta(minutes=int(EXPIRE_TIME_PROJECT_TOKEN))#протестить длительность токена с 0 минут
+    to_encode.update({"exp": expire})#тут мы добавили элемент в словарь который скопировали выше элемент с ключом "exp" и значением времени, которое сделали строкой выше. 
+    encoded_jwt = jwt.encode(to_encode, PROJECT_KEY, algorithm=ALG)#тут мы кодируем наш токен.
+    return {"project_token": encoded_jwt}
+
 
 
 

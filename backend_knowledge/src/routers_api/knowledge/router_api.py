@@ -118,11 +118,7 @@ async def delete_knowledge(knowledge_id: int, session: AsyncSession = Depends(ge
 # обновление шапки знания
 @router_knowledge_api.patch("/knowledge_update_header/{kn_id}", response_model=KnowledgesUpdateHeaderResponseSchema)
 async def knowledge_update_header(kn_id: int, knowledge_update: KnowledgesUpdateHeaderSchema, session: AsyncSession = Depends(get_async_session)):    
-    return await update_knowledge_header_service(        
-        knowledge_id=kn_id,
-        knowledge_update=knowledge_update,
-        db=session        
-    )
+    return await update_knowledge_header_service(knowledge_id=kn_id, knowledge_update=knowledge_update, db=session)
 
 
 

@@ -13,7 +13,7 @@ function KnowledgePageView() {
 	const {knowledgeLoad} = useLoaderData()
 
 	const [knowledges, setKnowledges] = useState(knowledgeLoad);
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(true);
 
 	
 	const navigate = useNavigate();
@@ -28,17 +28,14 @@ function KnowledgePageView() {
 
 	return (
 		<>
-			{/*<aside>
-		  <GroupsAll />
-			</aside>*/}
-
+			
 			<div className="list-knowledge">
-			<h1>База знаний</h1>
-				{/*<button className="add-button"><NavLink to="/group/create/" className={setActive}>Добавить группу</NavLink></button>*/}
+			  <div className='header-section'>
+        <h1>Знания</h1>				
 				<button className="toolbar-button" onClick={create_group}>Добавить группу</button>
 				&nbsp;&nbsp;&nbsp;
 				<button className="toolbar-button" onClick={create_knowledge}>Добавить знание</button>
-				{/*<button className="add-button"><NavLink to="/knowledge/create/" className={setActive}>Добавить запись в базе знаний</NavLink></button>*/}
+				</div>
 				
 
 						{

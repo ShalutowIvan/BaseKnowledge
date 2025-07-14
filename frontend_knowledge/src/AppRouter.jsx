@@ -3,7 +3,7 @@ import { Route, createBrowserRouter, createRoutesFromElements } from "react-rout
 import { Start } from './start/Start';
 
 //знания
-import { KnowledgeLayout } from './sections/BaseKnowledge/KnowledgeLayout';
+import { KnowledgeLayout} from './sections/BaseKnowledge/KnowledgeLayout';
 import { KnowledgePageView, KnowledgeListLoader } from './sections/BaseKnowledge/KnowledgePageView';
 import { KnowledgeInGroup } from './sections/BaseKnowledge/KnowledgeInGroup';
 import { GroupCreate } from './sections/BaseKnowledge/GroupCreate';
@@ -13,8 +13,13 @@ import { KnowledgeOpen, KnowledgeOpenLoader } from './sections/BaseKnowledge/Kno
 
 //проекты
 import { ProjectPageView, ProjectListLoader } from './sections/ProjectManagement/ProjectPageView';
-
-
+import { ProjectOpenLayout } from './sections/ProjectManagement/ProjectOpenLayout';
+import { ProjectOpenIndex } from './sections/ProjectManagement/ProjectOpenIndex';
+// import { ProjectOpen, ProjectOpenLoader } from './sections/ProjectManagement/ProjectOpen';
+// import { SectionCreate } from './sections/ProjectManagement/SectionCreate';
+import { SectionOpen, SectionOpenLoader } from './sections/ProjectManagement/SectionOpen';
+import { TaskOpen, TaskOpenLoader } from './sections/ProjectManagement/TaskOpen';
+import { ProjectOpenUsers } from './sections/ProjectManagement/ProjectOpenUsers';
 
 
 
@@ -70,15 +75,27 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
 
           {/* проекты */}
           <Route path="projects/" element={<ProjectPageView />}  loader={ProjectListLoader} />
+                    
+          {/* тут открывающий роут, далее вложенные */}
+          <Route path="projects/open/:project_id" element={<ProjectOpenLayout />}>
 
-          <Route path=":slug" element={<KnowledgeInGroup />} />
-          <Route path="create/" element={<KnowledgeCreate />} />
-          <Route path="open/:slug" element={<KnowledgeOpen />} loader={KnowledgeOpenLoader} />
-          <Route path="group/create/" element={<GroupCreate />}  />
+            <Route index element={<ProjectOpenIndex />} />
+                        
+            <Route path="section_open/:section_id" element={<SectionOpen />} loader={SectionOpenLoader} />
+            <Route path="section_open/:section_id/task_open/:task_id" element={<TaskOpen />} loader={TaskOpenLoader} />
+            <Route path="users_invite" element={<ProjectOpenUsers />} />
+          </Route>
+
+
+
+          {/* <Route path="group/create/" element={<GroupCreate />}  />  */}          
+          {/* <Route path=":slug" element={<KnowledgeInGroup />} /> */}
+          
+          
           
           
           {/* дорожные карты */}
-          <Route path="RoadMap/" element={<RoadMap />}  />
+          <Route path="roadmaps/" element={<RoadMap />}  />
         
 
         </Route>       

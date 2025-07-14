@@ -13,7 +13,7 @@ from db_api import Base
 @enum.unique
 class Role(enum.Enum):
     """Роли пользователей в проекте"""
-    ADMIN = "admin"#полные права на все, включая роли
+    ADMIN = "admin"#полные права на все, включая роли. Может быть несколько админов
     EDITOR = "editor"#только изменение и добавление чего либо в проекте и удаление задачи, удаление раздела. Не может удалить проект, не может менять роли
     VIEWER = "viewer"#только просмотр всех разделов
     GUEST = "guest"#это просто чтобы участник был в проекте, но без всяких прав. Если что поменять можно у него роль
@@ -53,7 +53,7 @@ class Project(Base):
     sections: Mapped[list["Section"]] = relationship(back_populates="project", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
 
 
-    def add_user(self, user, role="guest"):
+    def add_user(self, user, role=Role.GUEST):
         """Добавляет пользователя в проект с указанной ролью."""
         association = ProjectUserAssociation(project=self, user=user, role=role)
         return association  # Возвращает объект для дальнейшей работы
@@ -66,7 +66,7 @@ class Section(Base):
     description: Mapped[str] = mapped_column(default="_")
     created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
     
-    # первичный ключ на указания номера проекта
+    # первичный ключ на указания номера проекта, то есть id
     project_id: Mapped[int] = mapped_column(ForeignKey("project.id", ondelete="CASCADE"))
     # Связи
     project: Mapped["Project"] = relationship(back_populates="sections")
@@ -90,7 +90,7 @@ class Task(Base):
     slug: Mapped[str] = mapped_column(unique=True, nullable=False)    
     created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))    
     updated_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"), server_onupdate=text("TIMEZONE('utc', now())"))
-    state: Mapped[StatesTask] = mapped_column(SQLAlchemyEnum(StatesTask), nullable=False)#состояние, сделать enum: не в работе, в работе, готова
+    state: Mapped[StatesTask] = mapped_column(SQLAlchemyEnum(StatesTask), default=StatesTask.NEW)#состояние, сделать enum: не в работе, в работе, готова
 
     # связи
     section_id: Mapped[int] = mapped_column(ForeignKey("section.id", ondelete="CASCADE"))

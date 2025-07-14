@@ -3,68 +3,82 @@ import { React, Suspense, useState, useEffect } from 'react';
 import Cookies from "js-cookie";
 // import { API } from "../../apiAxios/apiAxios"
 import axios from "axios"
+import { ProjectCreateModal } from './ProjectCreateModal'
 
 
 function ProjectPageView() {
 	const setActive = ({isActive}) => isActive ? 'active-link' : '';
 	const {projectLoad} = useLoaderData()
 
-	const [projects, setProjects] = useState(projectLoad);
-	const [loading, setLoading] = useState(false);
+	const [projects, setProjects] = useState(projectLoad);	
 
-	// const fetchKnowledges = async () => {
-  //   setLoading(true);
-  //   try {      
-  //     const response = await axios.get("http://127.0.0.1:8000/knowledge_all/");
-  //     setKnowledges(response.data)
-  //   } catch (err) {
-  //     setError(err.message);      
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // 	};
+  const navigate = useNavigate();  
 
-	// useEffect(() => {	    
-  //       fetchKnowledges()
-	// }, [])
+	// const [loading, setLoading] = useState(false);
+  // const [error, setError] = useState(null);
 
+  const [modalOpen, setModalOpen] = useState(false);
 
-	const navigate = useNavigate();
+  const openModalClick = () => {	    
+	    setModalOpen(true);
+	  	};
 
   
-	
-	const create_knowledge = () => {
-      return navigate("/knowledge/create/");
-    }
+  const handleCreateSuccess = (newProject) => {
+		// Используем функциональную форму setProjects
+		console.log("Новый проект", newProject)
+		setProjects(prevProjects => [newProject, ...prevProjects]);
+		setModalOpen(false);
+		};
+
+
+  // if (loading) {
+  //   return <p>Загрузка...</p>;
+  // 	}
+
+	// if (error) {
+  //   return <p>Ошибка: {error.message}</p>;
+  // 	}
+
 
 	return (
 		<>			
+      
+			
+			<div className='projects-view'>
+        <h1>Проекты</h1>
+        <button className="toolbar-button" onClick={openModalClick}>Создать проект</button>
+            
+        
+        <br/><br/>
 
-			<div className="list-knowledge">
-			<h1>Менеджер проектов</h1>
-				{/*<button className="add-button"><NavLink to="/group/create/" className={setActive}>Добавить группу</NavLink></button>*/}
-				{/*<button className="toolbar-button" onClick={create_group}>Добавить группу</button>
-				&nbsp;&nbsp;&nbsp;
-				<button className="toolbar-button" onClick={create_knowledge}>Добавить знание</button>*/}
-				{/*<button className="add-button"><NavLink to="/knowledge/create/" className={setActive}>Добавить запись в базе знаний</NavLink></button>*/}
-				
-
-						{
-                projects?.map(project => (
-                				<>
-                				<h1 className="name-knowledge">{project.title}</h1>
-                        <h2>Описание: {project.description}</h2>
-                        <NavLink key={project.id} to={`/project/open/${project.id}`} className={setActive}>
-                            <button className="toolbar-button">Открыть</button>
-                        </NavLink>
-                            <p>_____________________________________________________________</p>
+        {
+                  projects?.map(project => (
+                        <>
+                          <div className='project-section'>
+                          <h1 className="name-knowledge">{project.title}</h1>
+                          <h2>Описание: {project.description}</h2>
+                          <NavLink key={project.id} to={`/projects/open/${project.id}`} className={setActive}>
+                              <button className="toolbar-button">Открыть</button>
+                          </NavLink>
+                              <p>_____________________________________________________________</p>
+                          </div>
+                          <br/>
                         </>
-                    ))
-            }
+                      ))
+              }
       </div>
 
 
-								
+      {modalOpen && (
+		        <ProjectCreateModal		          
+		          onClose={() => setModalOpen(false)}
+		          onSuccess={handleCreateSuccess}
+		        />
+		      )}
+      
+            		      
+      								
 		</>
 		)
 }

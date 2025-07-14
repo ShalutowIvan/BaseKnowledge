@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db_api import Base
 
-from ..projects.models import ProjectUserAssociation
+from ..projects.models import ProjectUserAssociation, Project, Role
 
 
 class User(Base):
@@ -31,8 +31,8 @@ class User(Base):
 
     def create_project(self, title, description):
         """Создаёт проект и автоматически добавляет создателя как администратора."""
-        project = Projects(title=title, description=description)
-        project.add_user(self, role="admin")  # Создатель = администратор
+        project = Project(title=title, description=description)
+        project.add_user(user=self, role=Role.ADMIN)  # Создатель = администратор
         return project
 
 

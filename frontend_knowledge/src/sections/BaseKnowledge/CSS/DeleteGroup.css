@@ -62,3 +62,21 @@
   color: #dc3545;
   margin: 10px 0;
 }
+
+/* CSS */
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.trash-icon {
+  color: #9ae5f8;
+  transition: color 0.2s ease;
+}
+
+.delete-btn:hover .trash-icon {
+  color: #ff0000; /* Ярко-красный при наведении */
+}
+

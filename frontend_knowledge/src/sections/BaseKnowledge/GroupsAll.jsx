@@ -1,17 +1,19 @@
-import { NavLink, useLoaderData, useNavigate, useLocation } from 'react-router-dom'
+import { NavLink, useLoaderData, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import axios from "axios"
 // import { API } from '../../apiAxios/apiAxios'
 import { DeleteGroupModal } from './DeleteGroupModal'
+import { FaTrash } from "react-icons/fa";
 
 
-function GroupsAll() {
+
+function GroupsAll( { groupList } ) {
 	// const {groupsLoad} = useLoaderData()
 
 	const setActive = ({isActive}) => isActive ? 'active-link' : '';	
 	const [groups, setGroups] = useState([]);
 
-	const [loading, setLoading] = useState(true);
+	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 
 
@@ -33,6 +35,7 @@ function GroupsAll() {
 	    setGroups(groups.filter(g => g.id !== selectedGroup.id));
   		};
 
+	
 	useEffect(() => {
 		const fetchData = async () => {
 		try {
@@ -45,9 +48,7 @@ function GroupsAll() {
 		}
 		};
 
-		// fetchData();
-
-		// Проверяем флаг из навигации или при первом рендере
+		// Проверяем флаг из навигации или при первом рендере. Это нужно чтобы после добавления группа добавлялась сразу
 		  if (!location.state?.needsRefresh) {
 		    fetchData();
 		  } else {
@@ -66,6 +67,9 @@ function GroupsAll() {
     return <p>Ошибка: {error.message}</p>;
   	}
 
+
+
+	<h1 style={{ textAlign: 'center' }}>Регистрация</h1>
 	
 	return (
 		<>
@@ -76,10 +80,12 @@ function GroupsAll() {
                 groups?.map(group => (
                         <NavLink key={group.id} to={`/knowledges/${group.slug}`} className={setActive}>
                             <li>{group.name_group} 
-                            	<button onClick={() => handleDeleteClick(group)}>
-						              Удалить
-						            </button>
+							<button onClick={() => handleDeleteClick(group)} className="delete-btn">
+						             <FaTrash className="trash-icon" size={15} />
+						            </button>	
+                            	
 						    </li>
+							
 						    <br/>
                         </NavLink>
 

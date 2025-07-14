@@ -79,14 +79,14 @@ export default function Start() {
       </aside>*/}
 
       <main>            
-          {/*<h1>Добро пожаловать!</h1>*/}
+          
           {/*{ !user && <h2 style={{ textAlign: 'center' }}>Для работы с базой данных нужно зарегистрироваться. Перейдите на вкладку "Войти".</h2> }*/}
 
-            { user && 
+            {/* { user && 
             <>
             <h1 style={{ textAlign: 'center' }}>Добро пожаловать!</h1>
             </>
-            }
+            } */}
 
           <Outlet />
       </main>
