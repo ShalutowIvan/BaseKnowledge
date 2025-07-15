@@ -1,5 +1,7 @@
 import axios from "axios";
-import { updateAccessTokenFromRefreshToken, setAccessToken, getAccessToken, setRefreshToken } from "../regusers/AuthService"
+
+//это изменить
+import { updateAccessTokenFromRefreshToken, setAccessToken, getAccessToken, setRefreshToken } from "../../../regusers/AuthService"
 
 import { apiKey } from "../config/config"
 
@@ -8,23 +10,21 @@ import { apiKey } from "../config/config"
 const API_URL = "http://127.0.0.1:8000";
 
 // Создаем экземпляр axios
-const API = axios.create({
+const axiosRole = axios.create({
   baseURL: API_URL,
    // Для работы с куками
 });
 
-
-// что то тут с асинхронностью....
-
+// withCredentials: true,
 // Интерцептор для добавления access токена в заголовки запросов
-API.interceptors.request.use(
+axiosRole.interceptors.request.use(
   (config) => {
-    const accessToken = getAccessToken();
-    if (accessToken) {
-      // config.headers.Authorization = `Bearer ${accessToken}`;
+    const roleToken = getRoleToken();
+    if (roleToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
       // console.log(config)
-      config.headers.Authorization = accessToken;
-      config.headers.CLIENT_ID = apiKey;
+      config.headers.roleToken = roleToken;
+      // config.headers.CLIENT_ID = apiKey;
     }
     return config;
   },
@@ -34,7 +34,7 @@ API.interceptors.request.use(
 );
 
 // Интерцептор для обработки ошибок и обновления токена
-API.interceptors.response.use(
+axiosRole.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
@@ -43,7 +43,7 @@ API.interceptors.response.use(
     // if (error.response.status === 403 && !originalRequest._retry) 
 
     // const verifyAccess = axios.get(`http://127.0.0.1:8000/api/regusers/auth/verify_access_token/${getAccessToken()}`)
-    const verifyAccess = true
+    // const verifyAccess = true
 
     if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true; // Помечаем запрос как повторный
@@ -52,14 +52,14 @@ API.interceptors.response.use(
 
       try {
         // Пробуем обновить access токен с помощью refresh токена
-        const newTokens = await updateAccessTokenFromRefreshToken();
-        if (newTokens["Authorization"]) {
+        const newTokens = await updateRoleTokenFromRefreshToken();
+        if (newTokens["roleToken"]) {
           // Обновляем access токен в куке
           // setAccessToken(newTokens["Authorization"]);
           // setRefreshToken(newTokens["refresh_token"])       
           // Повторяем оригинальный запрос с новым токеном
-          originalRequest.headers.Authorization = newTokens["Authorization"];
-          return API(originalRequest);
+          originalRequest.headers.roleToken = newTokens["roleToken"];
+          return axiosRole(originalRequest);
         }
       } catch (refreshError) {
         console.error("Failed to refresh token:", refreshError);
@@ -74,7 +74,7 @@ API.interceptors.response.use(
   }
 );
 
-export { API };
+export { axiosRole };
 
 
 

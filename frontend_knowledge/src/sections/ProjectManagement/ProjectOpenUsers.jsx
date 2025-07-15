@@ -50,19 +50,25 @@ function ProjectOpenUsers() {
             //     throw new Error("Некорректный формат ответа сервера");
             //   }
             
+            // тут обработать ошибку валидации когда список пользаков пустой!!!!!!!!!!!!! Типа если статус ответа 400 то пустой список записываем в состояние списка пользаков, или ничего не меняем. 
+            console.log(response.status, "статус")
             if (response.statusText==='OK') {
 				setEmail("");
 				setUsersearch(response.data.user)
                 setVisibleInvite(response.data.invite)
       
-            } else {
-                const errorData = await response.data
-                console.log(errorData, 'тут ошибка')     
-            }
+            } 
         } catch (error) {
+        
+              if (axios.isAxiosError(error) && error.response?.status === 400) {                
+                setUsersearch("")
+                setError(`Пользователь не найден!`);            
+              }               
+
             setLoading(false);
-            console.log(error)
-            setError('что-то пошло не так');            
+            console.log("Ошибка на сервере:", error)
+
+            // setError(`что-то пошло не так, ошибка: ${error}`);            
         }    
     };
 

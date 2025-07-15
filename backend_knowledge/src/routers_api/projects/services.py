@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timedelta
 from .models import *
 from .schemas import *
+from .verify_role import verify_role_service
 
 import os
 import uuid
@@ -68,7 +69,13 @@ async def section_create_service(project_id: int, db: AsyncSession, section: Sec
 
 
 # измененние шапки
-async def update_project_header_service(project_id: int, project_update: ProjectsCreateSchema, db: AsyncSession):
+async def update_project_header_service(request: Request, project_id: int, project_update: ProjectsCreateSchema, db: AsyncSession):
+    
+    user_id = await verify_user_service(request=request)
+    role = await verify_role_service(request=request)
+    print("!!!!!!!!!!!!!!!!!!!!")
+    print(role)
+
     # 1. Получаем текущий проект
     query = select(Project).where(Project.id == project_id)
         
@@ -231,6 +238,10 @@ async def search_user_service(email_user: EmailStr, project_id: int, db: AsyncSe
                 )
             ))
         db_user = query.scalar()
+        # print("!!!!!!!!!!!!!!!!!!")
+        # print(db_user)
+        # if db_user == None:
+        #     return {"user": None, "invite": False}
 
         query_user_project = await db.execute(
                 (select(ProjectUserAssociation)

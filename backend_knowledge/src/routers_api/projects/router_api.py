@@ -49,8 +49,8 @@ async def section_project_all(project_id: int, session: AsyncSession = Depends(g
 
 # изменение шапки проекта
 @router_project_api.patch("/project_update_header/{project_id}", response_model=ProjectsCreateSchema)
-async def project_update_header(project_id: int, project_update: ProjectsCreateSchema, session: AsyncSession = Depends(get_async_session)) -> ProjectsCreateSchema:    
-    return await update_project_header_service(project_id=project_id, project_update=project_update, db=session)
+async def project_update_header(request: Request, project_id: int, project_update: ProjectsCreateSchema, session: AsyncSession = Depends(get_async_session)) -> ProjectsCreateSchema:    
+    return await update_project_header_service(request=request, project_id=project_id, project_update=project_update, db=session)
 
 
 # создание секции
@@ -155,5 +155,9 @@ async def create_project_token(request: Request, project_id: User_project_role_s
     return await create_project_token_service(request=request, project_id=project_id, db=session)
 
 
+
+# @router_project_api.get("/update_project_token/")
+# async def update_project_token(request: Request, project_id: User_project_role_schema, session: AsyncSession = Depends(get_async_session)):
+#     return await create_project_token_service(request=request, project_id=project_id, db=session)
 
 

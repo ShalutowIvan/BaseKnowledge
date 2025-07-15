@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useParams, Link, NavLink, useNavigate, useLoaderData, Await, redirect, useRevalidator } from 'react-router-dom'
 import { SectionCreateModal } from './SectionCreateModal'
 import { API } from "../../apiAxios/apiAxios"
+import { axiosRole } from "./axiosRole/axiosRole"
 import Cookies from "js-cookie";
 
 function SectionAllProject({ project_id }) {
@@ -99,12 +100,13 @@ function SectionAllProject({ project_id }) {
         try {            
             setLoading(true);
             
-            const response = await axios.patch(
-                `http://127.0.0.1:8000/project_update_header/${project_id}`,
+            const response = await axiosRole.patch(
+                `/project_update_header/${project_id}`,                 
+                { title: project.title, description: project.description }, 
                 {
-                  title: project.title,
-                  description: project.description
-                }                
+                  params: {project_id: project_id},
+                }
+                
                 );
             setEditModeHeader(false)            
             if (response.statusText==='OK') {                
@@ -228,7 +230,7 @@ function SectionAllProject({ project_id }) {
                       
                     
                     {/*конец четвертой строки*/}
-                  {error && <p style={{ color: 'red'}}>{error}</p>}
+                  {/*{error && <p style={{ color: 'red'}}>{error}</p> }*/}
                 </form>
 
               {/*конец формы*/}
@@ -242,7 +244,7 @@ function SectionAllProject({ project_id }) {
             <br/>
               
             
-        </div>  
+        </div>
     {/* конец шапки проекта */}
 
           <button onClick={usersInvite} className="toolbar-button">Пользователи в проекте</button>

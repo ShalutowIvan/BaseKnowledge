@@ -71,8 +71,8 @@ async def knowledges_in_group(slug: str, session: AsyncSession = Depends(get_asy
 
 #сделал создание знания, переделал уже как надо. Возвращаем целое знание, чтобы открыть его. Так как после создания оно открывается и его можно будет редачить. Открытие со стороны фронта делать надо будет, и роут для открытия надо сделать
 @router_knowledge_api.post("/knowledges_create/", response_model=KnowledgesSchemaFull)
-async def knowledges_create(knowledge: KnowledgesCreateSchema, session: AsyncSession = Depends(get_async_session)):
-    return await knowledges_create_service(db=session, knowledge=knowledge)
+async def knowledges_create(request: Request, knowledge: KnowledgesCreateSchema, session: AsyncSession = Depends(get_async_session)):
+    return await knowledges_create_service(request=request, db=session, knowledge=knowledge)
 
 
 # открыть знание, тут фильтр по ID знания. Возможно переделаю на UUID

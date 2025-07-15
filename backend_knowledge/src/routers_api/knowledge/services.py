@@ -13,6 +13,10 @@ import aiofiles
 import re
 from transliterate import translit
 
+from routers_api.regusers.verify_user import verify_user_service
+from routers_api.regusers.models import User
+
+
 # для знаний
 ############################################################
 UPLOAD_FOLDER = "uploads"
@@ -49,11 +53,12 @@ async def get_knowledge(db: AsyncSession, knowledge_id: int) -> KnowledgesSchema
     return result.scalar()
 
 
-async def knowledges_create_service(db: AsyncSession, knowledge: KnowledgesCreateSchema) -> KnowledgesSchemaFull:
-    # Создаем новое знание
-    fake_user = 1
+async def knowledges_create_service(request: Request, db: AsyncSession, knowledge: KnowledgesCreateSchema) -> KnowledgesSchemaFull:
+    # Создаем новое знание    
+    user_id = await verify_user_service(request=request)
+
     slug = translit(knowledge.title, language_code='ru', reversed=True)    
-    new_knowledge = Knowledge(title=knowledge.title, description=knowledge.description, group_id=knowledge.group_id, slug=slug, user_id=fake_user)
+    new_knowledge = Knowledge(title=knowledge.title, description=knowledge.description, group_id=knowledge.group_id, slug=slug, user_id=user_id)
     db.add(new_knowledge)
     await db.commit()
     await db.refresh(new_knowledge)

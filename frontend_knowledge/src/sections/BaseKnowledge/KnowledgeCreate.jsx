@@ -4,6 +4,7 @@ import axios from "axios";
 // import Cookies from "js-cookie";
 
 import { GroupsAll } from "./GroupsAll"
+import { API } from "../../apiAxios/apiAxios"
 
 
 function KnowledgeCreate() {
@@ -53,8 +54,7 @@ function KnowledgeCreate() {
         setLoading(true);
 
         try {            
-            const response = await axios.post(
-                "http://127.0.0.1:8000/knowledges_create/",
+            const response = await API.post("/knowledges_create/",
                 {                 
                     title,                    
                     description,                    
