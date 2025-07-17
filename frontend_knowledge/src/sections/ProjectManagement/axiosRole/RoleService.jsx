@@ -16,8 +16,8 @@ function isTokenExpired(token) {
 }
 
 
-async function getRoleToken({project_id}) {
-  const roleToken = Cookies.get('Project_Token');
+async function getRoleToken(project_id) {
+  const roleToken = Cookies.get('Project_token');
   
   // Проверяем валидность токена (например, через декодирование JWT)
   if (roleToken && !isTokenExpired(roleToken)) {
@@ -32,9 +32,17 @@ async function getRoleToken({project_id}) {
             }
           );
 
-    roleToken = response.data["Project_Token"];
-    Cookies.set('Project_Token', roleToken);
-    return roleToken;
+    console.log("Обновляем Project_token...")
+    const newRoleToken = response.data["project_token"];
+    // Cookies.set('Project_token', newRoleToken);
+    Cookies.set("Project_token", newRoleToken, {
+              // expires: 0.0005, // тут указывается колво дней тут 0,72 минуты
+              expires: 30, // Кука истечет через 30 дней, тут указывается колво дней
+              path: "/", // Кука будет доступна на всех страницах        
+              sameSite: "lax", // Защита от CSRF-атак
+              });
+
+    return newRoleToken;
   } catch (error) {
     console.error('Failed to refresh role token', error);
     throw error; // Пробрасываем ошибку, чтобы обработать её в интерцепторе

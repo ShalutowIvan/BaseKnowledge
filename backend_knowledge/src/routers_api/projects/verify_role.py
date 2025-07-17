@@ -40,8 +40,8 @@ async def verify_role_service(request: Request):
     role_token = request.headers.get("Project_Token")
     if not role_token:
         raise HTTPException(status_code=401, detail="Not role_token")
-    print("Тут роль токен!!!!!!!!!!!")
-    print(role_token)#тут object Promise, а не токен!!!!
+    # print("Тут роль токен!!!!!!!!!!!")
+    # print(role_token)#тут object Promise, а не токен!!!!
     
     check = await role_token_decode(role_token=str(role_token))
 

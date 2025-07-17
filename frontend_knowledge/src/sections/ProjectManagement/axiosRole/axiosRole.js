@@ -24,11 +24,11 @@ axiosRole.interceptors.request.use(
     const roleToken = await getRoleToken(projectId);//если истек роль токен, то делаем его обновление используя API. Не читается тут project_id
     
 
-    const accessToken = getAccessToken();
+    // const accessToken = getAccessToken();
     
-    if (accessToken && roleToken) {
-      console.log(config)
-      config.headers.Authorization = accessToken;
+    if (roleToken) {
+      // console.log(config)
+      // config.headers.Authorization = accessToken;
       config.headers.CLIENT_ID = apiKey;
       config.headers["Project_Token"] = roleToken;
     }

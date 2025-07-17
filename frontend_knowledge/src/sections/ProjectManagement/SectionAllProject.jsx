@@ -6,6 +6,9 @@ import { SectionCreateModal } from './SectionCreateModal'
 import { API } from "../../apiAxios/apiAxios"
 import { axiosRole } from "./axiosRole/axiosRole"
 import Cookies from "js-cookie";
+import { getRoleToken } from "./axiosRole/RoleService"
+
+
 
 function SectionAllProject({ project_id }) {
     // const revalidator = useRevalidator();
@@ -37,19 +40,15 @@ function SectionAllProject({ project_id }) {
           const response2 = await axios.get(`http://127.0.0.1:8000/project_get/${project_id}`);
           setProject(response2.data);
 
-          
-          const responseProjectToken = await API.post(`/create_project_token/`,
-            {
-              project_id: project_id
-            }
-          );          
-          Cookies.set("Project_token", responseProjectToken.data["project_token"], {
-              // expires: 0.0005, // Кука истечет через 30 дней, тут указывается колво дней
-              expires: 30, // Кука истечет через 30 дней, тут указывается колво дней
-              path: "/", // Кука будет доступна на всех страницах        
-              sameSite: "lax", // Защита от CSRF-атак
-              });
+          const RoleToken = getRoleToken(project_id)
+          // const responseProjectToken = await API.post(`/create_project_token/`,
+          //   {
+          //     project_id: project_id
+          //   }
+          // );          
 
+
+          
           setLoading(false);
         } catch (err) {
           setError(err);

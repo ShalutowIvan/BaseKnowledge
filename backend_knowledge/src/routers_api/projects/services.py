@@ -68,13 +68,19 @@ async def section_create_service(project_id: int, db: AsyncSession, section: Sec
     return new_section
 
 
-# измененние шапки
+# измененние шапки. project_id тут не query параметр, а параметр из ссылки роута. В реакт интерцепторе тоже есть query параметр project_id используемый для обновления Project_token, но он потом удаляется и не передается
 async def update_project_header_service(request: Request, project_id: int, project_update: ProjectsCreateSchema, db: AsyncSession):
     
-    user_id = await verify_user_service(request=request)
+    # user_id = await verify_user_service(request=request)
     role = await verify_role_service(request=request)
     print("!!!!!!!!!!!!!!!!!!!!")
     print(role)
+    if role[0] != project_id:
+        print("Вы пользователь другого проекта!")
+    
+    if role[2] != Role.ADMIN.value:
+        print("Данное действие доступно только администраторам!")
+
 
     # 1. Получаем текущий проект
     query = select(Project).where(Project.id == project_id)
