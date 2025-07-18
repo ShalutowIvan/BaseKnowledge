@@ -66,10 +66,10 @@ async function roleTokenVerify(project_id) {
 
   const decoded = jwtDecode(roleToken); 
   
-  if (decoded.project_id !== project_id) {
-    return false
-  } else if ((decoded.project_id === project_id)) {
+  if (decoded.project_id !== project_id) {    
     return true
+  } else if ((decoded.project_id === project_id)) {
+    return false
   }
 
 }

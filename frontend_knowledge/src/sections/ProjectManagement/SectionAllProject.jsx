@@ -55,7 +55,7 @@ function SectionAllProject({ project_id }) {
           //тут проверка уже выданного токена. Если он не принадлежит данному проекту, то запрашиваем новый
           //вторая проверка токена идет, криво логику в функциях сделал, переделать.....
           //условие странно работает. Сделал так и работает как надо...
-          if (roleTokenVerify(project_id)) {
+          if (roleTokenVerify(project_id)) {            
             Cookies.remove("Project_token");
             const newRoleToken = await getRoleToken(project_id)
 
@@ -68,7 +68,7 @@ function SectionAllProject({ project_id }) {
           
 
 
-          console.log("Тут токен из юзэффекта: ", RoleToken)
+          // console.log("Тут токен из юзэффекта: ", RoleToken)
           
 
           // const responseProjectToken = await API.post(`/create_project_token/`,
