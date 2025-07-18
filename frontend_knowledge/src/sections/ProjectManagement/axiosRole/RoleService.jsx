@@ -24,6 +24,8 @@ async function getRoleToken(project_id) {
     return roleToken; // Токен валиден
   }
 
+
+
   // Если токена нет или он истёк, запрашиваем новый
   try {
     const response = await API.post(`/create_project_token/`,
@@ -33,6 +35,11 @@ async function getRoleToken(project_id) {
           );
 
     console.log("Обновляем Project_token...")
+    //проверка нет ли такой ошибки в ответе от сервера
+    if (response.data["error"] === "User_not_in_project") {
+      return response.data["error"]
+    }
+
     const newRoleToken = response.data["project_token"];
     // Cookies.set('Project_token', newRoleToken);
     Cookies.set("Project_token", newRoleToken, {
@@ -44,9 +51,27 @@ async function getRoleToken(project_id) {
 
     return newRoleToken;
   } catch (error) {
-    console.error('Failed to refresh role token', error);
-    throw error; // Пробрасываем ошибку, чтобы обработать её в интерцепторе
+    console.error('Ошибка при получении токена роли', error);
+    // throw error; // Пробрасываем ошибку, чтобы обработать её в интерцепторе
+    return false
   }
+}
+
+
+
+async function roleTokenVerify(project_id) {
+  
+
+  const roleToken = Cookies.get('Project_token');
+
+  const decoded = jwtDecode(roleToken); 
+  
+  if (decoded.project_id !== project_id) {
+    return false
+  } else if ((decoded.project_id === project_id)) {
+    return true
+  }
+
 }
 
 
@@ -54,7 +79,7 @@ async function getRoleToken(project_id) {
 
 
 
-export { getRoleToken };
+export { getRoleToken, roleTokenVerify };
 
 
 

@@ -363,7 +363,11 @@ async def create_project_token_service(request: Request, project_id: User_projec
                 ))
     user_project = query_user_project.scalar_one_or_none()
     if not user_project:
-        raise HTTPException(status_code=404, detail="Вы не добавлены в проект! Нет доступа!")
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        print("User_not_in_project")
+
+        return {"error": "User_not_in_project"}
+        # raise HTTPException(status_code=404, detail="Вы не добавлены в проект! Нет доступа!")
     
     
     data = {"project_id": user_project.project_id , "user_id": user_project.user_id, "role": user_project.role.value}

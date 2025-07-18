@@ -6,7 +6,7 @@ import { SectionCreateModal } from './SectionCreateModal'
 import { API } from "../../apiAxios/apiAxios"
 import { axiosRole } from "./axiosRole/axiosRole"
 import Cookies from "js-cookie";
-import { getRoleToken } from "./axiosRole/RoleService"
+import { getRoleToken, roleTokenVerify } from "./axiosRole/RoleService"
 
 
 
@@ -31,6 +31,9 @@ function SectionAllProject({ project_id }) {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(true);
 
+    const [visibleProject, setVisibleProject] = useState(true)
+
+
     useEffect(() => {
         const fetchData = async () => {
         try {
@@ -40,12 +43,39 @@ function SectionAllProject({ project_id }) {
           const response2 = await axios.get(`http://127.0.0.1:8000/project_get/${project_id}`);
           setProject(response2.data);
 
-          const RoleToken = getRoleToken(project_id)
+          //берем токена проекта
+          const RoleToken = await getRoleToken(project_id)      
+          
+          //тут условие если токена не было и его запросили, а пользователь не добавлен в проект
+          if (RoleToken === "User_not_in_project"){
+            setVisibleProject(false)
+          }
+
+          // ост тут!!!!!!!!!!!!!!!!
+          //тут проверка уже выданного токена. Если он не принадлежит данному проекту, то запрашиваем новый
+          //вторая проверка токена идет, криво логику в функциях сделал, переделать.....
+          //условие странно работает. Сделал так и работает как надо...
+          if (roleTokenVerify(project_id)) {
+            Cookies.remove("Project_token");
+            const newRoleToken = await getRoleToken(project_id)
+
+            if (newRoleToken === "User_not_in_project"){
+              setVisibleProject(false)
+            }
+
+          }
+
+          
+
+
+          console.log("Тут токен из юзэффекта: ", RoleToken)
+          
+
           // const responseProjectToken = await API.post(`/create_project_token/`,
           //   {
           //     project_id: project_id
           //   }
-          // );          
+          // );         
 
 
           
@@ -137,12 +167,29 @@ function SectionAllProject({ project_id }) {
 
   const usersInvite = () => {
       return navigate(`/projects/open/${project_id}/users_invite/`);}
-      
+  
+
+
+  if (!visibleProject) {
+      return (
+        <div>
+        <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>У вас нет доступа к проекту!</h1>
+        </div>
+        )
+    }    
+
+
+  const test = (project_id) => {
+    roleTokenVerify(project_id)
+  }
+
   return (
     <>
 
 
     <aside>
+          <button onClick={() => test(project_id)}>Test</button>
+          <br/><br/>
           <button onClick={toProjects} className="toolbar-button">К списку проектов</button>
           <br/><br/>
 
