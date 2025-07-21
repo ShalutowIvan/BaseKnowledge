@@ -1,7 +1,11 @@
-from fastapi import HTTPException, Request
-# from settings import CLIENT_ID
+from fastapi import HTTPException, Request, status
+from settings import CLIENT_ID
 from settings import PROJECT_KEY, EXPIRE_TIME_PROJECT_TOKEN, ALG
 import jwt # это PyJWT
+from .models import Role
+
+
+
 
 
 async def role_token_decode(role_token: str):#проверка аксес токена из куки  
@@ -31,17 +35,15 @@ async def role_token_decode(role_token: str):#проверка аксес ток
     return [project_id, user_id, role]
 
 
-
-async def verify_role_service(request: Request):
-    # client = request.headers.get("CLIENT_ID")
-    # if client != CLIENT_ID:        
-    #     raise HTTPException(status_code=401, detail="Клиент ID не сходится!!!!!!!!!!!!!!")
+# парсим роль из токена роли
+async def parse_role_service(request: Request):
+    client = request.headers.get("CLIENT_ID")
+    if client != CLIENT_ID:        
+        raise HTTPException(status_code=401, detail="Клиент ID не сходится!!!!!!!!!!!!!!")
         
     role_token = request.headers.get("Project_Token")
     if not role_token:
-        raise HTTPException(status_code=401, detail="Not role_token")
-    # print("Тут роль токен!!!!!!!!!!!")
-    # print(role_token)#тут object Promise, а не токен!!!!
+        raise HTTPException(status_code=401, detail="Not role_token")    
     
     check = await role_token_decode(role_token=str(role_token))
 
@@ -50,5 +52,19 @@ async def verify_role_service(request: Request):
     return check
 
 
+# проверка принадлежности проекту и соответствие роли админа
+async def verify_role_service(role, project_id):
 
-# ост тут. Делаю дешифровку токена роли и дальнейшее его использование
+    if role[0] != project_id:
+        print("Вы пользователь другого проекта!")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error_code": "access_denied", "message": "User is not a member of this project"})
+
+    
+    if role[2] != Role.ADMIN.value:
+        print("Данное действие доступно только администраторам!")        
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": "Your role is not suitable for this action"})
+
+    return True
+
+
+

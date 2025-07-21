@@ -2,7 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import { API } from "../../apiAxios/apiAxios"
-
+import { ROLES_USERS } from "./axiosRole/RoleService"
 
 
 function ProjectOpenUsers() {
@@ -203,12 +203,7 @@ function ProjectOpenUsers() {
     const [modifyRole, setModifyRole ] = useState(false)
     // const [selectedRole, setSelectedRole] = useState("");
 
-    const ROLES_USERS = {
-      ADMIN: 'admin',
-      EDITOR: 'editor',
-      VIEWER: 'viewer',
-      GUEST: 'guest'
-    };
+    
 
     //это функция для изменения состояния роли в таблице
     const updateRole = (itemId, newRole) => {

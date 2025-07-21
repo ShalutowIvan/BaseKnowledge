@@ -78,7 +78,7 @@ async def section_get_open(section_id: int, session: AsyncSession = Depends(get_
 
 
 # создание задачи
-@router_project_api.post("/task_create/{section_id}", response_model=TaskCreateSchema)
+@router_project_api.post("/task_create/{section_id}", response_model=TasksSchema)
 async def task_create(section_id: int, task: TaskCreateSchema, session: AsyncSession = Depends(get_async_session)) -> TasksSchema:
     return await task_create_service(section_id=section_id, db=session, task=task)
 

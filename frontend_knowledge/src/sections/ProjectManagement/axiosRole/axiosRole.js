@@ -22,10 +22,7 @@ axiosRole.interceptors.request.use(
     const projectId = config.params?.project_id;
 
     const roleToken = await getRoleToken(projectId);//если истек роль токен, то делаем его обновление используя API. Не читается тут project_id
-    
-
-    // const accessToken = getAccessToken();
-    
+        
     if (roleToken) {
       // console.log(config)
       // config.headers.Authorization = accessToken;
@@ -43,48 +40,38 @@ axiosRole.interceptors.request.use(
   }
 );
 
-// Интерцептор для обработки ошибок и обновления токена
-// axiosRole.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     const originalRequest = error.config;
 
-//     // Если ошибка связана с истекшим access токеном
-//     // if (error.response.status === 403 && !originalRequest._retry) 
 
-//     // const verifyAccess = axios.get(`http://127.0.0.1:8000/api/regusers/auth/verify_access_token/${getAccessToken()}`)
-//     // const verifyAccess = true
+axiosRole.interceptors.response.use(
+  (response) => response, // Успешные ответы пропускаем как есть
+  (error) => {
+    // Обрабатываем только ошибки с ответом от сервера
+    if (error.response) {
+      const { status, data } = error.response;
 
-//     if (error.response.status === 401 && !originalRequest._retry) {
-//       originalRequest._retry = true; // Помечаем запрос как повторный
+      // Глобальные сценарии (например, для 401)
+      // if (status === 401) {
+      //   window.location.href = '/login'; // Перенаправление на логин
+      // }
 
-//       // ост тут, не обновляется. Сделать проверку токена через роут бэка. Если будет тру то делать обнову.!!!!!!!!!!!!!!!!
+      // Пробрасываем ошибку дальше в компонент
+      return Promise.reject({
+        message: data.detail?.message,
+        error_code: data.detail?.error_code,
+        status,
+        errorDetail: data.detail
+      });
+    }
 
-//       try {
-//         // Пробуем обновить access токен с помощью refresh токена
-//         const newAccess = await updateAccessTokenFromRefreshToken();
-//         const newRole = await updateRoleTokenFromAccessToken();
-//         if (newAccess["Authorization"] && newRole["X-User-Role-Token"]) {
-//           // Обновляем access токен в куке
-//           // setAccessToken(newTokens["Authorization"]);
-//           // setRefreshToken(newTokens["refresh_token"])       
-//           // Повторяем оригинальный запрос с новым токеном
-//           originalRequest.headers.Authorization = newAccess["Authorization"];
-//           originalRequest.headers["X-User-Role-Token"] = newRole["X-User-Role-Token"];
-//           return axiosRole(originalRequest);
-//         }
-//       } catch (refreshError) {
-//         console.error("Failed to refresh token:", refreshError);
-//         // Если refresh токен тоже истек, перенаправляем на страницу входа
-//         // window.location.href = "/regusers/authorization";
-//         // return <Navigate to='/regusers/authorization/' />
-        
-//       }
-//     }
+    // Для ошибок сети/таймаута
+    return Promise.reject({
+      message: 'Сервер не отвечает. Проверьте интернет.',
+      status: null,
+    });
+  }
+);
 
-//     return Promise.reject(error);
-//   }
-// );
+
 
 export { axiosRole };
 

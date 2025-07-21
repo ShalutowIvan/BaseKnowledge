@@ -4,6 +4,17 @@ import { API } from "../../../apiAxios/apiAxios"
 import { jwtDecode } from 'jwt-decode';
 
 
+
+const ROLES_USERS = {
+      ADMIN: 'admin',
+      EDITOR: 'editor',
+      VIEWER: 'viewer',
+      GUEST: 'guest'
+    };
+
+
+
+
 function isTokenExpired(token) {
   try {
     const decoded = jwtDecode(token); // Декодируем токен без проверки подписи
@@ -34,11 +45,11 @@ async function getRoleToken(project_id) {
             }
           );
 
-    console.log("Обновляем Project_token...")
+    
     //проверка нет ли такой ошибки в ответе от сервера
-    if (response.data["error"] === "User_not_in_project") {
-      return response.data["error"]
-    }
+    // if (response.data["error"] === "User_not_in_project") {
+    //   return response.data["error"]
+    // }
 
     const newRoleToken = response.data["project_token"];
     // Cookies.set('Project_token', newRoleToken);
@@ -51,14 +62,19 @@ async function getRoleToken(project_id) {
 
     return newRoleToken;
   } catch (error) {
-    console.error('Ошибка при получении токена роли', error);
+    // console.error('Ошибка при получении токена роли', error.response.status);
+    console.error('Ошибка при получении токена роли', error.response.data.detail.message);
     // throw error; // Пробрасываем ошибку, чтобы обработать её в интерцепторе
-    return false
+    // const responseError = {
+    //   detail: error.response.data.detail,
+    //   status: error.response.status
+    // };
+    return error.response.data.detail.error_code;
   }
 }
 
 
-
+//тут идет сравнение номера проекта в токене и в параметр ссылки
 async function roleTokenVerify(project_id) {
   
 
@@ -79,7 +95,7 @@ async function roleTokenVerify(project_id) {
 
 
 
-export { getRoleToken, roleTokenVerify };
+export { getRoleToken, roleTokenVerify, ROLES_USERS };
 
 
 

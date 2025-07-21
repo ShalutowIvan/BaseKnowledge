@@ -1,4 +1,4 @@
-from fastapi import HTTPException, Request, UploadFile, File, Body
+from fastapi import HTTPException, Request, UploadFile, File, Body, status
 from fastapi.responses import FileResponse
 from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload, joinedload, load_only
@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timedelta
 from .models import *
 from .schemas import *
-from .verify_role import verify_role_service
+from .verify_role import parse_role_service, verify_role_service
 
 import os
 import uuid
@@ -69,19 +69,13 @@ async def section_create_service(project_id: int, db: AsyncSession, section: Sec
 
 
 # измененние шапки. project_id тут не query параметр, а параметр из ссылки роута. В реакт интерцепторе тоже есть query параметр project_id используемый для обновления Project_token, но он потом удаляется и не передается
-async def update_project_header_service(request: Request, project_id: int, project_update: ProjectsCreateSchema, db: AsyncSession):
+async def update_project_header_service(request: Request, project_id: int, project_update: ProjectsCreateSchema, db: AsyncSession):    
     
-    # user_id = await verify_user_service(request=request)
-    role = await verify_role_service(request=request)
-    print("!!!!!!!!!!!!!!!!!!!!")
-    print(role)
-    if role[0] != project_id:
-        print("Вы пользователь другого проекта!")
+    # 0. Проверка роли, пока только на админа
+    role = await parse_role_service(request=request)
+    verify = await verify_role_service(role=role, project_id=project_id)
+
     
-    if role[2] != Role.ADMIN.value:
-        print("Данное действие доступно только администраторам!")
-
-
     # 1. Получаем текущий проект
     query = select(Project).where(Project.id == project_id)
         
@@ -362,12 +356,9 @@ async def create_project_token_service(request: Request, project_id: User_projec
                 .where(ProjectUserAssociation.project_id == project_id.project_id)
                 ))
     user_project = query_user_project.scalar_one_or_none()
-    if not user_project:
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print("User_not_in_project")
+    if not user_project:        
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error_code": "access_denied", "message": "User is not a member of this project"})
 
-        return {"error": "User_not_in_project"}
-        # raise HTTPException(status_code=404, detail="Вы не добавлены в проект! Нет доступа!")
     
     
     data = {"project_id": user_project.project_id , "user_id": user_project.user_id, "role": user_project.role.value}

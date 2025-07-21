@@ -6,37 +6,100 @@ import { TaskCreateModal } from './TaskCreateModal'
 
 
 function SectionOpen() {
-    // const revalidator = useRevalidator();    
+    // const revalidator = useRevalidator();
+
+    const [userRole, setUserRole] = useState("")
 
     // const { taskLoad, section_id } = useLoaderData();//лоадер содержания проекта, грузим разделы
     const { section_id } = useParams();
     const [editModeHeader, setEditModeHeader] = useState(false);//это для редактирования шапки проекта
 
     // const project_id = useParams();
-    const [section, setSection] = useState({})//фигурные скобки означают что тут объект
+    const [section, setSection] = useState(null)//фигурные скобки означают что тут объект
 
     const [tasks, setTasks] = useState([]);
     
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-            fetch(`http://127.0.0.1:8000/section_get/${section_id}`)
-                .then(res => res.json())
-                .then(data => setSection(data));            
-        }, [section_id])
+    const navigate = useNavigate();
 
 
+
+    // useEffect(() => {
+    //     const fetchSection = async () => {
+    //         try {
+    //             setLoading(true);
+    //             const res = await fetch(`http://127.0.0.1:8000/section_get/${section_id}`);
+    //             const data = await res.json();
+    //             setSection(data);
+    //         } catch (err) {
+    //             setError("Ошибка загрузки данных раздела");
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
+    //     fetchSection();
+    // }, [section_id]);
+
+
+    // useEffect(() => {
+    // const fetchTasks = async () => {
+    //     const res = await fetch(`http://127.0.0.1:8000/task_section_all/${section_id}`);
+    //     const data = await res.json();
+    //     setTasks(data);
+    // };
+    // fetchTasks();
+    // }, [section_id]);
+
     useEffect(() => {
-    const fetchTasks = async () => {
-        const res = await fetch(`http://127.0.0.1:8000/task_section_all/${section_id}`);
-        const data = await res.json();
-        setTasks(data);
-    };
-    fetchTasks();
+        const fetchTasks = async () => {
+            try {
+                setLoading(true);
+                const sectionRes = await fetch(`http://127.0.0.1:8000/section_get/${section_id}`);
+                const sectionData = await sectionRes.json();
+                setSection(sectionData);
+
+                const tasksRes = await fetch(`http://127.0.0.1:8000/task_section_all/${section_id}`);
+                const tasksData = await tasksRes.json();
+                setTasks(tasksData);
+
+            } catch (err) {
+                setError("Ошибка загрузки задач");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTasks();
     }, [section_id]);
 
-    const navigate = useNavigate();
+     
+    // useEffect(() => {
+    //     const fetchData = async () => {
+    //         try {
+    //             setLoading(true);
+    //             const [sectionRes, tasksRes] = await Promise.all([
+    //                 fetch(`http://127.0.0.1:8000/section_get/${section_id}`),
+    //                 fetch(`http://127.0.0.1:8000/task_section_all/${section_id}`)
+    //             ]);
+                
+    //             const sectionData = await sectionRes.json();
+    //             const tasksData = await tasksRes.json();
+                
+    //             setSection(sectionData);
+    //             setTasks(tasksData);
+    //         } catch (err) {
+    //             setError("Ошибка загрузки данных");
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
+        
+    //     fetchData();
+    // }, [section_id]);
+    
+
+    
     
     const goBack = () => {      
       return navigate(`/project/open/${section.project_id}`);}
@@ -118,6 +181,19 @@ function SectionOpen() {
       setTasks(prevTasks => [...prevTasks, newTask]);
       setModalOpen(false);
       };
+
+
+  if (loading || !section || tasks.length === 0) {
+      return <div>Загрузка...</div>;
+  }
+
+    // Если есть ошибка, показываем её
+    if (error) {
+        return <div style={{ color: "red" }}>{error}</div>;
+    }
+
+
+
  
       
   return (
@@ -249,7 +325,8 @@ function SectionOpen() {
                           <h2>Описание: {task.description}</h2>
                           <NavLink className={({ isActive }) => 
                                 isActive ? "active" : ""
-                              } key={task.id} to={`/projects/open/${section.project_id}/section_open/${section.id}/task_open/${task.id}`}>
+                              } key={task.id} to={`/projects/open/${section.project_id}/section_open/${section_id}/task_open/${task?.id}`}>
+                              <h2>номер таски: {task?.id}</h2>
                               <button className="toolbar-button">Открыть</button>
                           </NavLink>
                           <p>______________________________________________________</p>

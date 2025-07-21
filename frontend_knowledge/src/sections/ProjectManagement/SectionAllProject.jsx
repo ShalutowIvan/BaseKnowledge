@@ -7,13 +7,16 @@ import { API } from "../../apiAxios/apiAxios"
 import { axiosRole } from "./axiosRole/axiosRole"
 import Cookies from "js-cookie";
 import { getRoleToken, roleTokenVerify } from "./axiosRole/RoleService"
-
+import { jwtDecode } from 'jwt-decode';
+import { ROLES_USERS } from "./axiosRole/RoleService"
 
 
 function SectionAllProject({ project_id }) {
     // const revalidator = useRevalidator();
 
     // const { sectionLoad, project_id } = useLoaderData();//лоадер содержания проекта, грузим разделы
+    
+    const [userRole, setUserRole] = useState("")
 
     const [editModeHeader, setEditModeHeader] = useState(false);//это для редактирования шапки раздела
 
@@ -43,52 +46,37 @@ function SectionAllProject({ project_id }) {
           const response2 = await axios.get(`http://127.0.0.1:8000/project_get/${project_id}`);
           setProject(response2.data);
 
+          //начало работы с токеном
           //берем токена проекта
-          const RoleToken = await getRoleToken(project_id)      
+          let RoleToken = await getRoleToken(project_id);
           
-          //тут условие если токена не было и его запросили, а пользователь не добавлен в проект
-          if (RoleToken === "User_not_in_project"){
+          //тут условие если токена не было и его запросили, а пользователь не добавлен в проект          
+          if (RoleToken === "access_denied"){
             setVisibleProject(false)
           }
-
-          // ост тут!!!!!!!!!!!!!!!!
-          //тут проверка уже выданного токена. Если он не принадлежит данному проекту, то запрашиваем новый
-          //вторая проверка токена идет, криво логику в функциях сделал, переделать.....
-          //условие странно работает. Сделал так и работает как надо...
+          
+          //тут проверка уже выданного токена. Если он не принадлежит данному проекту, то запрашиваем новый                    
           if (roleTokenVerify(project_id)) {            
             Cookies.remove("Project_token");
-            const newRoleToken = await getRoleToken(project_id)
-
-            if (newRoleToken === "User_not_in_project"){
+            const RoleToken = await getRoleToken(project_id);
+            if (RoleToken === "access_denied"){
               setVisibleProject(false)
             }
-
           }
+          const decoded = jwtDecode(RoleToken);
+          setUserRole(decoded.role)
 
-          
-
-
-          // console.log("Тут токен из юзэффекта: ", RoleToken)
-          
-
-          // const responseProjectToken = await API.post(`/create_project_token/`,
-          //   {
-          //     project_id: project_id
-          //   }
-          // );         
-
-
-          
+          setError("")
           setLoading(false);
         } catch (err) {
-          setError(err);
+          // setError(err);
           setLoading(false);
         }
         };
 
         fetchData();
 
-      }, [])
+      }, [userRole])
 
     
     
@@ -97,7 +85,7 @@ function SectionAllProject({ project_id }) {
     const deleteProject = () => {
       if (window.confirm('Вы уверены, что хотите удалить?')) {
         // Действие при подтверждении
-        axios.delete(`http://127.0.0.1:8000/delete_project/${project_id}`)      
+        axiosRole.delete(`http://127.0.0.1:8000/delete_project/${project_id}`)      
         navigate("/projects/");
         revalidator.revalidate();//принудительная перезагрузка лоадера
       }  
@@ -137,16 +125,31 @@ function SectionAllProject({ project_id }) {
                 }
                 
                 );
-            setEditModeHeader(false)            
-            if (response.statusText==='OK') {                
+            setEditModeHeader(false)
+            setError("")   
+            if (response.statusText==='OK') {               
                 console.log("Update complete!")                
             } else {
                 const errorData = await response.data
-                console.log(errorData, 'тут ошибка')     
+                console.log('тут ошибка', errorData)
             }
-        } catch (error) {            
-            console.log(error)
-            setError('что-то пошло не так');            
+        } catch (error) {
+            if (error.status===403 || error.status===404) {
+              // Ошибка от сервера (4xx/5xx)
+              console.log(error.error_code)              
+              setError(error.message)            
+            } else {
+              setError(error.errorDetail);
+            }
+
+          // if (error.status === 403) {
+          //     setError(error.message);
+          //   } else {
+          //     setError(error.message || 'Ошибка при загрузке');
+          //   }
+
+          //   console.log(error)
+            // setError('что-то пошло не так');            
         } finally {
           setLoading(false);
         }    
@@ -179,16 +182,14 @@ function SectionAllProject({ project_id }) {
     }    
 
 
-  const test = (project_id) => {
-    roleTokenVerify(project_id)
-  }
+  
 
   return (
     <>
 
 
     <aside>
-          <button onClick={() => test(project_id)}>Test</button>
+          <p>{userRole}</p>
           <br/><br/>
           <button onClick={toProjects} className="toolbar-button">К списку проектов</button>
           <br/><br/>
@@ -213,9 +214,13 @@ function SectionAllProject({ project_id }) {
               <br/>
               <span style={{ fontSize: '16px', color: '#E0FFFF' }}>{project.description}</span>
               <br/><br/>
-              <button onClick={() => setEditModeHeader(true)} className="toolbar-button">
-                Редактировать шапку
-              </button>            
+              {
+                (userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) && 
+                  <button onClick={() => setEditModeHeader(true)} className="toolbar-button">
+                    Редактировать шапку
+                  </button>
+              }
+              
               
               </>
               ) : (
@@ -276,7 +281,10 @@ function SectionAllProject({ project_id }) {
                       
                     
                     {/*конец четвертой строки*/}
-                  {/*{error && <p style={{ color: 'red'}}>{error}</p> }*/}
+                  {error && 
+                  <div>
+                  <p style={{ color: 'red'}}>{error}</p> 
+                  </div>}
                 </form>
 
               {/*конец формы*/}
@@ -293,13 +301,22 @@ function SectionAllProject({ project_id }) {
         </div>
     {/* конец шапки проекта */}
 
-          <button onClick={usersInvite} className="toolbar-button">Пользователи в проекте</button>
+          {userRole === ROLES_USERS.ADMIN && <button onClick={usersInvite} className="toolbar-button">Пользователи в проекте</button>}
+          
+          
+          
           <p>_________________________________</p>
-          <h1>Разделы проекта</h1>
-          <button className="toolbar-button" onClick={openModalClick}>Добавить раздел</button>
+          <h1>Разделы проекта</h1> 
+          {(userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
+           <>           
+           <button className="toolbar-button" onClick={openModalClick}>Добавить раздел</button>
+           </>
+          }
+          
 			        
         <br/><br/>
-                
+          {(userRole !== ROLES_USERS.GUEST) && 
+          <>
           {
                 sections?.map(section => (
                   <>
@@ -331,6 +348,9 @@ function SectionAllProject({ project_id }) {
 		          onSuccess={handleCreateSuccess}
 		        />
 		      )}
+
+          </>
+          }
 
     </aside>
 
