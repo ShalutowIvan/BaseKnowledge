@@ -12,9 +12,14 @@ import 'highlight.js/styles/atom-one-dark.css'; // стили подсветки
 import { markdownPlugins, markdownComponents } from './MDutils/UtilsImageMD';
 import { TextStyleToolbar } from './MDutils/TextStyleToolbar';
 
+import { useRoleStore } from './axiosRole/RoleStore';
+import { ROLES_USERS } from "./axiosRole/RoleService"
+
 
 function TaskOpen() {
-    const revalidator = useRevalidator();    
+    const revalidator = useRevalidator();
+
+    const userRole = useRoleStore(state => state.role);
 
     const [section, setSection] = useState({})
 
@@ -207,10 +212,11 @@ function TaskOpen() {
 
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>            
             <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{task.description}</span>
-            
+            {(userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
             <button onClick={() => setEditModeHeader(true)} className="toolbar-button">
               Редактировать шапку
             </button>
+            }
             
           </div>
           </>
@@ -294,7 +300,10 @@ function TaskOpen() {
              {task.state === TASK_STATES.AT_WORK && 'В работе'}
              {task.state === TASK_STATES.COMPLETED && 'Завершена'}
             </span>
-            <button onClick={() => {setModifyState(true);}} className="change-button"></button>
+            
+            {(userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
+            <button onClick={() => {setModifyState(true);}} className="change-button"></button>}
+
             </>
           ) : (
           <>
@@ -404,15 +413,19 @@ function TaskOpen() {
             <br/>
             {task.state !== TASK_STATES.COMPLETED && 
             <>
-            <button onClick={() => setEditMode(true)} className="toolbar-button">
-              Редактировать задачу
-            </button>
-            <button onClick={deleteTask} className="delete-button">Удалить задачу</button>
-            </>
+            {
+              (userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
+              <button onClick={() => setEditMode(true)} className="toolbar-button">
+                Редактировать задачу
+              </button>
             }
             
-
-            
+            {
+              (userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
+              <button onClick={deleteTask} className="delete-button">Удалить задачу</button>
+            }
+            </>
+            }            
 
         </div>
       )}

@@ -25,8 +25,8 @@ router_project_api = APIRouter(
 
 #запрос списка проектов
 @router_project_api.get("/project_all/", response_model=list[ProjectsSchema])
-async def projects_all(session: AsyncSession = Depends(get_async_session)) -> ProjectsSchema:
-    return await get_projects(db=session)
+async def projects_all(request: Request, session: AsyncSession = Depends(get_async_session)) -> ProjectsSchema:
+    return await get_projects(request=request, db=session)
 
 
 # создание проекта
@@ -37,8 +37,8 @@ async def project_create(request: Request, project: ProjectsCreateSchema, sessio
 
 # запрос проекта при открытии
 @router_project_api.get("/project_get/{project_id}", response_model=ProjectsSchema)
-async def project_get_open(project_id: int, session: AsyncSession = Depends(get_async_session)) -> ProjectsSchema:
-    return await get_project_open(project_id=project_id, db=session)
+async def project_get_open(request: Request, project_id: int, session: AsyncSession = Depends(get_async_session)) -> ProjectsSchema:
+    return await get_project_open(request=request, project_id=project_id, db=session)
 
 
 # запрос секций в проекте

@@ -55,8 +55,10 @@ const getRefreshToken = () => {
 const updateAccessTokenFromRefreshToken = async () => {
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
+
     throw new Error("No refresh token found");
   }
+  
   //делаю запрос на обновление токенов
   const response = await axios.get(`http://127.0.0.1:8000/api/regusers/auth/update_access_token/${refreshToken}`);
 

@@ -6,16 +6,27 @@ from settings import CLIENT_ID
 
 
 async def verify_user_service(request: Request):
-    client = request.headers.get("CLIENT_ID")
-    if client != CLIENT_ID:        
-        raise HTTPException(status_code=401, detail="Клиент ID не сходится!!!!!!!!!!!!!!")
+    client = request.headers.get("CLIENT_ID")    
+    if client != CLIENT_ID:
+        print("Не верный CLIENT_ID")
+        return False
+        # raise HTTPException(status_code=401, detail="Error CLIENT_ID")
         
     token = request.headers.get("Authorization")
     if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        print("Не верный токен Authorization")
+        return False
+        # raise HTTPException(status_code=401, detail="Not authenticated")
     
-    check = await access_token_decode(acces_token=str(token))
+    try:
+        check = await access_token_decode(acces_token=str(token))
+        user_id = int(check[1])
+        return user_id
+    except Exception as ex:
+        print("Ошибка при декодировании access_token ниже")
+        print(ex)
+        return False
+        # raise HTTPException(status_code=401, detail="Not verified")
 
-    user_id = int(check[1])
 
-    return user_id
+    

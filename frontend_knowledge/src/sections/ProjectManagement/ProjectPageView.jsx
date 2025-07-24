@@ -1,7 +1,7 @@
 import { useParams, Link, useNavigate, useLoaderData, Await, useAsyncValue, NavLink } from 'react-router-dom'
 import { React, Suspense, useState, useEffect } from 'react';
 import Cookies from "js-cookie";
-// import { API } from "../../apiAxios/apiAxios"
+import { API } from "../../apiAxios/apiAxios"
 import axios from "axios"
 import { ProjectCreateModal } from './ProjectCreateModal'
 
@@ -36,9 +36,9 @@ function ProjectPageView() {
   //   return <p>Загрузка...</p>;
   // 	}
 
-	// if (error) {
-  //   return <p>Ошибка: {error.message}</p>;
-  // 	}
+	if (projectLoad.error === "access_denied") {
+    return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {projectLoad["error"]}. Пройдите авторизацию.</h1>
+  	}
 
 
 	return (
@@ -85,19 +85,22 @@ function ProjectPageView() {
 
 
 async function getProjectList() { 
-  const res = await fetch("http://127.0.0.1:8000/project_all/")//тут берутся все элементы с одним и тем же номером документа
+  // const res = await fetch("http://127.0.0.1:8000/project_all/")//тут берутся все элементы с одним и тем же номером документа
 
-  // try {
-  //       const res = await API.get(`/api/checkout_list/orders/${id}`)     
-  //  return res.data
-  //     } catch (error) {
-  //      //если ошибка, то выдаем ошибку
-  //       console.error("Error here: ", error);
-  //       // setError("Failed to fetch user data. Please try again.");
-  //       return "error"
-  //     }
+  try {
+        const res = await API.get(`http://127.0.0.1:8000/project_all/`)
+        console.log(res)
+        return res.data
+      } catch (error) {
+       
+        console.log("Ошибка из detail:", error.response?.data?.detail)
+        // console.log("Статус ответа:", error.response?.status)       
 
-  return res.json()
+        // не отображается ошибка на странице, хз почему
+        return {"error": error.response?.data?.detail.error_code}
+      }
+
+  // return res.json()
 }
 
 

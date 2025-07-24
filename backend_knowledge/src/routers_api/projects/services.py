@@ -24,12 +24,28 @@ from settings import PROJECT_KEY, EXPIRE_TIME_PROJECT_TOKEN, ALG
 ############################################################
 
 
-
-
 # получение всех проектов, пока без пагинации
-async def get_projects(db: AsyncSession) -> list[ProjectsSchema]:
-    projects = await db.execute(select(Project).order_by(Project.created_at.desc()))    
-    return projects.scalars().all()
+async def get_projects(request: Request, db: AsyncSession) -> list[ProjectsSchema]:
+
+    user_id = await verify_user_service(request=request)
+
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error_code": "access_denied", "message": "User is not a member of this project"})
+
+    stmt = (
+        select(Project)  # Выбираем проекты        
+        # Присоединяем ассоциативную таблицу (Project -> ProjectUserAssociation)
+        .join(Project.users)        
+        # Фильтруем только записи, где user_id совпадает с ID текущего пользователя
+        .where(ProjectUserAssociation.user_id == user_id)
+        # Сортируем по дате создания (новые сверху)
+        .order_by(Project.created_at.desc())
+    )
+
+    result = await db.execute(stmt)
+    projects = result.scalars().all()
+    
+    return projects
     
 
 
@@ -50,9 +66,26 @@ async def project_create_service(request: Request, db: AsyncSession, project: Pr
     return new_project
 
 
-async def get_project_open(project_id: int, db: AsyncSession) -> ProjectsSchema:
-    project = await db.execute(select(Project).where(Project.id == project_id))    
-    return project.scalars().first()
+async def get_project_open(request: Request, project_id: int, db: AsyncSession) -> ProjectsSchema:
+    user_id = await verify_user_service(request=request)
+
+    stmt = (
+        select(Project)  # Выбираем проекты        
+        # Присоединяем ассоциативную таблицу (Project -> ProjectUserAssociation)
+        .join(Project.users)
+        # Фильтруем только записи, где user_id совпадает с ID текущего пользователя
+        .where(ProjectUserAssociation.project_id == project_id)
+        .where(ProjectUserAssociation.user_id == user_id)        
+    )
+
+    result = await db.execute(stmt)
+    project = result.scalar_one_or_none()
+    if project == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error_code": "access_denied", "message": "User is not a member of this project"})
+
+        # return "Все плохо тут прописать httpexception с детаил и тд ост тут.....!!! и сразу при запросе проекта будет ошибка с бэка если пользака нет в проекте и в реакт сделать логику..."
+    # return project.scalars().first()
+    return project
 
 
 async def get_sections_project(project_id: int, db: AsyncSession) -> SectionsSchema:
@@ -70,7 +103,6 @@ async def section_create_service(project_id: int, db: AsyncSession, section: Sec
 
 # измененние шапки. project_id тут не query параметр, а параметр из ссылки роута. В реакт интерцепторе тоже есть query параметр project_id используемый для обновления Project_token, но он потом удаляется и не передается
 async def update_project_header_service(request: Request, project_id: int, project_update: ProjectsCreateSchema, db: AsyncSession):    
-    
     # 0. Проверка роли, пока только на админа
     role = await parse_role_service(request=request)
     verify = await verify_role_service(role=role, project_id=project_id)
@@ -241,7 +273,7 @@ async def search_user_service(email_user: EmailStr, project_id: int, db: AsyncSe
         # print("!!!!!!!!!!!!!!!!!!")
         # print(db_user)
         # if db_user == None:
-        #     return {"user": None, "invite": False}
+        #     return {"user": None, "invite": False}        
 
         query_user_project = await db.execute(
                 (select(ProjectUserAssociation)

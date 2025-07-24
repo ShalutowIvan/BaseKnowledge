@@ -9,6 +9,7 @@ import Cookies from "js-cookie";
 import { getRoleToken, roleTokenVerify } from "./axiosRole/RoleService"
 import { jwtDecode } from 'jwt-decode';
 import { ROLES_USERS } from "./axiosRole/RoleService"
+import { useRoleStore } from './axiosRole/RoleStore';
 
 
 function SectionAllProject({ project_id }) {
@@ -16,7 +17,9 @@ function SectionAllProject({ project_id }) {
 
     // const { sectionLoad, project_id } = useLoaderData();//лоадер содержания проекта, грузим разделы
     
-    const [userRole, setUserRole] = useState("")
+    // const [userRole, setUserRole] = useState("")
+    const setRole = useRoleStore(state => state.setRole);
+    const userRole = useRoleStore(state => state.role);
 
     const [editModeHeader, setEditModeHeader] = useState(false);//это для редактирования шапки раздела
 
@@ -40,11 +43,13 @@ function SectionAllProject({ project_id }) {
     useEffect(() => {
         const fetchData = async () => {
         try {
-          const response = await axios.get(`http://127.0.0.1:8000/section_project_all/${project_id}`);
+          const response2 = await API.get(`http://127.0.0.1:8000/project_get/${project_id}`);
+          setProject(response2.data);
+
+          const response = await API.get(`http://127.0.0.1:8000/section_project_all/${project_id}`);
           setSections(response.data);
 
-          const response2 = await axios.get(`http://127.0.0.1:8000/project_get/${project_id}`);
-          setProject(response2.data);
+          
 
           //начало работы с токеном
           //берем токена проекта
@@ -63,13 +68,19 @@ function SectionAllProject({ project_id }) {
               setVisibleProject(false)
             }
           }
-          const decoded = jwtDecode(RoleToken);
-          setUserRole(decoded.role)
+          // const decoded = jwtDecode(RoleToken);
+          // setUserRole(decoded.role)
+          setRole(RoleToken)
 
           setError("")
           setLoading(false);
-        } catch (err) {
+        } catch (error) {
           // setError(err);
+          // error.response.data.detail.error_code
+          if (error.response.data.detail.error_code === "access_denied") {
+            setVisibleProject(false)
+          }
+
           setLoading(false);
         }
         };

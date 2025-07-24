@@ -3,12 +3,15 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { NavLink, useNavigate, useParams, useLoaderData, useRevalidator } from 'react-router-dom'
 import { TaskCreateModal } from './TaskCreateModal'
+import { useRoleStore } from './axiosRole/RoleStore';
+import { ROLES_USERS } from "./axiosRole/RoleService"
 
 
 function SectionOpen() {
     // const revalidator = useRevalidator();
 
-    const [userRole, setUserRole] = useState("")
+    //глобальное состояние роли из zustand
+    const userRole = useRoleStore(state => state.role);
 
     // const { taskLoad, section_id } = useLoaderData();//лоадер содержания проекта, грузим разделы
     const { section_id } = useParams();
@@ -225,9 +228,12 @@ function SectionOpen() {
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>            
             <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{section.description}</span>
             
+            {(userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
             <button onClick={() => setEditModeHeader(true)} className="toolbar-button">
               Редактировать шапку
-            </button>            
+            </button>
+            }
+            
           </div>
           </>
           ) : (
@@ -303,7 +309,8 @@ function SectionOpen() {
           {/* <button onClick={goBack} className="toolbar-button">Назад</button>           */}
           <h1>Задачи в разделе</h1>
           <p>______________________________________________________</p>
-          <button className="toolbar-button" onClick={openModalClick}>Добавить задачу</button>
+          {(userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
+          <button className="toolbar-button" onClick={openModalClick}>Добавить задачу</button>}
 
           {modalOpen && (
 		        <TaskCreateModal
