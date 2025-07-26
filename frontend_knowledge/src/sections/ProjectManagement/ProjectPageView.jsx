@@ -5,40 +5,72 @@ import { API } from "../../apiAxios/apiAxios"
 import axios from "axios"
 import { ProjectCreateModal } from './ProjectCreateModal'
 
+import { updateAccessTokenFromRefreshToken } from "../../regusers/AuthService"
+
 
 function ProjectPageView() {
 	const setActive = ({isActive}) => isActive ? 'active-link' : '';
 	const {projectLoad} = useLoaderData()
+	const [projects, setProjects] = useState(projectLoad);
 
-	const [projects, setProjects] = useState(projectLoad);	
+
+  // const [projects, setProjects] = useState([]);
 
   const navigate = useNavigate();  
 
-	// const [loading, setLoading] = useState(false);
-  // const [error, setError] = useState(null);
+	const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const [modalOpen, setModalOpen] = useState(false);
 
-  const openModalClick = () => {	    
-	    setModalOpen(true);
-	  	};
+  
+
+  // useEffect(() => {
+  //     const fetchProjects = async () => {
+  //       try {
+  //         const res = await API.get(`/project_all/`);
+  //         setProjects(res.data);
+  //         setError(null);
+  //       } catch (error) {
+  //         if (error.response?.data?.detail?.error_code === "access_denied") {
+  //           setError("access_denied");
+  //         } else {
+  //           setError("unknown_error");
+  //         }
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     };
+
+  //     fetchProjects();
+  //   }, []);
+
+   
+   // if (loading) {
+   //  return <p>Загрузка...</p>;
+   //  }
+
+  // if (error === "access_denied") {
+  //   return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {error}. Пройдите авторизацию.</h1>
+  // }
+
+
+	if (projectLoad.error === "401_UNAUTHORIZED") {  
+    return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {projectLoad["error"]}. Пройдите авторизацию.</h1>
+  	}
+
+
+  const openModalClick = () => {      
+      setModalOpen(true);
+      };
 
   
   const handleCreateSuccess = (newProject) => {
-		// Используем функциональную форму setProjects
-		console.log("Новый проект", newProject)
-		setProjects(prevProjects => [newProject, ...prevProjects]);
-		setModalOpen(false);
-		};
-
-
-  // if (loading) {
-  //   return <p>Загрузка...</p>;
-  // 	}
-
-	if (projectLoad.error === "access_denied") {
-    return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {projectLoad["error"]}. Пройдите авторизацию.</h1>
-  	}
+    // Используем функциональную форму setProjects
+    console.log("Новый проект", newProject)
+    setProjects(prevProjects => [newProject, ...prevProjects]);
+    setModalOpen(false);
+    };
 
 
 	return (
@@ -96,15 +128,16 @@ async function getProjectList() {
         console.log("Ошибка из detail:", error.response?.data?.detail)
         // console.log("Статус ответа:", error.response?.status)       
 
-        // не отображается ошибка на странице, хз почему
-        return {"error": error.response?.data?.detail.error_code}
+        
+        // return {"error": error.response?.data?.detail.error_code}
+        return {"error": error.response?.data?.detail}
       }
 
   // return res.json()
 }
 
 
-const ProjectListLoader = async () => {  
+const ProjectListLoader = async () => {
   return {projectLoad: await getProjectList()}
 }
 

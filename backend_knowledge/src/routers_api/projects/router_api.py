@@ -43,8 +43,8 @@ async def project_get_open(request: Request, project_id: int, session: AsyncSess
 
 # запрос секций в проекте
 @router_project_api.get("/section_project_all/{project_id}", response_model=list[SectionsSchema])
-async def section_project_all(project_id: int, session: AsyncSession = Depends(get_async_session)) -> SectionsSchema:
-    return await get_sections_project(project_id=project_id, db=session)
+async def section_project_all(request: Request,project_id: int, session: AsyncSession = Depends(get_async_session)) -> SectionsSchema:
+    return await get_sections_project(request=request, project_id=project_id, db=session)
 
 
 # изменение шапки проекта

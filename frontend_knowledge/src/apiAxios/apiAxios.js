@@ -45,9 +45,12 @@ API.interceptors.response.use(
     // if (error.response.status === 403 && !originalRequest._retry) 
 
     // const verifyAccess = axios.get(`http://127.0.0.1:8000/api/regusers/auth/verify_access_token/${getAccessToken()}`)
-    const verifyAccess = true
+    // const verifyAccess = true
+    
+    // const status_error_codes = [401, 402, 403, 404]
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status >= 400 && error.response?.status <= 499 && !originalRequest._retry) {
+    // if (error.response?.status === 401 || !originalRequest._retry) {
       originalRequest._retry = true; // Помечаем запрос как повторный
 
       // ост тут, не обновляется. Сделать проверку токена через роут бэка. Если будет тру то делать обнову.!!!!!!!!!!!!!!!!
@@ -60,8 +63,15 @@ API.interceptors.response.use(
           // setAccessToken(newTokens["Authorization"]);
           // setRefreshToken(newTokens["refresh_token"])       
           // Повторяем оригинальный запрос с новым токеном
+          
+          // первый вариант указания заголовков
           originalRequest.headers.Authorization = newTokens["Authorization"];
           originalRequest.headers.CLIENT_ID = apiKey;
+
+          // второй вариант указания заголовков
+          // API.defaults.headers.common['Authorization'] = newTokens["Authorization"];
+          // API.defaults.headers.common['CLIENT_ID'] = apiKey;
+
           return API(originalRequest);
         }
       } catch (refreshError) {

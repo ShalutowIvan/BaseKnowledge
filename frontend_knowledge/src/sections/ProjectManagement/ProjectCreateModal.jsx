@@ -62,7 +62,7 @@ function ProjectCreateModal({ onClose, onSuccess }) {
         } catch (error) {
             setLoading(false);
             console.log(error)
-            setError('что-то пошло не так');            
+            setError(error.response?.data?.detail || 'что-то пошло не так');            
         }    
     };
   

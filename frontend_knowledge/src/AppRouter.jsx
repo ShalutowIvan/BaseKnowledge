@@ -13,7 +13,7 @@ import { KnowledgeOpen, KnowledgeOpenLoader } from './sections/BaseKnowledge/Kno
 
 //проекты
 import { ProjectPageView, ProjectListLoader } from './sections/ProjectManagement/ProjectPageView';
-import { ProjectOpenLayout } from './sections/ProjectManagement/ProjectOpenLayout';
+import { ProjectOpenLayout, ProjectOpenLoader } from './sections/ProjectManagement/ProjectOpenLayout';
 import { ProjectOpenIndex } from './sections/ProjectManagement/ProjectOpenIndex';
 // import { ProjectOpen, ProjectOpenLoader } from './sections/ProjectManagement/ProjectOpen';
 // import { SectionCreate } from './sections/ProjectManagement/SectionCreate';
@@ -33,7 +33,6 @@ import Registration_verify from './regusers/Registration_verify';
 import Forgot_password from './regusers/Forgot_password';
 import Forgot_password_verify from './regusers/Forgot_password_verify';
 import { AuthProvider } from "./regusers/AuthProvider";
-import { Private } from "./regusers/Private";
 import { Registration_after } from "./regusers/Registration_after";
 
 
@@ -74,10 +73,11 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
 
 
           {/* проекты */}
-          <Route path="projects/" element={<ProjectPageView />}  loader={ProjectListLoader} />
+          
+          <Route path="projects/" element={<ProjectPageView />} loader={ProjectListLoader} />
                     
           {/* тут открывающий роут, далее вложенные */}
-          <Route path="projects/open/:project_id" element={<ProjectOpenLayout />}>
+          <Route path="projects/open/:project_id" element={<ProjectOpenLayout />} loader={ProjectOpenLoader}>
 
             <Route index element={<ProjectOpenIndex />} />
                         

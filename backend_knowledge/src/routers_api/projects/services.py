@@ -29,13 +29,13 @@ async def get_projects(request: Request, db: AsyncSession) -> list[ProjectsSchem
 
     user_id = await verify_user_service(request=request)
 
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error_code": "access_denied", "message": "User is not a member of this project"})
+    if not user_id:        
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="401_UNAUTHORIZED")
 
     stmt = (
         select(Project)  # Выбираем проекты        
         # Присоединяем ассоциативную таблицу (Project -> ProjectUserAssociation)
-        .join(Project.users)        
+        .join(Project.users)
         # Фильтруем только записи, где user_id совпадает с ID текущего пользователя
         .where(ProjectUserAssociation.user_id == user_id)
         # Сортируем по дате создания (новые сверху)
@@ -54,6 +54,9 @@ async def project_create_service(request: Request, db: AsyncSession, project: Pr
     # ищем пользователя по токену
     user_id = await verify_user_service(request=request)
 
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="401_UNAUTHORIZED")
+
     query = await db.execute(select(User).where(User.id == user_id))
     user = query.scalar()
     # print(dir(user))#в объекте user есть метод create_project, его можно юзать тут. То есть мы авторизовались, взяли пользака и юзаем метод из него для создания проекта. Но надо это тестировать...
@@ -68,6 +71,9 @@ async def project_create_service(request: Request, db: AsyncSession, project: Pr
 
 async def get_project_open(request: Request, project_id: int, db: AsyncSession) -> ProjectsSchema:
     user_id = await verify_user_service(request=request)
+
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="401_UNAUTHORIZED")
 
     stmt = (
         select(Project)  # Выбираем проекты        
@@ -88,7 +94,12 @@ async def get_project_open(request: Request, project_id: int, db: AsyncSession) 
     return project
 
 
-async def get_sections_project(project_id: int, db: AsyncSession) -> SectionsSchema:
+async def get_sections_project(request: Request, project_id: int, db: AsyncSession) -> SectionsSchema:
+    user_id = await verify_user_service(request=request)
+
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="401_UNAUTHORIZED")
+
     sections = await db.execute(select(Section).where(Section.project_id == project_id))    
     return sections.scalars().all()
 
@@ -381,14 +392,19 @@ async def role_project_change_service(user_role: User_role_change_schema, db: As
 
 
 async def create_project_token_service(request: Request, project_id: User_project_role_schema, db: AsyncSession, expires_delta: timedelta | None = None):
+
     current_user_id = await verify_user_service(request=request)
+
+    if not current_user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="401_UNAUTHORIZED")
+
     query_user_project = await db.execute(
                 (select(ProjectUserAssociation)
                 .where(ProjectUserAssociation.user_id == current_user_id)
                 .where(ProjectUserAssociation.project_id == project_id.project_id)
                 ))
     user_project = query_user_project.scalar_one_or_none()
-    if not user_project:        
+    if not user_project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error_code": "access_denied", "message": "User is not a member of this project"})
 
     

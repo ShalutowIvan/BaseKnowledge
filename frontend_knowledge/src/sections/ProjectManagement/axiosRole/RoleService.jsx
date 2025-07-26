@@ -46,13 +46,7 @@ async function getRoleToken(project_id) {
           );
 
     
-    //проверка нет ли такой ошибки в ответе от сервера
-    // if (response.data["error"] === "User_not_in_project") {
-    //   return response.data["error"]
-    // }
-
-    const newRoleToken = response.data["project_token"];
-    // Cookies.set('Project_token', newRoleToken);
+    const newRoleToken = response.data["project_token"];    
     Cookies.set("Project_token", newRoleToken, {
               // expires: 0.0005, // тут указывается колво дней тут 0,72 минуты
               expires: 30, // Кука истечет через 30 дней, тут указывается колво дней
@@ -64,38 +58,47 @@ async function getRoleToken(project_id) {
   } catch (error) {
     // console.error('Ошибка при получении токена роли', error.response.status);
     console.error('Ошибка при получении токена роли', error.response.data.detail.message);
-    // throw error; // Пробрасываем ошибку, чтобы обработать её в интерцепторе
-    // const responseError = {
-    //   detail: error.response.data.detail,
-    //   status: error.response.status
-    // };
+    
     return error.response.data.detail.error_code;
   }
 }
 
 
-//тут идет сравнение номера проекта в токене и в параметр ссылки
-async function roleTokenVerify(project_id) {
+//тут идет сравнение номера проекта в токене и в параметр ссылки, это если юзэффект
+// async function roleTokenVerify(project_id) {  
+
+//   const roleToken = Cookies.get('Project_token');
+
+//   const decoded = jwtDecode(roleToken); 
   
+//   if (decoded.project_id !== project_id) {    
+//     return true
+//   } else if ((decoded.project_id === project_id)) {
+//     return false
+//   }
 
-  const roleToken = Cookies.get('Project_token');
+// }
 
-  const decoded = jwtDecode(roleToken); 
+// это для лоадера
+// async function roleTokenVerify(project_id) {  
+
+//   const roleToken = getRoleToken(project_id) 
+
+//   const decoded = jwtDecode(roleToken); 
   
-  if (decoded.project_id !== project_id) {    
-    return true
-  } else if ((decoded.project_id === project_id)) {
-    return false
-  }
+//   if (decoded.project_id !== project_id) {    
+//     return true
+//   } else if ((decoded.project_id === project_id)) {
+//     return false
+//   }
 
-}
-
-
+// }
 
 
 
 
-export { getRoleToken, roleTokenVerify, ROLES_USERS };
+
+export { getRoleToken, ROLES_USERS };
 
 
 
