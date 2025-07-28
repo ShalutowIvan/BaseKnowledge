@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './CSS/DeleteGroup.css'
 import { API } from "../../apiAxios/apiAxios"
+import { axiosRole } from "./axiosRole/axiosRole"
+
 
 
 function SectionCreateModal({ project_id, onClose, onSuccess }) {
@@ -19,7 +21,7 @@ function SectionCreateModal({ project_id, onClose, onSuccess }) {
             setError("Есть пустые поля, заполните, пожалуйста!");
             return false;
         }
-        setError('');
+        // setError('');
         return true;
     }
 
@@ -31,20 +33,19 @@ function SectionCreateModal({ project_id, onClose, onSuccess }) {
         setLoading(true);
 
         try {
-            const response = await API.post(
+            const response = await axiosRole.post(
                 `http://127.0.0.1:8000/section_create/${project_id}`,
                 {                 
                     title,                    
                     description,
+                },
+                {
+                  params: {project_id: project_id},
                 }
                 
                 );
             setLoading(false);
-
-            // if (!response.data?.id) {
-            //     throw new Error("Некорректный формат ответа сервера");
-            //   }
-            
+                        
             if (response.statusText==='OK') {
               setTitle("");
               setDescription("");
@@ -58,8 +59,8 @@ function SectionCreateModal({ project_id, onClose, onSuccess }) {
             }
         } catch (error) {
             setLoading(false);
-            console.log(error)
-            setError('что-то пошло не так');            
+            console.log(error.message)
+            setError(error.message);            
         }    
     };
   

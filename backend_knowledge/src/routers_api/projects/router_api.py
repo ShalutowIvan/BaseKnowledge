@@ -43,7 +43,7 @@ async def project_get_open(request: Request, project_id: int, session: AsyncSess
 
 # запрос секций в проекте
 @router_project_api.get("/section_project_all/{project_id}", response_model=list[SectionsSchema])
-async def section_project_all(request: Request,project_id: int, session: AsyncSession = Depends(get_async_session)) -> SectionsSchema:
+async def section_project_all(request: Request, project_id: int, session: AsyncSession = Depends(get_async_session)) -> SectionsSchema:
     return await get_sections_project(request=request, project_id=project_id, db=session)
 
 
@@ -55,14 +55,14 @@ async def project_update_header(request: Request, project_id: int, project_updat
 
 # создание секции
 @router_project_api.post("/section_create/{project_id}", response_model=SectionsSchema)
-async def section_create(project_id: int, section: SectionsCreateSchema, session: AsyncSession = Depends(get_async_session)) -> SectionsSchema:
-    return await section_create_service(project_id=project_id, db=session, section=section)
+async def section_create(request: Request, project_id: int, section: SectionsCreateSchema, session: AsyncSession = Depends(get_async_session)) -> SectionsSchema:
+    return await section_create_service(request=request, project_id=project_id, db=session, section=section)
 
 
 # изменение шапки секции
-@router_project_api.patch("/section_update_header/{section_id}", response_model=SectionsCreateSchema)
-async def section_update_header(section_id: int, section_update: SectionsCreateSchema, session: AsyncSession = Depends(get_async_session)) -> SectionsCreateSchema:    
-    return await update_section_header_service(section_id=section_id, section_update=section_update, db=session)
+@router_project_api.patch("/section_update_header/{project_id}/{section_id}", response_model=SectionsCreateSchema)
+async def section_update_header(request: Request, project_id: int, section_id: int, section_update: SectionsCreateSchema, session: AsyncSession = Depends(get_async_session)) -> SectionsCreateSchema:    
+    return await update_section_header_service(request=request, project_id=project_id, section_id=section_id, section_update=section_update, db=session)
 
 
 # запрос тасок в разделе

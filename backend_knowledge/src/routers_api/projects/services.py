@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timedelta
 from .models import *
 from .schemas import *
-from .verify_role import parse_role_service, verify_role_service
+from .verify_role import parse_role_service, verify_project_service
 
 import os
 import uuid
@@ -95,67 +95,83 @@ async def get_project_open(request: Request, project_id: int, db: AsyncSession) 
 
 
 async def get_sections_project(request: Request, project_id: int, db: AsyncSession) -> SectionsSchema:
-    user_id = await verify_user_service(request=request)
+    role = await parse_role_service(request=request)#проверка клиент токена и дешифровка роли
+    verify = await verify_project_service(role=role, project_id=project_id)#проверка принадлежности проекту из токена
 
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="401_UNAUTHORIZED")
+    if (role[2] != Role.GUEST.value):
+        sections = await db.execute(select(Section).where(Section.project_id == project_id))    
+        return sections.scalars().all()
+    else:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role {role} is not suitable for this action"})
 
-    sections = await db.execute(select(Section).where(Section.project_id == project_id))    
-    return sections.scalars().all()
-
-
-async def section_create_service(project_id: int, db: AsyncSession, section: SectionsCreateSchema) -> SectionsSchema:    
-    new_section = Section(title=section.title, description=section.description, project_id=project_id)    
-    db.add(new_section)
-    await db.commit()
-    await db.refresh(new_section)
-    return new_section
-
-
+    
 # измененние шапки. project_id тут не query параметр, а параметр из ссылки роута. В реакт интерцепторе тоже есть query параметр project_id используемый для обновления Project_token, но он потом удаляется и не передается
 async def update_project_header_service(request: Request, project_id: int, project_update: ProjectsCreateSchema, db: AsyncSession):    
-    # 0. Проверка роли, пока только на админа
+    # 0. Проверка роли
     role = await parse_role_service(request=request)
-    verify = await verify_role_service(role=role, project_id=project_id)
+    verify = await verify_project_service(role=role, project_id=project_id)
 
-    
-    # 1. Получаем текущий проект
-    query = select(Project).where(Project.id == project_id)
+    if (role[2] == Role.ADMIN.value) or (role[2] == Role.EDITOR.value):    
+        # 1. Получаем текущий проект
+        query = select(Project).where(Project.id == project_id)
+            
+        result = await db.execute(query)
+        project_header = result.scalar()
+            
+        if not project_header:
+            raise HTTPException(status_code=404, detail="project not found")
         
-    result = await db.execute(query)
-    project_header = result.scalar()
+        # 2. Обновляем проект
+        project_header.title = project_update.title
+        project_header.description = project_update.description
         
-    if not project_header:
-        raise HTTPException(status_code=404, detail="project not found")
-    
-    # 2. Обновляем проект
-    project_header.title = project_update.title
-    project_header.description = project_update.description
-    
-    await db.commit()
-    await db.refresh(project_header)
-        
-    return project_header
+        await db.commit()
+        await db.refresh(project_header)
+            
+        return project_header
+    else:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role[2]} - is not suitable for this action"})
 
 
-async def update_section_header_service(section_id: int, section_update: SectionsCreateSchema, db: AsyncSession):
-    # 1. Получаем текущий проект
-    query = select(Section).where(Section.id == section_id)
+async def section_create_service(request: Request, project_id: int, db: AsyncSession, section: SectionsCreateSchema) -> SectionsSchema:
+    role = await parse_role_service(request=request)
+    verify = await verify_project_service(role=role, project_id=project_id)
+
+    if (role[2] == Role.ADMIN.value) or (role[2] == Role.EDITOR.value):
+        new_section = Section(title=section.title, description=section.description, project_id=project_id)    
+        db.add(new_section)
+        await db.commit()
+        await db.refresh(new_section)
+        return new_section        
+    else:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role[2]} - is not suitable for this action", "asd": "qwe"})
+
+
+async def update_section_header_service(request: Request, project_id: int, section_id: int, section_update: SectionsCreateSchema, db: AsyncSession):
+    role = await parse_role_service(request=request)
+    verify = await verify_project_service(role=role, project_id=project_id)
+
+    if (role[2] == Role.ADMIN.value) or (role[2] == Role.EDITOR.value):
+
+        # 1. Получаем текущий проект
+        query = select(Section).where(Section.id == section_id)
+            
+        result = await db.execute(query)
+        section_header = result.scalar()
+            
+        if not section_header:
+            raise HTTPException(status_code=404, detail="section not found")
         
-    result = await db.execute(query)
-    section_header = result.scalar()
+        # 2. Обновляем проект
+        section_header.title = section_update.title
+        section_header.description = section_update.description
         
-    if not section_header:
-        raise HTTPException(status_code=404, detail="section not found")
-    
-    # 2. Обновляем проект
-    section_header.title = section_update.title
-    section_header.description = section_update.description
-    
-    await db.commit()
-    await db.refresh(section_header)
-        
-    return section_header
+        await db.commit()
+        await db.refresh(section_header)
+            
+        return section_header
+    else:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role[2]} - is not suitable for this action", "asd": "qwe"})
 
 
 async def get_tasks_section(section_id: int, db: AsyncSession) -> TasksSchema:

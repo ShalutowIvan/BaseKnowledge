@@ -17,14 +17,18 @@ function ProjectOpenLayout() {
   const { projectLoad, sectionLoad, roleTokenLoad } = useLoaderData();
 
   //проверка есть ли ошибка авторизации
-  if (projectLoad.error === "401_UNAUTHORIZED" || sectionLoad.error === "401_UNAUTHORIZED") {  
-    return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {projectLoad["error"] || sectionLoad["error"]}. Пройдите авторизацию.</h1>
+  if (projectLoad.error === "401_UNAUTHORIZED") {  
+    return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {projectLoad["error"]}. Пройдите авторизацию.</h1>
     }
 
+  // if (sectionLoad.error) {
+  //   return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {sectionLoad.error}. Роль не соответсвует.</h1>
+  //   }
+
+  
+
   //проверка роли
-  if (roleTokenLoad.error) {
-    console.log("ТЫ ДУРАК");
-    // ТУТ НЕ РАБОТАЕТ БЛЯТЬ!!!!!!!!!!!!!!!!!!!!
+  if (roleTokenLoad.error === "access_denied") {
     return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>У вас нет доступа к проекту!</h1>      
   }    
 
@@ -76,8 +80,8 @@ function ProjectOpenLayout() {
         // }
         // const decoded = jwtDecode(roleTokenLoad);
         // setUserRole(decoded.role)
-        setRole(roleTokenLoad)
-
+        setRole(roleTokenLoad.newRoleToken)
+        console.log(roleTokenLoad.newRoleToken)
         setError("")
         setLoading(false);
       } catch (error) {
@@ -94,7 +98,7 @@ function ProjectOpenLayout() {
 
       fetchData();
 
-    }, [userRole])
+    }, [roleTokenLoad.newRoleToken])
 
   
 
@@ -140,11 +144,10 @@ const saveHeaderChanges = async (event) => {
               { title: project.title, description: project.description }, 
               {
                 params: {project_id: project_id},
-              }
-              
+              }              
               );
           setEditModeHeader(false)
-          setError("")   
+          setError("")
           if (response.statusText==='OK') {               
               console.log("Update complete!")                
           } else {
@@ -323,11 +326,15 @@ const usersInvite = () => {
           
               
         <br/><br/>
-          {(userRole !== ROLES_USERS.GUEST) && 
-          <>
           {
-                sections?.map(section => (
-                  <>
+            sections?.error === "role_denied" || !Array.isArray(sections) ?
+          (
+          <></>
+          ) : (
+          <>
+            {
+              sections?.map(section => (
+                  
                   <NavLink 
                     key={section.id}
                     to={`/projects/open/${project_id}/section_open/${section.id}`}
@@ -345,7 +352,7 @@ const usersInvite = () => {
                     )}
                   </NavLink>
                   
-                  </>
+                  
                 ))
             }
 
@@ -356,10 +363,9 @@ const usersInvite = () => {
               onSuccess={handleCreateSuccess}
             />
           )}
-
           </>
+          )          
           }
-
     </aside>
       
       {/* Основной контент (меняется) */}      
@@ -392,7 +398,12 @@ async function getSection(project_id) {
   
   try {        
         
-        const responseSections = await API.get(`http://127.0.0.1:8000/section_project_all/${project_id}`);
+        const responseSections = await axiosRole.get(`http://127.0.0.1:8000/section_project_all/${project_id}`,
+              {
+                params: {project_id: project_id}
+              }
+
+          );
 
         return responseSections.data
 
@@ -401,62 +412,55 @@ async function getSection(project_id) {
         // console.log("Ошибка из detail при запросе секций:", error.response?.data?.detail)
         // console.log("Статус ответа:", error.response?.status)       
 
-        return {"error": error.response?.data?.detail}
+        return {"error": error.response?.data?.detail.error_code}
       }  
 }
 
-// async function getRole(project_id) { 
 
-// try {
+async function getRole(project_id) { 
+
+  try {        
+        const responseRoleToken = await API.post(`/create_project_token/`,
+            {
+              project_id: project_id
+            }
+          );
+
+        const newRoleToken = responseRoleToken.data["project_token"];    
+        Cookies.set("Project_token", newRoleToken, {
+                  // expires: 0.0005, // тут указывается колво дней тут 0,72 минуты
+                  expires: 30, // Кука истечет через 30 дней, тут указывается колво дней
+                  path: "/", // Кука будет доступна на всех страницах        
+                  sameSite: "lax", // Защита от CSRF-атак
+                  });
+
+        return {"newRoleToken": newRoleToken};
         
-//         //начало работы с токеном проекта
-//         //берем токена проекта
-//         const RoleToken = await getRoleToken(project_id);
         
-//         //тут условие если токена не было и его запросили, а пользователь не добавлен в проект          
-//         // if (RoleToken === "access_denied"){
-//         //   setVisibleProject(false)
-//         // }
-        
-//         //тут проверка уже выданного токена. Если он не принадлежит данному проекту, то запрашиваем новый                    
-//         // if (roleTokenVerify(project_id)) {            
-//         //   Cookies.remove("Project_token");
-//         //   const RoleToken = await getRoleToken(project_id);
-//         //   if (RoleToken === "access_denied"){
-//         //     setVisibleProject(false)
-//         //   }
-//         // }
-//         // const decoded = jwtDecode(RoleToken);
-//         // setUserRole(decoded.role)
-//         // setRole(RoleToken)
+      } catch (error) {
+        // setError(err);
+        // error.response.data.detail.error_code
+        console.error('Ошибка при получении токена роли', error.response.data.detail.message);
+    
+        return {"error": error.response?.data?.detail.error_code}
+      }
 
-//         // setError("")
-//         // setLoading(false);
-//       } catch (error) {
-//         // setError(err);
-//         // error.response.data.detail.error_code
-//         if (error.response.data.detail.error_code === "access_denied") {
-//           setVisibleProject(false)
-//         }
-
-//         setLoading(false);
-//       }
-
-// }
+}
 
 
 const ProjectOpenLoader = async ({params}) => {
   
   const project_id = params.project_id//после params писать название параметра которое прописали в файле AppRouter.jsx с урлками
   
+  // запрос проекта
   const requestProject = await getProject(project_id);  
 
-  const requestSections = await getSection(project_id);
+  // запрос токена роли
+  const requestRoleToken = await getRole(project_id);
 
+  // запрос разделов проекта
+  const requestSections = await getSection(project_id);  
 
-  const requestRoleToken = await getRoleToken(project_id);
-
-  
   return {projectLoad: requestProject, sectionLoad: requestSections, roleTokenLoad: requestRoleToken}
 }
 

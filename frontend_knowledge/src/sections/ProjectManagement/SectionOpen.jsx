@@ -5,7 +5,7 @@ import { NavLink, useNavigate, useParams, useLoaderData, useRevalidator } from '
 import { TaskCreateModal } from './TaskCreateModal'
 import { useRoleStore } from './axiosRole/RoleStore';
 import { ROLES_USERS } from "./axiosRole/RoleService"
-
+import { axiosRole } from "./axiosRole/axiosRole"
 
 function SectionOpen() {
     // const revalidator = useRevalidator();
@@ -14,7 +14,7 @@ function SectionOpen() {
     const userRole = useRoleStore(state => state.role);
 
     // const { taskLoad, section_id } = useLoaderData();//лоадер содержания проекта, грузим разделы
-    const { section_id } = useParams();
+    const { section_id, project_id } = useParams();
     const [editModeHeader, setEditModeHeader] = useState(false);//это для редактирования шапки проекта
 
     // const project_id = useParams();
@@ -138,7 +138,7 @@ function SectionOpen() {
     }));
   };
 
-  
+  // тут криво работает, форма завершается когда должна отобразиться ошибка, глючит все, исправить.!!!!!!!!!!!!!!
   //функция для формы шапки
   const saveHeaderChanges = async (event) => {
         event.preventDefault();
@@ -146,23 +146,26 @@ function SectionOpen() {
         try {            
             setLoading(true);
             
-            const response = await axios.patch(
-                `http://127.0.0.1:8000/section_update_header/${section_id}`,
+            const response = await axiosRole.patch(
+                `http://127.0.0.1:8000/section_update_header/${project_id}/${section_id}`,
+                { title: section.title, description: section.description },
                 {
-                  title: section.title,
-                  description: section.description
-                }                
+                params: {project_id: project_id}
+                }
                 );
-            setEditModeHeader(false)            
-            if (response.statusText==='OK') {                
+            
+            setError("")
+            if (response.statusText==='OK') {
+                setEditModeHeader(false)
+
                 console.log("Update complete!")                
             } else {
                 const errorData = await response.data
                 console.log(errorData, 'тут ошибка')     
             }
         } catch (error) {            
-            console.log(error)
-            setError('что-то пошло не так');            
+            console.log(error.error_code)              
+            setError(error.message)  
         } finally {
           setLoading(false);
         }    
@@ -352,27 +355,43 @@ function SectionOpen() {
 }
 
 
-async function getSectionOpen(section_id) { 
-  const res = await fetch(`http://127.0.0.1:8000/task_section_all/${section_id}`)
+async function getSection(project_id) { 
+  
+  try {        
+        
+        const responseSection = await axiosRole.get(`http://127.0.0.1:8000/section_project_all/${project_id}`,
+              {
+                params: {project_id: project_id}
+              }
+          );
 
-  // try {
-  //       const res = await API.get(`/api/checkout_list/orders/${id}`)     
-  //  return res.data
-  //     } catch (error) {
-  //      //если ошибка, то выдаем ошибку
-  //       console.error("Error here: ", error);
-  //       // setError("Failed to fetch user data. Please try again.");
-  //       return "error"
-  //     }
+        return responseSections.data
 
+      } catch (error) {
+       
+        // console.log("Ошибка из detail при запросе секций:", error.response?.data?.detail)
+        // console.log("Статус ответа:", error.response?.status)       
 
-  return res.json()
+        return {"error": error.response?.data?.detail.error_code}
+      }  
 }
 
 
+
+// сделать нормально лоадер без гонок!!!!!!!!!!!!!!!
 const SectionOpenLoader = async ({params}) => {
   
   const section_id = params.section_id//после params писать название параметра которое прописали в файле AppRouter.jsx с урлками
+
+  // const sectionRes = await fetch(`http://127.0.0.1:8000/section_get/${section_id}`);
+  // const sectionData = await sectionRes.json();
+  // setSection(sectionData);
+
+  // const tasksRes = await fetch(`http://127.0.0.1:8000/task_section_all/${section_id}`);
+  // const tasksData = await tasksRes.json();
+  // setTasks(tasksData);
+
+
   
   return {taskLoad: await getSectionOpen(section_id), section_id: section_id}
 }
