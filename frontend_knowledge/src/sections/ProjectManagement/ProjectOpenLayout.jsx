@@ -81,7 +81,7 @@ function ProjectOpenLayout() {
         // const decoded = jwtDecode(roleTokenLoad);
         // setUserRole(decoded.role)
         setRole(roleTokenLoad.newRoleToken)
-        console.log(roleTokenLoad.newRoleToken)
+        // console.log(roleTokenLoad.newRoleToken)
         setError("")
         setLoading(false);
       } catch (error) {

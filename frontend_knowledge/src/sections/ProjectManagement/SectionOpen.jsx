@@ -7,25 +7,36 @@ import { useRoleStore } from './axiosRole/RoleStore';
 import { ROLES_USERS } from "./axiosRole/RoleService"
 import { axiosRole } from "./axiosRole/axiosRole"
 
+
 function SectionOpen() {
     // const revalidator = useRevalidator();
-
     //глобальное состояние роли из zustand
     const userRole = useRoleStore(state => state.role);
 
-    // const { taskLoad, section_id } = useLoaderData();//лоадер содержания проекта, грузим разделы
+    const { taskLoad, sectionLoad } = useLoaderData();//лоадер содержания проекта, грузим разделы и таски
     const { section_id, project_id } = useParams();
     const [editModeHeader, setEditModeHeader] = useState(false);//это для редактирования шапки проекта
+    
+    // const [section, setSection] = useState(sectionLoad)
+    const [section, setSection] = useState(null)
 
-    // const project_id = useParams();
-    const [section, setSection] = useState(null)//фигурные скобки означают что тут объект
-
+    // const [tasks, setTasks] = useState(taskLoad);
     const [tasks, setTasks] = useState([]);
+
     
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const navigate = useNavigate();
+    const navigate = useNavigate();    
+
+    if (taskLoad.error === "role_denied") {
+      return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>У вас нет доступа к проекту!</h1>  
+    }
+
+    if (sectionLoad.error === "role_denied") {
+      return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>У вас нет доступа к проекту!</h1>      
+    }    
+
 
 
 
@@ -55,51 +66,61 @@ function SectionOpen() {
     // fetchTasks();
     // }, [section_id]);
 
-    useEffect(() => {
-        const fetchTasks = async () => {
-            try {
-                setLoading(true);
-                const sectionRes = await fetch(`http://127.0.0.1:8000/section_get/${section_id}`);
-                const sectionData = await sectionRes.json();
-                setSection(sectionData);
-
-                const tasksRes = await fetch(`http://127.0.0.1:8000/task_section_all/${section_id}`);
-                const tasksData = await tasksRes.json();
-                setTasks(tasksData);
-
-            } catch (err) {
-                setError("Ошибка загрузки задач");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchTasks();
-    }, [section_id]);
-
-     
     // useEffect(() => {
-    //     const fetchData = async () => {
+    //     const fetchTasks = async () => {
     //         try {
     //             setLoading(true);
-    //             const [sectionRes, tasksRes] = await Promise.all([
-    //                 fetch(`http://127.0.0.1:8000/section_get/${section_id}`),
-    //                 fetch(`http://127.0.0.1:8000/task_section_all/${section_id}`)
-    //             ]);
-                
-    //             const sectionData = await sectionRes.json();
-    //             const tasksData = await tasksRes.json();
-                
-    //             setSection(sectionData);
-    //             setTasks(tasksData);
+    //             // const sectionRes = await fetch(`http://127.0.0.1:8000/section_get/${section_id}`);
+    //             // const sectionData = await sectionRes.json();
+    //             // setSection(sectionData);
+
+    //             // const tasksRes = await fetch(`http://127.0.0.1:8000/task_section_all/${section_id}`);
+    //             // const tasksData = await tasksRes.json();
+    //             // setTasks(tasksData);
+
     //         } catch (err) {
-    //             setError("Ошибка загрузки данных");
+    //             setError("Ошибка загрузки задач");
     //         } finally {
     //             setLoading(false);
     //         }
     //     };
-        
-    //     fetchData();
+    //     fetchTasks();
     // }, [section_id]);
+
+     
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                
+                // setSection(sectionLoad);
+
+                if (sectionLoad && !sectionLoad.error) {
+                    setSection(sectionLoad);
+                }
+
+
+                // setTasks(taskLoad);
+
+                if (taskLoad && !taskLoad.error) {
+                    // Убедимся, что taskLoad - массив
+                    const tasksArray = Array.isArray(taskLoad) ? taskLoad : [];
+                    setTasks(tasksArray);
+                  }
+
+                console.log("Таски длинна", tasks.length)
+                console.log("Таски тут", tasks)
+                // проблема с тасками, он не грузятся, и не парсятся сразу хз почему!!!!! нуждно понять чему равна таска и сделать для нее проверку, чтобы не отображалась ошибка на странице
+
+            } catch (err) {
+                setError("Ошибка загрузки данных");
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchData();
+    }, [section_id]);//возможно стоит добавить зависимости, ответ дипсика
     
 
     
@@ -136,9 +157,7 @@ function SectionOpen() {
       ...prev,
       [name]: value
     }));
-  };
-
-  // тут криво работает, форма завершается когда должна отобразиться ошибка, глючит все, исправить.!!!!!!!!!!!!!!
+  };  
   //функция для формы шапки
   const saveHeaderChanges = async (event) => {
         event.preventDefault();
@@ -189,7 +208,7 @@ function SectionOpen() {
       };
 
 
-  if (loading || !section || tasks.length === 0) {
+  if (loading || !section) {
       return <div>Загрузка...</div>;
   }
 
@@ -204,7 +223,9 @@ function SectionOpen() {
       
   return (
     <>
-    
+    {userRole === ROLES_USERS.GUEST ? 
+    (<h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>У вас нет прав для проекта</h1>) 
+    : (
     <div className='header-chapter'>
       <div className="project-section">
         {/*это шапка раздела*/}  
@@ -328,7 +349,8 @@ function SectionOpen() {
         <br/><br/>
                 
           {
-                tasks?.map(task => (
+                tasks.length === 0 ? (<div className="name-knowledge">В этом разделе пока нет задач. Попробуйте обновить страницу.</div>)
+                : (tasks?.map(task => (
                 				<>
                         {/* <div className='project-section'> */}
                           <h1 className="name-knowledge">{task.title}</h1>
@@ -344,28 +366,55 @@ function SectionOpen() {
                         {/* <br/> */}
                         </>
                     ))
+                )
+                
+                // не отображаются таски сразу когда выдали роль юзеру. Сделать условие
             }
 
 
             
         
-    </div>             
+    </div>     
+    )
+    }        
     </>
     )
 }
 
 
-async function getSection(project_id) { 
+async function getSection(section_id, project_id) { 
   
   try {        
         
-        const responseSection = await axiosRole.get(`http://127.0.0.1:8000/section_project_all/${project_id}`,
+        const responseSection = await axiosRole.get(`/section_get/${project_id}/${section_id}`,
               {
                 params: {project_id: project_id}
               }
           );
 
-        return responseSections.data
+        return responseSection.data
+
+      } catch (error) {
+       
+        // console.log("Ошибка из detail при запросе секций:", error.response?.data?.detail)
+        // console.log("Статус ответа:", error.response?.status)       
+
+        return {"error": error.response?.data?.detail.error_code}
+      }  
+}
+
+
+async function getTasks(section_id, project_id) { 
+  
+  try {        
+        
+        const responseTasks = await axiosRole.get(`/task_section_all/${project_id}/${section_id}`,
+              {
+                params: {project_id: project_id}
+              }
+          );
+
+        return responseTasks.data
 
       } catch (error) {
        
@@ -382,18 +431,15 @@ async function getSection(project_id) {
 const SectionOpenLoader = async ({params}) => {
   
   const section_id = params.section_id//после params писать название параметра которое прописали в файле AppRouter.jsx с урлками
+  const project_id = params.project_id
 
-  // const sectionRes = await fetch(`http://127.0.0.1:8000/section_get/${section_id}`);
-  // const sectionData = await sectionRes.json();
-  // setSection(sectionData);
+  const requestSection = await getSection(section_id, project_id)
 
-  // const tasksRes = await fetch(`http://127.0.0.1:8000/task_section_all/${section_id}`);
-  // const tasksData = await tasksRes.json();
-  // setTasks(tasksData);
-
-
+  const requestTasks = await getTasks(section_id, project_id)  
+    
   
-  return {taskLoad: await getSectionOpen(section_id), section_id: section_id}
+
+  return {taskLoad: requestTasks, sectionLoad: requestSection}
 }
 
 

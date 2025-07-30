@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import { API } from "../../apiAxios/apiAxios"
 import { ROLES_USERS } from "./axiosRole/RoleService"
+import { ProjectDeleteModal } from './ProjectDeleteModal'
 
 
 function ProjectOpenUsers() {
@@ -17,6 +18,8 @@ function ProjectOpenUsers() {
     // состояние для отображения кнопки пригласить/исключить пользователя из проекта
     const [visibleInvite, setVisibleInvite] = useState(true)
 
+    //состояние для отображения информации об удалении проекта
+    const [visibleInfoDelete, setVisibleInfoDelete] = useState(false)
 
 	const { project_id } = useParams()
 
@@ -252,7 +255,33 @@ function ProjectOpenUsers() {
             }    
     }
 
-    
+    const [modalOpen, setModalOpen] = useState(false);
+
+    const deleteProject = async () => {
+        setLoading(true);
+        try {           
+            const response = await axios.delete(`http://127.0.0.1:8000/delete_project/${project_id}`);
+            setLoading(false);
+            
+            if (response.statusText==='OK') {
+                console.log("Проект удален!")
+                setModalOpen(false);
+                navigate("/projects/");
+                      
+            } else {
+                const errorData = await response.data
+                console.log(errorData, 'тут ошибка')     
+            }
+        } catch (error) {
+            setLoading(false);
+            console.log(error)
+            setError('что-то пошло не так');            
+        }    
+    }
+
+    const openModalClick = () => {      
+      setModalOpen(true);
+      };
 
 
 	return (
@@ -377,8 +406,31 @@ function ProjectOpenUsers() {
                     </table>
 				</div>
 				}
+
 				</div>
-    		</div>					
+
+    		</div>	
+
+
+            <h1>Информация об удалении проекта</h1>
+            <button className='toolbar-button' onClick={() => {setVisibleInfoDelete(!visibleInfoDelete);}}>Развернуть</button>
+            {visibleInfoDelete && 
+                <div>
+                    <h3>Вы можете полностью отредактировать текущий проект для других целей или удалить его по кнопке ниже</h3>
+                    <button className='cancel-button' onClick={openModalClick}>Удалить</button>
+                </div>
+            }
+
+
+
+            {modalOpen && (
+                <ProjectDeleteModal               
+                  onClose={() => setModalOpen(false)}
+                  onSuccess={deleteProject}
+                />
+              )}
+
+
 		</div>
 		)
 }

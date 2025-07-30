@@ -66,15 +66,16 @@ async def section_update_header(request: Request, project_id: int, section_id: i
 
 
 # запрос тасок в разделе
-@router_project_api.get("/task_section_all/{section_id}", response_model=list[TasksSchema])
-async def section_project_all(section_id: int, session: AsyncSession = Depends(get_async_session)) -> TasksSchema:
-    return await get_tasks_section(section_id=section_id, db=session)
+@router_project_api.get("/task_section_all/{project_id}/{section_id}", response_model=list[TasksSchema])
+async def section_project_all(request: Request, project_id: int, section_id: int, session: AsyncSession = Depends(get_async_session)) -> TasksSchema:
+    return await get_tasks_section(request=request, project_id=project_id, section_id=section_id, db=session)
+
 
 
 # запрос секции при открытой секции
-@router_project_api.get("/section_get/{section_id}", response_model=SectionsSchema)
-async def section_get_open(section_id: int, session: AsyncSession = Depends(get_async_session)) -> SectionsSchema:
-    return await get_section_open(section_id=section_id, db=session)
+@router_project_api.get("/section_get/{project_id}/{section_id}", response_model=SectionsSchema)
+async def section_get_open(request: Request, project_id: int, section_id: int, session: AsyncSession = Depends(get_async_session)) -> SectionsSchema:
+    return await get_section_open(request=request, project_id=project_id, section_id=section_id, db=session)
 
 
 # создание задачи
@@ -159,5 +160,13 @@ async def create_project_token(request: Request, project_id: User_project_role_s
 # @router_project_api.get("/update_project_token/")
 # async def update_project_token(request: Request, project_id: User_project_role_schema, session: AsyncSession = Depends(get_async_session)):
 #     return await create_project_token_service(request=request, project_id=project_id, db=session)
+
+
+# удаление проекта
+@router_project_api.delete("/delete_project/{project_id}")
+async def delete_project(project_id: int, session: AsyncSession = Depends(get_async_session)):
+    return await delete_project_service(project_id=project_id, db=session)
+
+
 
 

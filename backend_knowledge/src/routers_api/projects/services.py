@@ -102,6 +102,7 @@ async def get_sections_project(request: Request, project_id: int, db: AsyncSessi
         sections = await db.execute(select(Section).where(Section.project_id == project_id))    
         return sections.scalars().all()
     else:
+        print("ошибка тут!!!!!!!!!!!!!!")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role {role} is not suitable for this action"})
 
     
@@ -144,7 +145,7 @@ async def section_create_service(request: Request, project_id: int, db: AsyncSes
         await db.refresh(new_section)
         return new_section        
     else:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role[2]} - is not suitable for this action", "asd": "qwe"})
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role[2]} - is not suitable for this action"})
 
 
 async def update_section_header_service(request: Request, project_id: int, section_id: int, section_update: SectionsCreateSchema, db: AsyncSession):
@@ -171,17 +172,31 @@ async def update_section_header_service(request: Request, project_id: int, secti
             
         return section_header
     else:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role[2]} - is not suitable for this action", "asd": "qwe"})
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! роль не та")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role[2]} - is not suitable for this action"})
 
 
-async def get_tasks_section(section_id: int, db: AsyncSession) -> TasksSchema:
-    tasks = await db.execute(select(Task).where(Task.section_id == section_id))    
-    return tasks.scalars().all()
+async def get_tasks_section(request: Request, project_id: int, section_id: int, db: AsyncSession) -> TasksSchema:
+    role = await parse_role_service(request=request)
+    verify = await verify_project_service(role=role, project_id=project_id)
+
+    if (role[2] != Role.GUEST.value):
+        tasks = await db.execute(select(Task).where(Task.section_id == section_id))    
+        return tasks.scalars().all()
+    else:
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! роль не та при запросе секции")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role[2]} - is not suitable for this action"})
 
 
-async def get_section_open(section_id: int, db: AsyncSession) -> SectionsSchema:
-    section = await db.execute(select(Section).where(Section.id == section_id))    
-    return section.scalars().first()
+async def get_section_open(request: Request, project_id: int, section_id: int, db: AsyncSession) -> SectionsSchema:
+    role = await parse_role_service(request=request)
+    verify = await verify_project_service(role=role, project_id=project_id)
+    if (role[2] != Role.GUEST.value):
+        section = await db.execute(select(Section).where(Section.id == section_id))    
+        return section.scalars().first()
+    else:
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! роль не та при запросе таски")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role[2]} - is not suitable for this action"})
 
 
 async def task_create_service(section_id: int, db: AsyncSession, task: TaskCreateSchema) -> TasksSchema:
@@ -439,4 +454,29 @@ async def create_project_token_service(request: Request, project_id: User_projec
 
 
 
+async def delete_project_service(project_id: int, db: AsyncSession) -> bool:    
+    try:
+        # 1. Получаем проект
+        await db.execute(
+            delete(ProjectUserAssociation).where(ProjectUserAssociation.project_id == project_id)
+        )
+        await db.commit()
+
+        query = await db.execute(select(Project).where(Project.id == project_id))    
+        db_project = query.scalar()
+        if not db_project:
+            return False
+
+        # 2. Удаляем проект. 
+        await db.delete(db_project)
+        
+        await db.commit()
+        return True
+
+    except Exception as ex:
+        print("Ошибка при удалении задачи:", ex)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка при удалении задачи: {str(ex)}"
+        )
 
