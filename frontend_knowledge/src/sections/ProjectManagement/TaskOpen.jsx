@@ -14,6 +14,9 @@ import { TextStyleToolbar } from './MDutils/TextStyleToolbar';
 
 import { useRoleStore } from './axiosRole/RoleStore';
 import { ROLES_USERS } from "./axiosRole/RoleService"
+import { axiosRole } from "./axiosRole/axiosRole"
+
+
 
 
 function TaskOpen() {
@@ -21,15 +24,18 @@ function TaskOpen() {
 
     const userRole = useRoleStore(state => state.role);
 
-    const [section, setSection] = useState({})
+    
 
-    const { taskLoad } = useLoaderData();
+    const { taskLoad, sectionLoad } = useLoaderData();
     const [editMode, setEditMode] = useState(false);//это для редактирования контента
     const [preview, setPreview] = useState(false);//предварительный просмотр при редактировании контента
     
+    const [section, setSection] = useState(sectionLoad)
+
     const [editModeHeader, setEditModeHeader] = useState(false);//это для редактирования шапки
 
-    // const {slug} = useParams();
+    const { project_id, section_id } = useParams();
+
     const [task, setTask] = useState(taskLoad);
     
     const [error, setError] = useState("");
@@ -44,31 +50,51 @@ function TaskOpen() {
         
     // сохранение после редактирования
     const handleSave = async () => {
-    try {
-      //тут идет отправка текста на сервер.
-      setLoading(true);
-      await axios.put(`http://127.0.0.1:8000/task_update/${task.id}`, {            
-            content: task.content
-          });      
-      setEditMode(false);
-    } catch (error) {
-      console.error('Error saving knowledge: ', error);
-      setError('Failed to save changes');
-    } finally {
-      setLoading(false);
-    }
-    };
+      try {
+        //тут идет отправка текста на сервер.
+        setLoading(true);
+        await axios.put(`http://127.0.0.1:8000/task_update/${task.id}`, {            
+              content: task.content
+            });      
+        setEditMode(false);
+      } catch (error) {
+        console.error('Error saving knowledge: ', error);
+        setError('Failed to save changes');
+      } finally {
+        setLoading(false);
+      }
+      };
 
-    useEffect(() => {
-            fetch(`http://127.0.0.1:8000/section_get/${task.section_id}`)
-                .then(res => res.json())
-                .then(data => setSection(data));
-        }, [])
+    // useEffect(() => {
+    //         // fetch(`http://127.0.0.1:8000/section_get/${task.section_id}`)
+    //         //     .then(res => res.json())
+    //         //     .then(data => setSection(data));
+    //         // переделать под интерцептор роли
+
+    //         const fetchSection = async () => {
+    //           try {
+    //             const res = await axiosRole.get(`/section_get/${project_id}/${section_id}`);
+    //             setSection(res.data);
+    //             setError(null);
+    //           } catch (error) {
+    //             if (error.response?.data?.detail?.error_code === "access_denied") {
+    //               setError("access_denied");
+    //             } else {
+    //               setError("unknown_error");
+    //             }
+    //           } finally {
+    //             setLoading(false);
+    //           }
+    //         };
+
+    //         fetchSection();
+
+    //     }, [])
 
     const navigate = useNavigate();
 
     const goTaskList = () => {
-      return navigate(`/projects/open/${section.project_id}/section_open/${task.section_id}`);
+      return navigate(`/projects/open/${project_id}/section_open/${section_id}`);
     }
 
       
@@ -455,12 +481,39 @@ async function getTaskOpen(task_id) {
   return res.json()
 }
 
+async function getSection(section_id, project_id) { 
+  
+  try {        
+        
+        const responseSection = await axiosRole.get(`/section_get/${project_id}/${section_id}`,
+              {
+                params: {project_id: project_id}
+              }
+          );
+
+        return responseSection.data
+
+      } catch (error) {
+       
+        // console.log("Ошибка из detail при запросе секций:", error.response?.data?.detail)
+        // console.log("Статус ответа:", error.response?.status)       
+
+        return {"error": error.response?.data?.detail.error_code}
+      }  
+}
+
 
 const TaskOpenLoader = async ({params}) => {
   
-  const task_id = params.task_id//после params писать название параметра которое прописали в файле AppRouter.jsx с урлками
+  const task_id = params.task_id
+  const section_id = params.section_id
+  const project_id = params.project_id
+
+  const requestSection = await getSection(section_id, project_id)
+
+  const requestTask = await getTaskOpen(task_id)  
   
-  return {taskLoad: await getTaskOpen(task_id)}
+  return {taskLoad: requestTask, sectionLoad: requestSection}
 }
 
 

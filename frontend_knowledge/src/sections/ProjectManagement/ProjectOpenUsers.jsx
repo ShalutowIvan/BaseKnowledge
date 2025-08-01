@@ -416,7 +416,7 @@ function ProjectOpenUsers() {
             <button className='toolbar-button' onClick={() => {setVisibleInfoDelete(!visibleInfoDelete);}}>Развернуть</button>
             {visibleInfoDelete && 
                 <div>
-                    <h3>Вы можете полностью отредактировать текущий проект для других целей или удалить его по кнопке ниже</h3>
+                    <h3>Вы можете полностью отредактировать текущий проект для других целей или удалить его по кнопке ниже. При удалении будут удалены все вложенные разделы и задачи в них без возможности восстановления.</h3>
                     <button className='cancel-button' onClick={openModalClick}>Удалить</button>
                 </div>
             }

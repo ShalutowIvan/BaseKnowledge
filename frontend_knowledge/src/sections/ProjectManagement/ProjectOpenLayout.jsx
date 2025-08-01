@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link, NavLink, useNavigate, useLoaderData, Await, redirect, useRevalidator, Outlet } from 'react-router-dom'
+import { useParams, Link, NavLink, useNavigate, useLoaderData, Await, redirect, useRevalidator, Outlet, useLocation } from 'react-router-dom'
 import { SectionCreateModal } from './SectionCreateModal'
 import { API } from "../../apiAxios/apiAxios"
 import { axiosRole } from "./axiosRole/axiosRole"
@@ -8,27 +8,33 @@ import { getRoleToken, ROLES_USERS } from "./axiosRole/RoleService"
 import { useRoleStore } from './axiosRole/RoleStore';
 import { jwtDecode } from 'jwt-decode';
 
+// импорт секции из zustand 
+// import { useSectionsStore } from './sectionStore/sectionStore'
+// записать про локейшин в базу знаний в гуглтаблице 
+
 
 //тут компонент отрисовывается при открытии проекта с Outlet в середине, который будет меняться при открытии разделов или других частей в проекте. 
 
 function ProjectOpenLayout() {
+  
+  const location = useLocation();
+  
   const { project_id } = useParams();
 
   const { projectLoad, sectionLoad, roleTokenLoad } = useLoaderData();
+  // const { roleTokenLoad, sectionLoad } = useLoaderData();
 
   //проверка есть ли ошибка авторизации
-  if (projectLoad.error === "401_UNAUTHORIZED") {  
-    return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {projectLoad["error"]}. Пройдите авторизацию.</h1>
-    }
+  // if (projectLoad?.error === "401_UNAUTHORIZED") {  
+  //   return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {projectLoad["error"]}. Пройдите авторизацию.</h1>
+  //   }
 
   // if (sectionLoad.error) {
   //   return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {sectionLoad.error}. Роль не соответсвует.</h1>
   //   }
 
-  
-
   //проверка роли
-  if (roleTokenLoad.error === "access_denied") {
+  if (roleTokenLoad?.error === "access_denied") {
     return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>У вас нет доступа к проекту!</h1>      
   }    
 
@@ -37,12 +43,16 @@ function ProjectOpenLayout() {
 
   const [editModeHeader, setEditModeHeader] = useState(false);//это для редактирования шапки раздела
   
-  const [project, setProject] = useState(projectLoad)//тут будет объект проекта из таблицы Project для шапки раздела
-
+  const [project, setProject] = useState(projectLoad)
+  // const [project, setProject] = useState("")
   
   const navigate = useNavigate();
 
-  const [sections, setSections] = useState(sectionLoad);
+  
+  const [sections, setSections] = useState([]);
+
+  // пробую zustand вместо обычного useState
+  // const { sections, setSections, removeSection, addSection } = useSectionsStore();
 
   
   
@@ -56,32 +66,18 @@ function ProjectOpenLayout() {
   const toProjects = () => {
     return navigate("/projects/");}
 
-
+  
   useEffect(() => {
       const fetchData = async () => {
-      try {
+      try {        
         
-        //начало работы с токеном проекта
-        //берем токена проекта
-        // let RoleToken = await getRoleToken(project_id);
-        
-        //тут условие если токена не было и его запросили, а пользователь не добавлен в проект          
-        // if (RoleToken === "access_denied"){
-        //   setVisibleProject(false)
-        // }
-        
-        //тут проверка уже выданного токена. Если он не принадлежит данному проекту, то запрашиваем новый                    
-        // if (roleTokenVerify(project_id)) {            
-        //   Cookies.remove("Project_token");
-        //   const RoleToken = await getRoleToken(project_id);
-        //   if (RoleToken === "access_denied"){
-        //     setVisibleProject(false)
-        //   }
-        // }
-        // const decoded = jwtDecode(roleTokenLoad);
-        // setUserRole(decoded.role)
-        setRole(roleTokenLoad.newRoleToken)
+        setRole(roleTokenLoad?.newRoleToken)
         // console.log(roleTokenLoad.newRoleToken)
+        // const asd = await getSection(project_id)
+        
+        //убрал загрузку секции
+        // setSections(sectionLoad)
+
         setError("")
         setLoading(false);
       } catch (error) {
@@ -98,22 +94,103 @@ function ProjectOpenLayout() {
 
       fetchData();
 
-    }, [roleTokenLoad.newRoleToken])
+    // }, [roleTokenLoad.newRoleToken, sectionLoad])
+    }, [roleTokenLoad?.newRoleToken])
 
   
+  // эффект с состоянием секции
+  useEffect(() => {
+    // Инициализируем секции из loader
+    if (sectionLoad && !sectionLoad.error) {
+      setSections(sectionLoad);
+    }
+    
+    // Обрабатываем удаление, если есть ID в location.state
+    if (location.state?.deletedSectionId) {
+      console.log("состояние локейшн", location.state?.deletedSectionId)
+      setSections(prev => prev.filter(s => s.id !== location.state.deletedSectionId));
+
+
+      navigate(location.pathname, { replace: true, state: undefined });//это очистка локального состояния контекста location
+    }
+  }, [sectionLoad, location.state]);
+
+
+  // состояние zustand. пока не стал делать
+  // useEffect(() => {
+  //   if (sectionLoad && !sectionLoad.error && Array.isArray(sectionLoad)) {
+  //     setSections(sectionLoad);
+  //   }
+  // }, [sectionLoad, setSections]);
+
+  // решил попробовать через юзэффект вместо лоадер, ост тут............... эффекты будут для секций
+  // для проекта
+  // useEffect(() => {
+
+  //     const fetchProject = async () => {
+  //     try {
+  //       console.log("Запрос проекта")
+  //       const res = await API.get(`http://127.0.0.1:8000/project_get/${project_id}`);
+  //       setProject(res.data);
+  //       setError(null);
+  //     } catch (error) {
+  //       if (error.response?.data?.detail?.error_code === "access_denied") {
+  //         setError("access_denied");
+  //       } else {
+  //         setError("unknown_error");
+  //       }
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchProject();
+    
+  //   }, [project_id])
+
+
+  // для секций он работает, но косяк с обновлением двух токенов при открытой секции
+  // useEffect(() => {
+  //     const fetchSection = async () => {
+  //     try {
+  //       console.log("Запрос секций")
+  //       const responseSections = await axiosRole.get(`http://127.0.0.1:8000/section_project_all/${project_id}`,
+  //             {
+  //               params: {project_id: project_id}
+  //             }
+  //         );
+  //       setSections(responseSections.data);
+  //       if (location.state?.deletedSectionId) {
+  //         console.log("состояние локейшн", location.state?.deletedSectionId)
+  //         setSections(prev => prev.filter(s => s.id !== location.state.deletedSectionId));
+  //         navigate(location.pathname, { replace: true, state: undefined });//это очистка локального состояния контекста location
+  //         }
+  //       setError(null);
+  //     } catch (error) {
+  //       if (error.response?.data?.detail?.error_code === "access_denied") {
+  //         setError("access_denied");
+  //       } else {
+  //         setError("unknown_error");
+  //       }
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchSection();    
+  //   }, [location.state])
+
+//   // Обрабатываем удаление, если есть ID в location.state
+  //   if (location.state?.deletedSectionId) {
+  //     console.log("состояние локейшн", location.state?.deletedSectionId)
+  //     setSections(prev => prev.filter(s => s.id !== location.state.deletedSectionId));
+
+
+  //     navigate(location.pathname, { replace: true, state: undefined });//это очистка локального состояния контекста location
+  //   }
+  // }, [sectionLoad, location.state]);
 
   
-  //удаление проекта, сделать позже... пока не работает
-  const deleteProject = () => {
-    if (window.confirm('Вы уверены, что хотите удалить?')) {
-      // Действие при подтверждении
-      axiosRole.delete(`http://127.0.0.1:8000/delete_project/${project_id}`)      
-      navigate("/projects/");
-      revalidator.revalidate();//принудительная перезагрузка лоадера
-    }  
-  };
-
-
+  
 const validateForm = () => {
       if (!project.title || !project.description ) {
           setError("Есть пустые поля, заполните, пожалуйста!");
@@ -182,12 +259,17 @@ const openModalClick = () => {
     setModalOpen(true);
     };
 
-const handleCreateSuccess = (newSection) => {
-  // Используем функциональную форму setProjects
-  
+const handleCreateSuccess = (newSection) => {  
   setSections(prevSections => [...prevSections, newSection]);
   setModalOpen(false);
   };
+
+// const handleCreateSuccess = (newSection) => {
+//   addSection(newSection); // Добавляем в хранилище
+//   setModalOpen(false);
+// };
+
+
 
 const usersInvite = () => {
     return navigate(`/projects/open/${project_id}/users_invite/`);}
@@ -215,15 +297,15 @@ const usersInvite = () => {
               <>          
               <span style={{ fontSize: '16px', color: '#5F9EA0', fontWeight: 'bold' }}>Название проекта:</span>
               <br/>  
-              <span style={{ fontSize: '16px', color: '#E0FFFF' }}>{project.title}</span>
+              <span style={{ fontSize: '16px', color: '#E0FFFF' }}>{project?.title}</span>
               <br/>
               <span style={{ fontSize: '16px', color: '#5F9EA0' }}>Дата создания: </span>
               <br/>
-              <span style={{ fontSize: '16px', color: '#E0FFFF' }}>{project.created_at}</span>
+              <span style={{ fontSize: '16px', color: '#E0FFFF' }}>{project?.created_at}</span>
               <br/>
               <span style={{ fontSize: '16px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>
               <br/>
-              <span style={{ fontSize: '16px', color: '#E0FFFF' }}>{project.description}</span>
+              <span style={{ fontSize: '16px', color: '#E0FFFF' }}>{project?.description}</span>
               <br/><br/>
               {
                 (userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) && 
@@ -333,27 +415,29 @@ const usersInvite = () => {
           ) : (
           <>
             {
-              sections?.map(section => (
-                  
-                  <NavLink 
-                    key={section.id}
-                    to={`/projects/open/${project_id}/section_open/${section.id}`}
-                    style={{ textDecoration: 'none' }}
-                  >
-                    {({ isActive }) => (
-                      <div className={`list-section project-section ${isActive ? "active" : ""}`}>
-                        <h2 className="name-knowledge">{section.title}</h2>
-                        <label>Описание: </label>{section.description}
-                        <br/><br/>
-                        <button className="toolbar-button">Открыть</button>
+              sections.length === 0 ? (
+                <div>Нет доступных разделов</div>
+              ) : (
+                sections?.map(section => (
+                    
+                    <NavLink 
+                      key={section.id}
+                      to={`/projects/open/${project_id}/section_open/${section.id}`}
+                      style={{ textDecoration: 'none' }}
+                    >
+                      {({ isActive }) => (
+                        <div className={`list-section project-section ${isActive ? "active" : ""}`}>
+                          <h2 className="name-knowledge">{section.title}</h2>
+                          <label>Описание: </label>{section.description}
+                          <br/><br/>
+                          <button className="toolbar-button">Открыть</button>
+                          
+                        </div>                     
                         
-                      </div>                     
-                      
-                    )}
-                  </NavLink>
-                  
-                  
-                ))
+                      )}
+                    </NavLink>                  
+                  ))
+              )
             }
 
           {modalOpen && (
@@ -380,7 +464,13 @@ const usersInvite = () => {
 async function getProject(project_id) { 
   
   try {
-        const responseProject = await API.get(`http://127.0.0.1:8000/project_get/${project_id}`);
+        console.log("Сработал запрос проекта")
+        const responseProject = await axiosRole.get(`http://127.0.0.1:8000/project_get/${project_id}`,
+              {
+                params: {project_id: project_id}
+              }
+          );
+
 
         return responseProject.data
 
@@ -397,7 +487,7 @@ async function getProject(project_id) {
 async function getSection(project_id) { 
   
   try {        
-        
+        console.log("Сработал запрос секции")
         const responseSections = await axiosRole.get(`http://127.0.0.1:8000/section_project_all/${project_id}`,
               {
                 params: {project_id: project_id}
@@ -419,7 +509,8 @@ async function getSection(project_id) {
 
 async function getRole(project_id) { 
 
-  try {        
+  try {       
+        console.log("Сработал запрос токена")
         const responseRoleToken = await API.post(`/create_project_token/`,
             {
               project_id: project_id
@@ -451,19 +542,31 @@ async function getRole(project_id) {
 const ProjectOpenLoader = async ({params}) => {
   
   const project_id = params.project_id//после params писать название параметра которое прописали в файле AppRouter.jsx с урлками
-  
-  // запрос проекта
-  const requestProject = await getProject(project_id);  
 
+  // const url = new URL(request.url);
+
+  // if (url.searchParams.get('skipRefresh')) {
+  //   return { skipLoad: true };
+  // }
+  
   // запрос токена роли
   const requestRoleToken = await getRole(project_id);
+
+  // запрос проекта
+  const requestProject = await getProject(project_id);  
 
   // запрос разделов проекта
   const requestSections = await getSection(project_id);  
 
-  return {projectLoad: requestProject, sectionLoad: requestSections, roleTokenLoad: requestRoleToken}
+  return {
+    projectLoad: requestProject, 
+    sectionLoad: requestSections, 
+    roleTokenLoad: requestRoleToken}
 }
 
 
 
 export { ProjectOpenLayout, ProjectOpenLoader };
+
+
+// тестирую секшнлоад... как с ним запросы

@@ -70,10 +70,15 @@ async def project_create_service(request: Request, db: AsyncSession, project: Pr
 
 
 async def get_project_open(request: Request, project_id: int, db: AsyncSession) -> ProjectsSchema:
-    user_id = await verify_user_service(request=request)
+    role = await parse_role_service(request=request)#проверка клиент токена и дешифровка роли
+    verify = await verify_project_service(role=role, project_id=project_id)#проверка принадлежности проекту из токена
 
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="401_UNAUTHORIZED")
+    user_id = role[1]
+
+    # user_id = await verify_user_service(request=request)
+
+    # if not user_id:
+    #     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="401_UNAUTHORIZED")
 
     stmt = (
         select(Project)  # Выбираем проекты        
@@ -474,9 +479,35 @@ async def delete_project_service(project_id: int, db: AsyncSession) -> bool:
         return True
 
     except Exception as ex:
-        print("Ошибка при удалении задачи:", ex)
+        print("Ошибка при удалении проекта:", ex)
         raise HTTPException(
             status_code=500,
-            detail=f"Ошибка при удалении задачи: {str(ex)}"
+            detail=f"Ошибка при удалении проекта: {str(ex)}"
         )
 
+
+async def delete_section_service(section_id: int, db: AsyncSession) -> bool:    
+    try:
+        # 1. Получаем проект
+        # await db.execute(
+        #     delete(ProjectUserAssociation).where(ProjectUserAssociation.project_id == project_id)
+        # )
+        # await db.commit()
+
+        query = await db.execute(select(Section).where(Section.id == section_id))    
+        db_section = query.scalar()
+        if not db_section:
+            return False
+
+        # 2. Удаляем проект. 
+        await db.delete(db_section)
+        
+        await db.commit()
+        return True
+
+    except Exception as ex:
+        print("Ошибка при удалении секции:", ex)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка при удалении секции: {str(ex)}"
+        )

@@ -35,7 +35,7 @@ async function getRoleToken(project_id) {
     return roleToken; // Токен валиден
   }
 
-
+  await new Promise(resolve => setTimeout(resolve, 500));
 
   // Если токена нет или он истёк, запрашиваем новый
   try {

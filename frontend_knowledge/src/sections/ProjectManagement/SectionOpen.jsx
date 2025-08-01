@@ -2,14 +2,24 @@ import { useState, useEffect } from 'react';
 
 import axios from 'axios';
 import { NavLink, useNavigate, useParams, useLoaderData, useRevalidator } from 'react-router-dom'
+
+// import { json } from 'react-router-dom/static';
+// import { json } from "react-router-dom"
+// import { json } from "react-router-dom/server";
+
+import { json } from "./jsonUtils/jsonUtils";
+
 import { TaskCreateModal } from './TaskCreateModal'
 import { useRoleStore } from './axiosRole/RoleStore';
 import { ROLES_USERS } from "./axiosRole/RoleService"
 import { axiosRole } from "./axiosRole/axiosRole"
 
+// import { useSectionsStore } from './sectionStore/sectionStore'
+
 
 function SectionOpen() {
     // const revalidator = useRevalidator();
+    const { revalidate } = useRevalidator();
     //глобальное состояние роли из zustand
     const userRole = useRoleStore(state => state.role);
 
@@ -37,55 +47,6 @@ function SectionOpen() {
       return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>У вас нет доступа к проекту!</h1>      
     }    
 
-
-
-
-    // useEffect(() => {
-    //     const fetchSection = async () => {
-    //         try {
-    //             setLoading(true);
-    //             const res = await fetch(`http://127.0.0.1:8000/section_get/${section_id}`);
-    //             const data = await res.json();
-    //             setSection(data);
-    //         } catch (err) {
-    //             setError("Ошибка загрузки данных раздела");
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     };
-    //     fetchSection();
-    // }, [section_id]);
-
-
-    // useEffect(() => {
-    // const fetchTasks = async () => {
-    //     const res = await fetch(`http://127.0.0.1:8000/task_section_all/${section_id}`);
-    //     const data = await res.json();
-    //     setTasks(data);
-    // };
-    // fetchTasks();
-    // }, [section_id]);
-
-    // useEffect(() => {
-    //     const fetchTasks = async () => {
-    //         try {
-    //             setLoading(true);
-    //             // const sectionRes = await fetch(`http://127.0.0.1:8000/section_get/${section_id}`);
-    //             // const sectionData = await sectionRes.json();
-    //             // setSection(sectionData);
-
-    //             // const tasksRes = await fetch(`http://127.0.0.1:8000/task_section_all/${section_id}`);
-    //             // const tasksData = await tasksRes.json();
-    //             // setTasks(tasksData);
-
-    //         } catch (err) {
-    //             setError("Ошибка загрузки задач");
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     };
-    //     fetchTasks();
-    // }, [section_id]);
 
      
     useEffect(() => {
@@ -128,20 +89,49 @@ function SectionOpen() {
     const goBack = () => {      
       return navigate(`/project/open/${section.project_id}`);}
     
-    
+    // const reloadOnlySection = () => {
+    //   revalidate({ key: "section" }); // Перезагрузит ТОЛЬКО sectionLoad
+    // };
     
 
-    //удаление проекта, сделать позже
-    const deleteSection = () => {
+    // const { removeSection } = useSectionsStore();
+
+
+    //удаление секции
+    const deleteSection = async () => {
       if (window.confirm('Вы уверены, что хотите удалить?')) {
-        // Действие при подтверждении
-        axios.delete(`http://127.0.0.1:8000/delete_section/${section_id}`)   
-        navigate(`/projects/open/${section.project_id}`);//тут может быть ошибка, так секцию то мы удалили уже...
-        // revalidator.revalidate();//принудительная перезагрузка лоадера
-      }  
+        try {
+          await axios.delete(`http://127.0.0.1:8000/delete_section/${section_id}`);
+          // Возвращаемся к списку разделов
+          navigate(`/projects/open/${project_id}`, {
+            state: { deletedSectionId: section_id }, // Передаем ID удаленной секции
+            replace: true // Важно: заменяем текущую запись в истории
+          });
+
+          // navigate(`/projects/open/${project_id}?skipRefresh=true`, { 
+          //   replace: true
+          // });
+
+        } catch (error) {
+          console.error('Ошибка при удалении:', error);
+        }
+      }
     };
 
 
+  //   const deleteSection = async () => {
+  //   if (window.confirm('Вы уверены, что хотите удалить?')) {
+  //     try {
+  //       await axios.delete(`http://127.0.0.1:8000/delete_section/${section_id}`);
+  //       removeSection(section_id);
+  //       navigate(`/projects/open/${project_id}`);
+  //     } catch (error) {
+  //       console.error('Ошибка при удалении:', error);
+  //     }
+  //   }
+  // };
+
+     
   const validateForm = () => {
         if (!section.title || !section.description ) {
             setError("Есть пустые поля, заполните, пожалуйста!");
@@ -331,7 +321,10 @@ function SectionOpen() {
         <br/>
                 
           {/* <button onClick={goBack} className="toolbar-button">Назад</button>           */}
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
           <h1>Задачи в разделе</h1>
+          <button className="cancel-button" onClick={deleteSection}>Удалить раздел</button>
+          </div>
           <p>______________________________________________________</p>
           {(userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
           <button className="toolbar-button" onClick={openModalClick}>Добавить задачу</button>}
@@ -358,7 +351,7 @@ function SectionOpen() {
                           <NavLink className={({ isActive }) => 
                                 isActive ? "active" : ""
                               } key={task.id} to={`/projects/open/${section.project_id}/section_open/${section_id}/task_open/${task?.id}`}>
-                              <h2>номер таски: {task?.id}</h2>
+                              
                               <button className="toolbar-button">Открыть</button>
                           </NavLink>
                           <p>______________________________________________________</p>
@@ -427,7 +420,7 @@ async function getTasks(section_id, project_id) {
 
 
 
-// сделать нормально лоадер без гонок!!!!!!!!!!!!!!!
+
 const SectionOpenLoader = async ({params}) => {
   
   const section_id = params.section_id//после params писать название параметра которое прописали в файле AppRouter.jsx с урлками
@@ -439,7 +432,15 @@ const SectionOpenLoader = async ({params}) => {
     
   
 
-  return {taskLoad: requestTasks, sectionLoad: requestSection}
+  // return {
+  //   taskLoad: json(requestTasks),
+  //   sectionLoad: json(requestSection, { key: "section" })
+  // }
+
+  return {
+    taskLoad: requestTasks,
+    sectionLoad: requestSection
+  }
 }
 
 

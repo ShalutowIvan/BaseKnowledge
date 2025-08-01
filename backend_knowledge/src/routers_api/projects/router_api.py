@@ -168,5 +168,9 @@ async def delete_project(project_id: int, session: AsyncSession = Depends(get_as
     return await delete_project_service(project_id=project_id, db=session)
 
 
+# удаление раздела в проекте
+@router_project_api.delete("/delete_section/{section_id}")
+async def delete_section(section_id: int, session: AsyncSession = Depends(get_async_session)):
+    return await delete_section_service(section_id=section_id, db=session)
 
 
