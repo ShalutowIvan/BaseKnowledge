@@ -411,7 +411,7 @@ const usersInvite = () => {
           {
             sections?.error === "role_denied" || !Array.isArray(sections) ?
           (
-          <></>
+          <div>Для вашей роли запрещен просмотр разделов</div>
           ) : (
           <>
             {

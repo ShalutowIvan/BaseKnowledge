@@ -5,7 +5,7 @@ import './CSS/DeleteGroup.css'
 import { API } from "../../apiAxios/apiAxios"
 
 
-function ProjectDeleteModal({ onClose, onSuccess }) {
+function ProjectDeleteModal({ onClose, onSuccess, error }) {
     
   
   return (
@@ -34,7 +34,7 @@ function ProjectDeleteModal({ onClose, onSuccess }) {
             
         </div>        
       
-
+        {error && <div className="error-message">Ошибка при удалении: {error}</div>}
       </div>
     </div>
   );

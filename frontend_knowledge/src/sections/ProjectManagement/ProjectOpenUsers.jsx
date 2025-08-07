@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { API } from "../../apiAxios/apiAxios"
 import { ROLES_USERS } from "./axiosRole/RoleService"
 import { ProjectDeleteModal } from './ProjectDeleteModal'
+import { axiosRole } from "./axiosRole/axiosRole"
 
 
 function ProjectOpenUsers() {
@@ -40,10 +41,10 @@ function ProjectOpenUsers() {
         setLoading(true);
 
         try {
-            const response = await axios.get('http://127.0.0.1:8000/search_user', {
+            const response = await axiosRole.get(`http://127.0.0.1:8000/search_user/${project_id}`, {
                 params: {                 
                     email_user: email,
-                    project_id: project_id
+                    project_id: project_id//этот параметр для интерцептора axiosRole, он удалятся при запросе на Бэк
                 }
                 }
                 );
@@ -63,25 +64,26 @@ function ProjectOpenUsers() {
             } 
         } catch (error) {
         
-              if (axios.isAxiosError(error) && error.response?.status === 400) {                
-                setUsersearch("")
-                setError(`Пользователь не найден!`);            
-              }               
+              // if (axios.isAxiosError(error) && error.response?.status === 400) {                
+              //   setUsersearch("")
+              //   setError(`Пользователь не найден!`);            
+              // }               
 
             setLoading(false);
             console.log("Ошибка на сервере:", error)
 
-            // setError(`что-то пошло не так, ошибка: ${error}`);            
+            setError(`что-то пошло не так, ошибка: ${error.response?.data?.detail}`);            
         }    
     };
 
 	const inviteToProject = async () => {
 		setLoading(true);
 		try {			
-            const response = await axios.post('http://127.0.0.1:8000/invite_to_project/', {                                 
-                user_id: usersearch.id,
-				project_id: project_id        
-                }
+            const response = await axiosRole.post('http://127.0.0.1:8000/invite_to_project/', 
+                { user_id: usersearch.id, project_id: project_id }, 
+                {params: {                 
+                    project_id: project_id
+                }}
                 );
             setLoading(false);
             
@@ -105,12 +107,10 @@ function ProjectOpenUsers() {
 		setLoading(true);
 		try {
 			
-            const response = await API.delete('http://127.0.0.1:8000/exclude_from_project/', {                                 
-                data: {
-					user_id: usersearch.id,
-					project_id: project_id
-				}			
-				
+            const response = await axiosRole.delete('/exclude_from_project/', 
+                {
+                params: {project_id: project_id},
+                data: {user_id: usersearch.id, project_id: project_id}
                 }
                 );
             setLoading(false);
@@ -119,7 +119,7 @@ function ProjectOpenUsers() {
                 alert("Нельзя удалить себя!")
             }            
             else if (response.statusText==='OK') {
-				console.log("Пользователь добавлен в проект!")
+				console.log("Пользователь исключен из проекта!")
 				setVisibleInvite(true)
       
             } else {
@@ -140,7 +140,7 @@ function ProjectOpenUsers() {
         setLoading(true);
 
         try {
-            const response = await axios.get('http://127.0.0.1:8000/search_current_users', {
+            const response = await axiosRole.get('/search_current_users', {
                 params: {                 
                     email_user: emailCurrentUser,
                     project_id: project_id
@@ -177,10 +177,9 @@ function ProjectOpenUsers() {
         setLoading(true);
 
         try {
-            const response = await axios.get('http://127.0.0.1:8000/all_current_users_project', {
-                params: {
-                    project_id: project_id
-                }
+            const response = await axiosRole.get(`/all_current_users_project/${project_id}`,
+                {
+                params: {project_id: project_id}
                 }
                 );
             setLoading(false);
@@ -227,13 +226,9 @@ function ProjectOpenUsers() {
         try {
             setLoading(true);
             
-            const response = await axios.patch(
-                    `http://127.0.0.1:8000/role_project_change/`,
-                    {
-                    project_id: project_id,
-                    user_id: user_id,
-                    role: role
-                    }                
+            const response = await axiosRole.patch(`/role_project_change/`,
+                    { project_id: project_id, user_id: user_id, role: role },
+                    { params: {project_id: project_id} }//это для интерцептора роли, не передается в запрос
                     );
                 setModifyRole(false)
                 setErrorUser("")
@@ -260,7 +255,12 @@ function ProjectOpenUsers() {
     const deleteProject = async () => {
         setLoading(true);
         try {           
-            const response = await axios.delete(`http://127.0.0.1:8000/delete_project/${project_id}`);
+            const response = await axiosRole.delete(`http://127.0.0.1:8000/delete_project/`,                
+                {
+                params: {project_id: project_id},
+                data: {project_id: project_id}
+                }
+                );
             setLoading(false);
             
             if (response.statusText==='OK') {
@@ -274,8 +274,8 @@ function ProjectOpenUsers() {
             }
         } catch (error) {
             setLoading(false);
-            console.log(error)
-            setError('что-то пошло не так');            
+            console.log(error)            
+            setError(error.error_code);//в error прокидывается то что пишем в detail, почему-то
         }    
     }
 
@@ -427,6 +427,7 @@ function ProjectOpenUsers() {
                 <ProjectDeleteModal               
                   onClose={() => setModalOpen(false)}
                   onSuccess={deleteProject}
+                  error={error}
                 />
               )}
 

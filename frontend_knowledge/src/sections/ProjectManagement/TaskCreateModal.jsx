@@ -2,9 +2,9 @@ import { useState } from 'react';
 // import { useNavigate } from 'react-router-dom';
 import './CSS/DeleteGroup.css'
 import { API } from "../../apiAxios/apiAxios"
+import { axiosRole } from "./axiosRole/axiosRole"
 
-
-function TaskCreateModal({ section_id, onClose, onSuccess }) {
+function TaskCreateModal({ section_id, project_id, onClose, onSuccess }) {
   
   const [title, setTitle] = useState("_");    
   const [description, setDescription] = useState("_");    
@@ -30,11 +30,14 @@ function TaskCreateModal({ section_id, onClose, onSuccess }) {
         setLoading(true);
 
         try {
-            const response = await API.post(
-                `http://127.0.0.1:8000/task_create/${section_id}`,
+            const response = await axiosRole.post(
+                `http://127.0.0.1:8000/task_create/${project_id}/${section_id}`,
                 {                 
                     title,                    
                     description,
+                },
+                {
+                params: {project_id: project_id}
                 }
                 
                 );

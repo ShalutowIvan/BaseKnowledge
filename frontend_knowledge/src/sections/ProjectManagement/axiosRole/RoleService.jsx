@@ -2,6 +2,8 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { API } from "../../../apiAxios/apiAxios"
 import { jwtDecode } from 'jwt-decode';
+import { getRefreshState, setRefreshState } from '../../../apiAxios/tokenRefreshState';
+
 
 
 
@@ -35,7 +37,24 @@ async function getRoleToken(project_id) {
     return roleToken; // Токен валиден
   }
 
-  await new Promise(resolve => setTimeout(resolve, 500));
+  //таймаут не надежный. Если инет затупит и долго будет обновлять, то будет ошибка, а увеличивать таймаут это плохо
+  // await new Promise(resolve => setTimeout(resolve, 500));
+
+  const { isRefreshing, refreshPromise } = getRefreshState();
+  
+  // Если идет обновление access токена, ждем его завершения
+  if (isRefreshing) {
+    try {
+      await refreshPromise;
+    } catch (e) {
+      // Продолжаем даже если обновление access токена не удалось
+    }
+  }
+
+
+
+
+
 
   // Если токена нет или он истёк, запрашиваем новый
   try {

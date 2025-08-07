@@ -27,6 +27,11 @@ function TaskOpen() {
     
 
     const { taskLoad, sectionLoad } = useLoaderData();
+
+    if (taskLoad.error === "role_denied") {
+      return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>У вас нет доступа к проекту!</h1>  
+    }
+
     const [editMode, setEditMode] = useState(false);//это для редактирования контента
     const [preview, setPreview] = useState(false);//предварительный просмотр при редактировании контента
     
@@ -53,13 +58,16 @@ function TaskOpen() {
       try {
         //тут идет отправка текста на сервер.
         setLoading(true);
-        await axios.put(`http://127.0.0.1:8000/task_update/${task.id}`, {            
-              content: task.content
-            });      
+        await axiosRole.put(`http://127.0.0.1:8000/task_update/${project_id}/${task.id}`, 
+            { content: task.content },
+            {
+              params: {project_id: project_id}
+            }
+            );      
         setEditMode(false);
       } catch (error) {
-        console.error('Error saving knowledge: ', error);
-        setError('Failed to save changes');
+        console.error('Error saving task: ', error);
+        setError(error.error_code || error || 'Failed to save changes');
       } finally {
         setLoading(false);
       }
@@ -101,7 +109,9 @@ function TaskOpen() {
   const deleteTask = () => {
     if (window.confirm('Вы уверены, что хотите удалить?')) {
       // Действие при подтверждении
-      axios.delete(`http://127.0.0.1:8000/delete_task/${task.id}`)      
+      axiosRole.delete(`http://127.0.0.1:8000/delete_task/${project_id}/${task.id}`,
+        { params: {project_id: project_id} }
+        )
       navigate(`/projects/open/${section.project_id}/section_open/${section.id}`);
       revalidator.revalidate();//принудительная перезагрузка лоадера после редиректа в списке знаний
     }  
@@ -132,12 +142,10 @@ function TaskOpen() {
         if (!validateForm()) return;
         try {           
             setLoading(true);
-            const response = await axios.patch(
-                `http://127.0.0.1:8000/task_update_header/${task.id}`,
-                {                 
-                  title: task.title,
-                  description: task.description,
-                }                
+            const response = await axiosRole.patch(
+                `http://127.0.0.1:8000/task_update_header/${project_id}/${task.id}`,
+                { title: task.title, description: task.description,},
+                { params: {project_id: project_id} }
                 );
             setEditModeHeader(false)
             setError("")
@@ -176,11 +184,10 @@ function TaskOpen() {
     try {           
           setLoading(true);
           console.log("состояние тут", selectedState)
-          const response = await axios.patch(
-                `http://127.0.0.1:8000/task_state_change/${task.id}`,
-                {                 
-                  state: selectedState
-                }                
+          const response = await axiosRole.patch(
+                `http://127.0.0.1:8000/task_state_change/${project_id}/${task.id}`,
+                { state: selectedState },
+                { params: {project_id: project_id} }
                 );
             setModifyState(false)
             setError("")
@@ -464,22 +471,23 @@ function TaskOpen() {
 }
 
 
-async function getTaskOpen(task_id) { 
-  const res = await fetch(`http://127.0.0.1:8000/task_open/${task_id}`)//тут берутся все элементы с одним и тем же номером документа
-
-  // try {
-  //       const res = await API.get(`/api/checkout_list/orders/${id}`)     
-  //  return res.data
-  //     } catch (error) {
-  //      //если ошибка, то выдаем ошибку
-  //       console.error("Error here: ", error);
-  //       // setError("Failed to fetch user data. Please try again.");
-  //       return "error"
-  //     }
-
-
-  return res.json()
+async function getTaskOpen(project_id, task_id) {
+  try {
+        const responseTask = await axiosRole.get(`/task_open/${project_id}/${task_id}`,
+              {
+                params: {project_id: project_id}
+              }
+          );
+        return responseTask.data
+      } catch (error) {       
+        // console.log("Ошибка из detail при запросе секций:", error.response?.data?.detail)
+        // console.log("Статус ответа:", error.response?.status)      
+        // console.log("Ошибка из detail при запросе таски:", error.error_code)
+        
+        return {"error": error.error_code}
+      }    
 }
+
 
 async function getSection(section_id, project_id) { 
   
@@ -498,7 +506,8 @@ async function getSection(section_id, project_id) {
         // console.log("Ошибка из detail при запросе секций:", error.response?.data?.detail)
         // console.log("Статус ответа:", error.response?.status)       
 
-        return {"error": error.response?.data?.detail.error_code}
+        // return {"error": error.response?.data?.detail.error_code}
+        return {"error": error.error_code}
       }  
 }
 
@@ -511,7 +520,7 @@ const TaskOpenLoader = async ({params}) => {
 
   const requestSection = await getSection(section_id, project_id)
 
-  const requestTask = await getTaskOpen(task_id)  
+  const requestTask = await getTaskOpen(project_id, task_id)  
   
   return {taskLoad: requestTask, sectionLoad: requestSection}
 }

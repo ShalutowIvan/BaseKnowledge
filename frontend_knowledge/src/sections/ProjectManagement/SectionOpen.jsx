@@ -19,7 +19,7 @@ import { axiosRole } from "./axiosRole/axiosRole"
 
 function SectionOpen() {
     // const revalidator = useRevalidator();
-    const { revalidate } = useRevalidator();
+    // const { revalidate } = useRevalidator();
     //глобальное состояние роли из zustand
     const userRole = useRoleStore(state => state.role);
 
@@ -101,7 +101,9 @@ function SectionOpen() {
     const deleteSection = async () => {
       if (window.confirm('Вы уверены, что хотите удалить?')) {
         try {
-          await axios.delete(`http://127.0.0.1:8000/delete_section/${section_id}`);
+          await axiosRole.delete(`/delete_section/${project_id}/${section_id}`,
+            { params: {project_id: project_id} }
+            );
           // Возвращаемся к списку разделов
           navigate(`/projects/open/${project_id}`, {
             state: { deletedSectionId: section_id }, // Передаем ID удаленной секции
@@ -332,6 +334,7 @@ function SectionOpen() {
           {modalOpen && (
 		        <TaskCreateModal
 		          section_id={section_id}
+              project_id={project_id}
 		          onClose={() => setModalOpen(false)}
 		          onSuccess={handleCreateSuccess}
 		        />
@@ -347,7 +350,8 @@ function SectionOpen() {
                 				<>
                         {/* <div className='project-section'> */}
                           <h1 className="name-knowledge">{task.title}</h1>
-                          <h2>Описание: {task.description}</h2>
+                          <h3>Описание: {task.description}</h3>
+                          <h3>Статус: {task.state}</h3>
                           <NavLink className={({ isActive }) => 
                                 isActive ? "active" : ""
                               } key={task.id} to={`/projects/open/${section.project_id}/section_open/${section_id}/task_open/${task?.id}`}>

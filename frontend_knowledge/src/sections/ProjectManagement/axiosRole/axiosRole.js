@@ -61,7 +61,8 @@ axiosRole.interceptors.response.use(
         errorDetail: data.detail
       });
     }
-
+    // прокинул ошибку в консоль, кажется не читается куери параметр.... ост тут
+    console.log("ошибки интерцептора роли тут:", error)
     // Для ошибок сети/таймаута
     return Promise.reject({
       message: 'Сервер не отвечает. Проверьте интернет.',
