@@ -8,6 +8,7 @@ import os
 from routers_api.knowledge.router_api import router_knowledge_api
 from routers_api.regusers.router_api import router_reg_api
 from routers_api.projects.router_api import router_project_api
+from routers_api.roadmap.router_api import router_roadmap_api
 
 
 app = FastAPI(title="База знаний", debug=True)#debug=True это для того чтобы в документации выводилсь ошибки как в консоли. 
@@ -26,6 +27,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(router_knowledge_api)
 app.include_router(router_reg_api)
 app.include_router(router_project_api)
+app.include_router(router_roadmap_api)
 
 origins = [
     "http://localhost:5173",  

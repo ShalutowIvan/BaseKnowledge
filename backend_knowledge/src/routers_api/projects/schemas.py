@@ -88,7 +88,7 @@ class UsersSearchSchema(BaseModel):
 
 
 class User_invite_to_project_schema(BaseModel):    
-    project_id: int
+    # project_id: int
     user_id: int
 
 
@@ -106,5 +106,4 @@ class User_role_schema(BaseModel):
 
 class User_project_role_schema(BaseModel):
     project_id: int
-    # user_id: int
-    # role: Role
+    

@@ -9,9 +9,7 @@ from datetime import datetime
 
 from db_api import Base
 
-
-
-#в таблице Projects указывается связь с пользователем, и в зависимости от роли пользователя ему будет доступны те или иные действия. Номер проекта (id) можно будет подтянуть при открытии созданного проекта и запросить всю инфу о пользаке из таблицы ProjectUserAssociation, так как там обратная связь и с проектом и с юзером. 
+ 
 class RoadMap(Base):
     __tablename__ = "roadmap"
     id: Mapped[int] = mapped_column(primary_key=True)#это как бы номер проекта в который будут включаться секции. В таблице секций(разделы) будет номер проекта указываться который соответствует номеру проекта
@@ -21,12 +19,10 @@ class RoadMap(Base):
     # открываем проект, в нем будут разделы - секции. В секциях будут задачи. Например инет магаз, в нем секции корзина, авторизация. В корзине и авторизации свои задачи. 
     
     # связи
-    # users: Mapped["Stage"] = relationship(back_populates="project")# Связь с пользователями через ассоциативную таблицу
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
+    user: Mapped["User"] = relationship(back_populates="roadmap_user")
     
-    chapters: Mapped[list["Chapter"]] = relationship(back_populates="roadmap", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
-
-
-    
+    chapters: Mapped[list["Chapter"]] = relationship(back_populates="roadmap", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")    
 
 
 class Chapter(Base):
@@ -36,20 +32,16 @@ class Chapter(Base):
     description: Mapped[str] = mapped_column(default="_")
     created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
     
-    # первичный ключ на указания номера проекта, то есть id
+    # первичный ключ на указания номера роадмапы, то есть id
     roadmap_id: Mapped[int] = mapped_column(ForeignKey("roadmap.id", ondelete="CASCADE"))
     # Связи
     roadmap: Mapped["RoadMap"] = relationship(back_populates="chapters")
-    
-
-
     stages: Mapped[list["Stage"]] = relationship(back_populates="chapter", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
-
 
 
 @enum.unique
 class StatesStage(enum.Enum):
-    """Статусы задач"""
+    """Статусы этапов изучения"""
     NOT_STUDIED = "not_studied"
     IN_THE_STUDY = "in_the_study"
     COMPLETED = "completed"

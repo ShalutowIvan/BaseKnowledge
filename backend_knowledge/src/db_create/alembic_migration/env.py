@@ -1,14 +1,9 @@
 import os
 import sys
-
 from logging.config import fileConfig
-
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
 from alembic import context
-
-
 
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
@@ -29,6 +24,7 @@ from db_api import Base
 from routers_api.regusers.models import *
 from routers_api.knowledge.models import *
 from routers_api.projects.models import *
+from routers_api.roadmap.models import *
 
 
 load_dotenv()

@@ -22,10 +22,11 @@ API.interceptors.request.use(
   (config) => {
     const accessToken = getAccessToken();
     if (accessToken) {
-      // config.headers.Authorization = `Bearer ${accessToken}`;
+      config.headers.Authorization = `Bearer ${accessToken}`;
       // console.log(config)
       config.headers.CLIENT_ID = apiKey;
-      config.headers.Authorization = accessToken;
+      // config.headers.Authorization = accessToken;
+
       
     }
     return config;

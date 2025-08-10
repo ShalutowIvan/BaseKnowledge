@@ -79,8 +79,8 @@ function ProjectOpenUsers() {
 	const inviteToProject = async () => {
 		setLoading(true);
 		try {			
-            const response = await axiosRole.post('http://127.0.0.1:8000/invite_to_project/', 
-                { user_id: usersearch.id, project_id: project_id }, 
+            const response = await axiosRole.post(`http://127.0.0.1:8000/invite_to_project/${project_id}`, 
+                { user_id: usersearch.id }, 
                 {params: {                 
                     project_id: project_id
                 }}
@@ -107,10 +107,10 @@ function ProjectOpenUsers() {
 		setLoading(true);
 		try {
 			
-            const response = await axiosRole.delete('/exclude_from_project/', 
+            const response = await axiosRole.delete(`/exclude_from_project/${project_id}`, 
                 {
                 params: {project_id: project_id},
-                data: {user_id: usersearch.id, project_id: project_id}
+                data: {user_id: usersearch.id}
                 }
                 );
             setLoading(false);
@@ -197,8 +197,13 @@ function ProjectOpenUsers() {
             }
         } catch (error) {
             setLoading(false);
-            console.log(error)
-            setErrorUser('что-то пошло не так');            
+            console.log(error.message)
+            if (error?.message === "User is not a member of this project") {
+                setErrorUser('Возможно вы зашли в другой проект. Попруйте обновить страницу');                
+            } else {
+                setErrorUser('что-то пошло не так');                
+            }
+            
         }  
     }
 
@@ -226,8 +231,8 @@ function ProjectOpenUsers() {
         try {
             setLoading(true);
             
-            const response = await axiosRole.patch(`/role_project_change/`,
-                    { project_id: project_id, user_id: user_id, role: role },
+            const response = await axiosRole.patch(`/role_project_change/${project_id}`,
+                    { user_id: user_id, role: role },
                     { params: {project_id: project_id} }//это для интерцептора роли, не передается в запрос
                     );
                 setModifyRole(false)
@@ -240,7 +245,7 @@ function ProjectOpenUsers() {
                 }
             } catch (error) {
                 console.log("ошибка тут", error)
-                setErrorUser(error)
+                // setErrorUser(error)
                 if (error.response) {
                 // Сервер ответил с ошибкой 4xx/5xx
                 setErrorUser(error.response.data?.detail || error.message);

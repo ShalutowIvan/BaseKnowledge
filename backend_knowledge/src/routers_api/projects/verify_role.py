@@ -1,10 +1,15 @@
-from fastapi import HTTPException, Request, status
+from fastapi import HTTPException, Request, status, Path, Header, Depends
 from settings import CLIENT_ID
 from settings import PROJECT_KEY, EXPIRE_TIME_PROJECT_TOKEN, ALG
 import jwt # это PyJWT
-from .models import Role
+from typing import Annotated
 
 
+
+async def parse_role_service(request):
+    pass
+
+# ост на тесте роли
 
 
 
@@ -20,7 +25,7 @@ async def role_token_decode(role_token: str):#проверка аксес ток
         
         if user_id is None:
             print("нет такого user_id")
-            return [None, None, " "]
+            return (None, None, " ")
                 
     except Exception as ex:
                 
@@ -28,38 +33,52 @@ async def role_token_decode(role_token: str):#проверка аксес ток
             
             print("ОШИБКА ТОКЕНА РОЛИ ТУТ")
             print(ex)
-            return [ex, None, " "]#если токен истек то это
+            return (ex, None, " ")#если токен истек то это
     
-        return [None, None, " "]#если токена нет вообще, то это возвращается
+        return (None, None, " ")#если токена нет вообще, то это возвращается
         
-    return [project_id, user_id, role]
+    return (project_id, user_id, role)
+
+
+
+async def verify_client_id(client_id: str = Header(..., alias="CLIENT_ID")) -> bool:
+    if client_id != CLIENT_ID:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid CLIENT_ID"
+        )
+    return True
+
 
 
 # парсим роль из токена роли
-async def parse_role_service(request: Request):
-    client = request.headers.get("CLIENT_ID")
-    if client != CLIENT_ID:
-        raise HTTPException(status_code=401, detail="Клиент ID не сходится!!!!!!!!!!!!!!")
-        
-    role_token = request.headers.get("Project_Token")
-    if not role_token:
-        raise HTTPException(status_code=401, detail="Not role_token")    
-    
-    check = await role_token_decode(role_token=str(role_token))
+async def verify_role_token(
+    project_id: Annotated[int, Path(...)],
+    project_token: Annotated[str, Header(..., alias="Project_token")]
+    ):
 
-    # user_id = int(check[1])
+    check = await role_token_decode(role_token=str(project_token))
+
+    if check[0] != project_id:
+        print("Вы пользователь другого проекта!")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error_code": "access_denied", "message": "User is not a member of this project"})    
 
     return check
 
 
 # проверка принадлежности проекту и соответствие роли админа. есть 2 параметра. Роль равна или роль не равна. Передаем обычно один параметр, а второй None. И тогда второе условие не срабатывает
-async def verify_project_service(role, project_id: int):
+# async def verify_project_service(role, project_id: int):
 
-    if role[0] != project_id:
-        print("Вы пользователь другого проекта!")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error_code": "access_denied", "message": "User is not a member of this project"})    
+#     if role[0] != project_id:
+#         print("Вы пользователь другого проекта!")
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error_code": "access_denied", "message": "User is not a member of this project"})    
 
-    return True
+#     return True
 
 
+async def verify_project_service(
+    client_id: str = Depends(verify_client_id),
+    role_info: tuple[int, int, str] = Depends(verify_role_token)
+    ) -> int:
+    return role_info
 

@@ -26,7 +26,7 @@ axiosRole.interceptors.request.use(
       // console.log(config)
       // config.headers.Authorization = accessToken;
       config.headers.CLIENT_ID = apiKey;
-      config.headers["Project_Token"] = roleToken;
+      config.headers["Project_token"] = roleToken;
     }
 
     delete config.params.project_id;

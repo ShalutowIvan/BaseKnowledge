@@ -18,7 +18,8 @@ import Cookies from "js-cookie";
 
 const setAccessToken = (token) => { 
   Cookies.set("Authorization", token, {
-    expires: 0.0005, // Кука истечет через 30 дней, тут указывается колво дней
+    // expires: 0.0005, // Кука истечет через 30 дней, тут указывается колво дней
+    expires: 1, // Кука истечет через 1 дней, тут указывается колво дней
     path: "/", // Кука будет доступна на всех страницах        
     sameSite: "lax", // Защита от CSRF-атак
     });

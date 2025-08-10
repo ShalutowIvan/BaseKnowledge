@@ -51,11 +51,6 @@ async function getRoleToken(project_id) {
     }
   }
 
-
-
-
-
-
   // Если токена нет или он истёк, запрашиваем новый
   try {
     const response = await API.post(`/create_project_token/`,
@@ -65,7 +60,7 @@ async function getRoleToken(project_id) {
           );
 
     
-    const newRoleToken = response.data["project_token"];    
+    const newRoleToken = response.data["Project_token"];    
     Cookies.set("Project_token", newRoleToken, {
               // expires: 0.0005, // тут указывается колво дней тут 0,72 минуты
               expires: 30, // Кука истечет через 30 дней, тут указывается колво дней
