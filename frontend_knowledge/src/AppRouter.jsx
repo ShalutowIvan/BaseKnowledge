@@ -22,10 +22,6 @@ import { TaskOpen, TaskOpenLoader } from './sections/ProjectManagement/TaskOpen'
 import { ProjectOpenUsers } from './sections/ProjectManagement/ProjectOpenUsers';
 
 
-
-import { RoadMap } from './sections/RoadMap/RoadMap';
-
-
 // пользователи
 import Authorization from './regusers/Authorization';
 import Registration from './regusers/Registration';
@@ -35,6 +31,9 @@ import Forgot_password_verify from './regusers/Forgot_password_verify';
 import { AuthProvider } from "./regusers/AuthProvider";
 import { Registration_after } from "./regusers/Registration_after";
 
+
+// Дорожные карты
+import { RoadMapList, RoadMapListLoader } from './sections/RoadMap/RoadMapList';
 
 
 
@@ -95,7 +94,7 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
           
           
           {/* дорожные карты */}
-          <Route path="roadmaps/" element={<RoadMap />}  />
+          <Route path="roadmaps/" element={<RoadMapList />} loader={RoadMapListLoader} />
         
 
         </Route>       

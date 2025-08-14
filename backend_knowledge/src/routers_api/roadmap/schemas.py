@@ -15,9 +15,9 @@ class RoadmapsSchema(BaseModel):
 
 
 
-# class ProjectsCreateSchema(BaseModel):
-#     title: str
-#     description: str
+class RoadmapsCreateSchema(BaseModel):
+    title: str
+    description: str
 
 
 # class SectionsSchema(BaseModel):

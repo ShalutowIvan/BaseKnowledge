@@ -260,10 +260,10 @@ function ProjectOpenUsers() {
     const deleteProject = async () => {
         setLoading(true);
         try {           
-            const response = await axiosRole.delete(`http://127.0.0.1:8000/delete_project/`,                
+            const response = await axiosRole.delete(`http://127.0.0.1:8000/delete_project/${project_id}`,                
                 {
                 params: {project_id: project_id},
-                data: {project_id: project_id}
+                // data: {project_id: project_id}
                 }
                 );
             setLoading(false);

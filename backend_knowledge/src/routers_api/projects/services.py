@@ -520,15 +520,16 @@ async def delete_project_service(role_info: tuple, db: AsyncSession) -> bool:
     # role = await parse_role_service(request=request)
     # verify = await verify_project_service(role=role, project_id=project_id)
 
-    if role[2] == Role.ADMIN.value:
+    if role_info[2] == Role.ADMIN.value:
         try:
-            # 1. Получаем проект
+            # удаляем связь проекта из таблицы ассоциаций
             await db.execute(
-                delete(ProjectUserAssociation).where(ProjectUserAssociation.project_id == project_id)
+                delete(ProjectUserAssociation).where(ProjectUserAssociation.project_id == role_info[0])
             )
             await db.commit()
 
-            query = await db.execute(select(Project).where(Project.id == project_id))    
+            # удаляем сам проект
+            query = await db.execute(select(Project).where(Project.id == role_info[0]))    
             db_project = query.scalar()
             if not db_project:
                 return False
@@ -547,17 +548,17 @@ async def delete_project_service(role_info: tuple, db: AsyncSession) -> bool:
             )
     else:
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! роль не та")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role[2]} - is not suitable for this action"})
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role_info[2]} - is not suitable for this action"})
 
 
-async def delete_section_service(request: Request, project_id: int, section_id: int, db: AsyncSession) -> bool:
+async def delete_section_service(role_info: tuple, section_id: int, db: AsyncSession) -> bool:
 
-    role = await parse_role_service(request=request)
-    verify = await verify_project_service(role=role, project_id=project_id)
+    # role = await parse_role_service(request=request)
+    # verify = await verify_project_service(role=role, project_id=project_id)
 
-    if role[2] == Role.ADMIN.value:
+    if role_info[2] == Role.ADMIN.value:
         try:
-            query = await db.execute(select(Section).where(Section.id == section_id))    
+            query = await db.execute(select(Section).where(Section.id == section_id))
             db_section = query.scalar()
             if not db_section:
                 return False
@@ -576,7 +577,7 @@ async def delete_section_service(request: Request, project_id: int, section_id: 
             )
     else:
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! роль не та")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role[2]} - is not suitable for this action"})
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role_info[2]} - is not suitable for this action"})
 
 
 

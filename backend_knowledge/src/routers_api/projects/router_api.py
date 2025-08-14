@@ -169,9 +169,6 @@ async def task_state_change(
     return await task_state_change_service(role_info=role_info, task_id=task_id, task_state=task_state, db=session)
 
 
-# приглашение пользователя в проект
-# на фронте ищем пользователей по емейлу и даем список пользователей на фронте также. Напротив пользователя отобразить кнопку пригласить в проект. После приглашения в ассоциативной таблице появится запись, например, 32-й проект и пользователь 1, и вторая строка 32-й проект и пользователь 2. То есть в 32 проекте будет 2 пользака. 
-
 # поиск юзера при добавлении в проект. Тут поиск идет через параметр из ссылки
 @router_project_api.get("/search_user/{project_id}", response_model=UsersSearchSchema)
 async def search_user(
@@ -232,20 +229,24 @@ async def delete_project(
     session: AsyncSession = Depends(get_async_session)):
     return await delete_project_service(role_info=role_info, db=session)
 
-# ост на удалении проекта
 
 # удаление раздела в проекте
 @router_project_api.delete("/delete_section/{project_id}/{section_id}")
-async def delete_section(request: Request, project_id: int, section_id: int, session: AsyncSession = Depends(get_async_session)):
-    return await delete_section_service(request=request, project_id=project_id, section_id=section_id, db=session)
+async def delete_section(
+    section_id: int, 
+    role_info: tuple[int, int, str] = Depends(verify_project_service), 
+    session: AsyncSession = Depends(get_async_session)):
+    return await delete_section_service(role_info=role_info, section_id=section_id, db=session)
 
 
-# в react сделать хранение и проверку ролей через zustand, и на бэке сделать проверку ролей. В дипсик есть ответы почитать и сделать
-# смотреть дипсик, там сделал промт. Получается у нас всегда есть уязвимость если украли токен злоумышленник
-
+# роут для получения токена роли для проектов
 @router_project_api.post("/create_project_token/")
 async def create_project_token(
     project_id: User_project_role_schema, 
     user_id: int = Depends(verify_user_service), 
     session: AsyncSession = Depends(get_async_session)):
     return await create_project_token_service(user_id=user_id, project_id=project_id, db=session)
+
+
+
+
