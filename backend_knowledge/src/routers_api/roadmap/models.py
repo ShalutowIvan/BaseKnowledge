@@ -32,10 +32,13 @@ class Chapter(Base):
     description: Mapped[str] = mapped_column(default="_")
     created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
     
-    # первичный ключ на указания номера роадмапы, то есть id
-    roadmap_id: Mapped[int] = mapped_column(ForeignKey("roadmap.id", ondelete="CASCADE"))
     # Связи
+    roadmap_id: Mapped[int] = mapped_column(ForeignKey("roadmap.id", ondelete="CASCADE"))    
     roadmap: Mapped["RoadMap"] = relationship(back_populates="chapters")
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
+    user: Mapped["User"] = relationship(back_populates="chapter_user")
+
     stages: Mapped[list["Stage"]] = relationship(back_populates="chapter", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
 
 
@@ -61,6 +64,9 @@ class Stage(Base):
     # связи
     chapter_id: Mapped[int] = mapped_column(ForeignKey("chapter.id", ondelete="CASCADE"))
     chapter: Mapped["Chapter"] = relationship(back_populates="stages")
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
+    user: Mapped["User"] = relationship(back_populates="stage_user")
     
     
 

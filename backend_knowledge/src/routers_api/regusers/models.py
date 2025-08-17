@@ -23,6 +23,9 @@ class User(Base):
     #связи
     knowledge_user: Mapped["Knowledge"] = relationship(back_populates="user")
     roadmap_user: Mapped["RoadMap"] = relationship(back_populates="user")
+    chapter_user: Mapped["Chapter"] = relationship(back_populates="user")
+    stage_user: Mapped["Stage"] = relationship(back_populates="user")
+
     tokens: Mapped["Token"] = relationship(back_populates="user")    
     client_generate: Mapped["Code_verify_client"] = relationship(back_populates="user")
 

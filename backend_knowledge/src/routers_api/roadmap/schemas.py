@@ -20,17 +20,17 @@ class RoadmapsCreateSchema(BaseModel):
     description: str
 
 
-# class SectionsSchema(BaseModel):
-#     id: int
-#     title: str
-#     description: str    
-#     created_at: datetime
-#     project_id: int
+class ChaptersSchema(BaseModel):
+    id: int
+    title: str
+    description: str    
+    created_at: datetime
+    roadmap_id: int
 
 
-# class SectionsCreateSchema(BaseModel):
-#     title: str
-#     description: str
+class ChaptersCreateSchema(BaseModel):
+    title: str
+    description: str
 
 
 
@@ -39,32 +39,31 @@ class RoadmapsCreateSchema(BaseModel):
 #     description: Optional[str] = None    
 
 
-# class TasksSchema(BaseModel):
-#     id: int
-#     title: str
-#     description: str    
-#     created_at: datetime
-#     updated_at: datetime
-#     state: StatesTask
-#     section_id: int
+class StageSchema(BaseModel):
+    id: int
+    title: str
+    description: str    
+    created_at: datetime
+    updated_at: datetime
+    state: StatesStage
+    chapter_id: int
 
 
-# class TaskCreateSchema(BaseModel):
-#     # id: int
-#     title: str
-#     description: str
+class StageCreateSchema(BaseModel):    
+    title: str
+    description: str
 
 
-# class TaskOpenSchema(TasksSchema):
-#     content: str
+class StageOpenSchema(StageSchema):
+    content: str
 
 
-# class TaskUpdateSchema(BaseModel):        
-#     content: str
+class StageUpdateSchema(BaseModel):        
+    content: str
 
 
-# class TaskUpdateHeaderSchema(TaskCreateSchema):
-#     updated_at: datetime
+class StageUpdateHeaderSchema(StageCreateSchema):
+    updated_at: datetime
 
 
 # class TaskStateSchema(BaseModel):

@@ -45,106 +45,106 @@ async def roadmap_get_open(
     return await roadmap_get_open_service(roadmap_id=roadmap_id, user_id=user_id, db=session)
 
 
-# # запрос секций в проекте
-# @router_roadmap_api.get("/section_project_all/{project_id}", response_model=list[SectionsSchema])
-# async def section_project_all(
-#     role_info: tuple[int, int, str] = Depends(verify_project_service), 
-#     session: AsyncSession = Depends(get_async_session)) -> SectionsSchema:
-#     return await get_sections_project(role_info=role_info, db=session)
+# запрос чаптеров в мапе
+@router_roadmap_api.get("/chapters_roadmap_all/{roadmap_id}", response_model=list[ChaptersSchema])
+async def chapters_roadmap_all(
+    roadmap_id: int,
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)) -> ChaptersSchema:
+    return await chapters_all_roadmap_service(roadmap_id=roadmap_id, user_id=user_id, db=session)
 
 
-# # изменение шапки проекта
-# @router_roadmap_api.patch("/project_update_header/{project_id}", response_model=ProjectsCreateSchema)
-# async def project_update_header(    
-#     project_update: ProjectsCreateSchema, 
-#     role_info: tuple[int, int, str] = Depends(verify_project_service), 
-#     session: AsyncSession = Depends(get_async_session)
-#     ) -> ProjectsCreateSchema:    
-#     return await update_project_header_service(role_info=role_info, project_update=project_update, db=session)
+# # изменение шапки мапы
+@router_roadmap_api.patch("/roadmap_update_header/{roadmap_id}", response_model=RoadmapsCreateSchema)
+async def roadmap_update_header(
+    roadmap_update: RoadmapsCreateSchema, 
+    roadmap_id: int,
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)
+    ) -> RoadmapsCreateSchema:    
+    return await update_roadmap_header_service(roadmap_id=roadmap_id, user_id=user_id, roadmap_update=roadmap_update, db=session)
 
 
-# # создание секции
-# @router_roadmap_api.post("/section_create/{project_id}", response_model=SectionsSchema)
-# async def section_create(   
-#     section: SectionsCreateSchema, 
-#     role_info: tuple[int, int, str] = Depends(verify_project_service), 
-#     session: AsyncSession = Depends(get_async_session)) -> SectionsSchema:
-#     return await section_create_service(role_info=role_info, db=session, section=section)
+# # создание чаптеров. Можно создать чаптер в чужой роадмапе. При этом владелец роадмапы ее не увидит. И пользак который создал чаптер в чужой роадмапе через фронт не увидит, а через отдельный запрос с бэка увидит
+# любой пользак в любой дорожной карте может создать чаптер. Плохо... Самое просто сделать запрос принадлежности роадмапе, но это +1 SQL...
+@router_roadmap_api.post("/chapter_create/{roadmap_id}", response_model=ChaptersSchema)
+async def chapter_create(
+    roadmap_id: int,
+    chapter: ChaptersCreateSchema, 
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)) -> ChaptersSchema:
+    return await chapter_create_service(roadmap_id=roadmap_id, user_id=user_id, chapter=chapter, db=session)
 
 
 # # изменение шапки секции
-# @router_roadmap_api.patch("/section_update_header/{project_id}/{section_id}", response_model=SectionsCreateSchema)
-# async def section_update_header(
-#     section_id: int,
-#     section_update: SectionsCreateSchema, 
-#     role_info: tuple[int, int, str] = Depends(verify_project_service), 
-#     session: AsyncSession = Depends(get_async_session)
-#     ) -> SectionsCreateSchema:    
-#     return await update_section_header_service(role_info=role_info, section_id=section_id, section_update=section_update, db=session)
+@router_roadmap_api.patch("/chapter_update_header/{chapter_id}", response_model=ChaptersCreateSchema)
+async def chapter_update_header(
+    chapter_id: int,
+    chapter_update: ChaptersCreateSchema, 
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)
+    ) -> ChaptersCreateSchema:    
+    return await chapter_update_header_service(user_id=user_id, chapter_id=chapter_id, chapter_update=chapter_update, db=session)
 
 
-# # запрос тасок в разделе
-# @router_roadmap_api.get("/task_section_all/{project_id}/{section_id}", response_model=list[TasksSchema])
-# async def section_project_all(
-#     section_id: int, 
-#     role_info: tuple[int, int, str] = Depends(verify_project_service),     
-#     session: AsyncSession = Depends(get_async_session)) -> TasksSchema:
-#     return await get_tasks_section(role_info=role_info, section_id=section_id, db=session)
-
+# # запрос стейджей в разделе
+@router_roadmap_api.get("/stage_chapter_all/{chapter_id}", response_model=list[StageSchema])
+async def stage_chapter_all(
+    chapter_id: int, 
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)) -> StageSchema:
+    return await stage_chapter_all_service(user_id=user_id, chapter_id=chapter_id, db=session)
 
 
 # # запрос секции при открытой секции
-# @router_roadmap_api.get("/section_get/{project_id}/{section_id}", response_model=SectionsSchema)
-# async def section_get_open(
-#     section_id: int, 
-#     role_info: tuple[int, int, str] = Depends(verify_project_service), 
-#     session: AsyncSession = Depends(get_async_session)) -> SectionsSchema:
-#     return await get_section_open(role_info=role_info, section_id=section_id, db=session)
+@router_roadmap_api.get("/chapter_get/{chapter_id}", response_model=ChaptersSchema)
+async def chapter_get_open(
+    chapter_id: int, 
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)) -> ChaptersSchema:
+    return await chapter_get_open_service(user_id=user_id, chapter_id=chapter_id, db=session)
 
-
-# # начала с этого роута по созданию задачи. Фронт пока не исправлял!!!!!!!!!!!!!! Сделал только создание задачи на фронте. Ост тут на фронте!!!!!
 
 # # создание задачи
-# @router_roadmap_api.post("/task_create/{project_id}/{section_id}", response_model=TasksSchema)
-# async def task_create(
-#     section_id: int, 
-#     task: TaskCreateSchema, 
-#     role_info: tuple[int, int, str] = Depends(verify_project_service), 
-#     session: AsyncSession = Depends(get_async_session)) -> TasksSchema:
-#     return await task_create_service(role_info=role_info, section_id=section_id, db=session, task=task)
-
-
+@router_roadmap_api.post("/stage_create/{chapter_id}", response_model=StageSchema)
+async def stage_create(
+    chapter_id: int, 
+    stage: StageCreateSchema, 
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)) -> StageSchema:
+    return await stage_create_service(user_id=user_id, chapter_id=chapter_id, db=session, stage=stage)
 
 
 # # открыть задачу, тут фильтр по ID задачи. Возможно переделаю на UUID
-# @router_roadmap_api.get("/task_open/{project_id}/{task_id}", response_model=TaskOpenSchema)
-# async def task_open(
-#     task_id: int, 
-#     role_info: tuple[int, int, str] = Depends(verify_project_service), 
-#     session: AsyncSession = Depends(get_async_session)
-#     ) -> TaskOpenSchema:
-#     return await task_open_service(role_info=role_info, task_id=task_id, db=session)
+@router_roadmap_api.get("/stage_open/{stage_id}", response_model=StageOpenSchema)
+async def stage_open(
+    stage_id: int, 
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)
+    ) -> StageOpenSchema:
+    return await stage_open_service(user_id=user_id, stage_id=stage_id, db=session)
 
 
-# #изменение задачи. Меняется только текст в контенте
-# @router_roadmap_api.put("/task_update/{project_id}/{task_id}", response_model=TaskOpenSchema)
-# async def task_update(
-#     task_update: TaskUpdateSchema, 
-#     task_id: int, 
-#     role_info: tuple[int, int, str] = Depends(verify_project_service), 
-#     session: AsyncSession = Depends(get_async_session)):    
-#     return await update_task_service(role_info=role_info, task_id=task_id, task_update=task_update, db=session)
+# #изменение задачи. Меняется только текст в контенте. Подумать, зачем возвращать полную схему когда меняем только контент...
+@router_roadmap_api.put("/stage_update/{stage_id}", response_model=StageOpenSchema)
+async def stage_update(
+    stage_update: StageUpdateSchema, 
+    stage_id: int, 
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)):    
+    return await stage_update_service(user_id=user_id, stage_id=stage_id, stage_update=stage_update, db=session)
 
 
 # # изменение шапки задачи
-# @router_roadmap_api.patch("/task_update_header/{project_id}/{task_id}", response_model=TaskUpdateHeaderSchema)
-# async def task_update_header(
-#     task_id: int,
-#     task_update: TaskCreateSchema,
-#     role_info: tuple[int, int, str] = Depends(verify_project_service), 
-#     session: AsyncSession = Depends(get_async_session)) -> TaskUpdateHeaderSchema:
-#     return await update_task_header_service(role_info=role_info, task_id=task_id, task_update=task_update, db=session)
+@router_roadmap_api.patch("/stage_update_header/{stage_id}", response_model=StageUpdateHeaderSchema)
+async def stage_update_header(
+    stage_id: int,
+    stage_update: StageCreateSchema,
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)) -> StageUpdateHeaderSchema:
+    return await stage_update_header_service(user_id=user_id, stage_id=stage_id, stage_update=stage_update, db=session)
 
+# ост тут
 
 # #удаление задачи
 # @router_roadmap_api.delete("/delete_task/{project_id}/{task_id}")
