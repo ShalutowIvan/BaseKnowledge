@@ -55,7 +55,7 @@ function ProjectPageView() {
   // }
 
 
-	if (projectLoad.error === "401_UNAUTHORIZED") {  
+	if (projectLoad?.error) {  
     return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {projectLoad["error"]}. Пройдите авторизацию.</h1>
   	}
 

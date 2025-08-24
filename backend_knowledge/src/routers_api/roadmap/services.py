@@ -18,17 +18,15 @@ from routers_api.regusers.verify_user import verify_user_service
 from routers_api.regusers.models import User
 import jwt #это PyJWT
 # from settings import PROJECT_KEY, EXPIRE_TIME_PROJECT_TOKEN, ALG
-
+from db_api.database import logger
 
 
 # получение всех мапов, пока без пагинации
-async def get_roadmaps(db: AsyncSession, user_id: int = None) -> list[RoadmapsSchema]:    
+async def get_roadmaps_service(db: AsyncSession, user_id: int = None) -> list[RoadmapsSchema]:    
 
     query = (
-        select(RoadMap)  # Выбираем проекты        
-        # Фильтруем только записи, где user_id совпадает с ID текущего пользователя
-        .where(RoadMap.user_id == user_id)
-        # Сортируем по дате создания (новые сверху)
+        select(RoadMap)
+        .where(RoadMap.user_id == user_id)        
         .order_by(RoadMap.created_at.desc())
     )
 
@@ -52,15 +50,15 @@ async def roadmap_create_service(
 
 
 async def roadmap_get_open_service(roadmap_id: int, user_id: int, db: AsyncSession) -> RoadmapsSchema:    
-    try:
-        query = select(RoadMap).where(RoadMap.id == roadmap_id).where(RoadMap.user_id == user_id)
-        result = await db.execute(query)
-        roadmap = result.scalar_one_or_none()
-        if roadmap == None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Road map not found!")            
-        return roadmap
-    except Exception as ex:        
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Error search roadmap!")
+    # try:
+    query = select(RoadMap).where(RoadMap.id == roadmap_id).where(RoadMap.user_id == user_id)
+    result = await db.execute(query)
+    roadmap = result.scalar_one_or_none()
+    if roadmap == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Road map not found!")            
+    return roadmap
+    # except Exception as ex:        
+    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Error search roadmap!")
 
 
 # запрос секций в мапе
@@ -147,7 +145,7 @@ async def chapter_update_header_service(user_id: int, chapter_id: int, chapter_u
 
 async def stage_chapter_all_service(user_id: int, chapter_id: int, db: AsyncSession) -> StageSchema:    
     try:
-        query = select(Stage).where(Stage.chapter_id == chapter_id).where(Stage.user_id == user_id)
+        query = select(Stage).where(Stage.chapter_id == chapter_id).where(Stage.user_id == user_id).order_by(Stage.created_at.desc())
         stages = await db.execute(query)
         return stages.scalars().all()
     except Exception as ex:
@@ -164,7 +162,7 @@ async def chapter_get_open_service(user_id: int, chapter_id: int, db: AsyncSessi
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"{ex}")
 
 
-async def task_create_service(user_id: int, chapter_id: int, db: AsyncSession, stage: StageCreateSchema) -> StageSchema:
+async def stage_create_service(user_id: int, chapter_id: int, db: AsyncSession, stage: StageCreateSchema) -> StageSchema:
     try:
         query = select(Chapter).where(Chapter.id == chapter_id, Chapter.user_id == user_id)
         result = await db.execute(query)
@@ -176,7 +174,7 @@ async def task_create_service(user_id: int, chapter_id: int, db: AsyncSession, s
             )
 
         slug = translit(stage.title, language_code='ru', reversed=True)    
-        new_stage = Stage(title=stage.title, description=stage.description, chapter_id=chapter_id, slug=slug)
+        new_stage = Stage(title=stage.title, description=stage.description, chapter_id=chapter_id, slug=slug, user_id=user_id)
         db.add(new_stage)
         await db.commit()
         await db.refresh(new_stage)
@@ -200,7 +198,7 @@ async def stage_update_service(user_id: int, stage_id: int, stage_update: StageU
     
     try:
         # 1. Получаем текущую задачу.
-        query = await db.execute(select(Stage).where(Stage.id == stage_id)).where(Stage.user_id == user_id)   
+        query = await db.execute(select(Stage).where(Stage.id == stage_id).where(Stage.user_id == user_id))
         db_stage = query.scalar()
         if not db_stage:
             raise HTTPException(status_code=404, detail="stage not found")
@@ -218,344 +216,152 @@ async def stage_update_service(user_id: int, stage_id: int, stage_update: StageU
 
 
 # # обновление шапки таски, переделать под таску
-async def stage_update_header_service(user_id: int, stage_id: int, stage_update: StageCreateSchema, db: AsyncSession):    
+async def stage_update_header_service(user_id: int, stage_id: int, stage_update: StageChangeHeaderSchema, db: AsyncSession):    
     try:
-        # 1. Получаем текущую таску 3-мя полями. А с фронта принимаем 2 поля. И возвращаем ответ
+        # 1. Получаем текущую таску 4-мя полями. А с фронта принимаем 3 поля. И возвращаем ответ
         query = select(Stage).where(Stage.id == stage_id).where(Stage.user_id == user_id).options(
                     load_only(
                     Stage.title,
                     Stage.description,
-                    Stage.updated_at                
+                    Stage.updated_at,
+                    Stage.state
                     )
                 )
         result = await db.execute(query)
-        stage_header = query.scalar_one_or_none()
+        stage_header = result.scalar_one_or_none()
 
-        if not stage_header:
-            raise HTTPException(status_code=404, detail="task not found")
+        if not stage_header:            
+            # logger.warning(f"Stage not found - user_id: {user_id}, stage_id: {stage_id}")
+            raise HTTPException(status_code=404, detail="stage not found")
         
-        # # 2. Обновляем задачу
+        # # 2. Обновляем этап
         stage_header.title = stage_update.title
         stage_header.description = stage_update.description
+        stage_header.state = stage_update.state
         stage_header.updated_at = datetime.utcnow()
         await db.commit()
         await db.refresh(stage_header)
         
+        logger.info(f"Stage updated successfully - user_id: {user_id}, stage_id: {stage_id}")
         # возвращаем все 3 поля.
         return stage_header
+
+
+    # except HTTPException as ex:        
+    #     # HTTPException которые мы сами подняли - уже залогированы
+    #     # Просто передаем дальше без изменений
+    #     raise ex
+
+    except Exception as ex:
+        # Правильное логирование ошибки
+        # logger.error(
+        #     f"Error in stage_update_header_service, user_id: {user_id}, stage_id: {stage_id}",            
+        #     # exc_info=True  # Это добавит полный traceback к логу
+        # )
+
+        # import traceback
+        # import inspect
+        # stack = traceback.format_stack()
+        # calling_function = stack[-2].split('\n')[0].strip() if len(stack) > 1 else "unknown"
+        
+        # logger.error(
+        #     f"Error in {inspect.currentframe().f_code.co_name}, "
+        #     f"called from: {calling_function}, "
+        #     f"user_id: {user_id}, stage_id: {stage_id}",
+        #     exc_info=True
+        # )
+
+        # raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Ошибка: {ex}")
+        raise ex
+
+
+
+async def delete_stage_service(user_id: int, stage_id: int, db: AsyncSession) -> bool:    
+    
+    try:
+        # 1. Получаем задачу        
+        query = select(Stage).where(Stage.id == stage_id).where(Stage.user_id == user_id)
+        result = await db.execute(query)
+        db_stage = result.scalar()
+        if not db_stage:
+            return False
+
+        # 2. Удаляем задачу. 
+        await db.delete(db_stage)
+        
+        await db.commit()
+        return True
+
+    except Exception as ex:
+        
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Ошибка при удалении этапа: {str(e)}"
+        )
+
+
+
+async def stage_state_change_service(user_id: int, stage_id: int, stage_state: StageStateSchema, db: AsyncSession):
+    
+    try:
+        # 1. Получаем текущую таску 2-мя полями. С фронта принимаем 2 поля. И возвращаем ответ
+        query = select(Stage).where(Stage.id == stage_id).where(Stage.user_id == user_id).options(
+                    load_only(
+                    Stage.state,
+                    Stage.updated_at
+                    )
+                )
+        result = await db.execute(query)
+        stage = result.scalar_one_or_none()
+
+        if not stage:
+            raise HTTPException(status_code=404, detail="stage not found")
+        
+        # # 2. Обновляем задачу    
+        stage.state = stage_state.state
+        stage.updated_at = datetime.utcnow()
+        await db.commit()
+        await db.refresh(stage)
+        
+        # возвращаем 2 поля.
+        return stage
     except Exception as ex:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"{ex}")
 
 
-
-# async def delete_task_service(role_info: tuple, db: AsyncSession, task_id: int) -> bool:
-#     # role = await parse_role_service(request=request)
-#     # verify = await verify_project_service(role=role, project_id=project_id)
-
-#     if (role_info[2] == Role.ADMIN.value) or (role_info[2] == Role.EDITOR.value):
-
-#         try:
-#             # 1. Получаем задачу
-#             query = await db.execute(select(Task).where(Task.id == task_id))    
-#             db_task = query.scalar()
-#             if not db_task:
-#                 return False
-
-#             # 2. Удаляем задачу. 
-#             await db.delete(db_task)
-            
-#             await db.commit()
-#             return True
-
-#         except Exception as ex:
-#             print("Ошибка при удалении задачи:", ex)
-#             raise HTTPException(
-#                 status_code=500,
-#                 detail=f"Ошибка при удалении задачи: {str(e)}"
-#             )
-#     else:
-#         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! роль не та")
-#         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role_info[2]} - is not suitable for this action"})
-
-
-# async def task_state_change_service(role_info: tuple, task_id: int, task_state: TaskStateSchema, db: AsyncSession):
-#     # role = await parse_role_service(request=request)
-#     # verify = await verify_project_service(role=role, project_id=project_id)
-
-#     if (role_info[2] == Role.ADMIN.value) or (role_info[2] == Role.EDITOR.value):
-#         # 1. Получаем текущую таску 3-мя полями. А с фронта принимаем 2 поля. И возвращаем ответ
-#         query = await db.execute(select(Task).where(Task.id == task_id).options(
-#                     load_only(
-#                     Task.state,
-#                     Task.updated_at
-#                     )
-#                 ))    
-#         task = query.scalar_one_or_none()
-
-#         if not task:
-#             raise HTTPException(status_code=404, detail="task not found")
+async def delete_roadmap_service(user_id: int, roadmap_id: int, db: AsyncSession) -> bool:
+    
+    try:
+        # удаляем роадмап
+        query = select(RoadMap).where(RoadMap.id == roadmap_id).where(RoadMap.user_id == user_id)
+        result = await db.execute(query)
+        db_roadmap = result.scalar()
+        if not db_roadmap:
+            return False
         
-#         # # 2. Обновляем задачу    
-#         task.state = task_state.state
-#         task.updated_at = datetime.utcnow()
-#         await db.commit()
-#         await db.refresh(task)
+        await db.delete(db_roadmap)
         
-#         # возвращаем 2 поля.
-#         return task
-#     else:
-#         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! роль не та")
-#         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role_info[2]} - is not suitable for this action"})
+        await db.commit()
+        return True
 
-
-
-# async def search_user_service(role_info: tuple, email_user: EmailStr, db: AsyncSession):
-#     # role = await parse_role_service(request=request)
-#     # verify = await verify_project_service(role=role, project_id=project_id)
-
-#     if role_info[2] == Role.ADMIN.value:
-#         try:
-#             query = await db.execute(select(User).where(User.email == email_user).options(
-#                     load_only(
-#                     User.name,
-#                     User.email,
-#                     User.id
-#                     )
-#                 ))
-#             db_user = query.scalar()
-#             # print("!!!!!!!!!!!!!!!!!!")
-#             # print(db_user)
-#             if db_user == None:
-#                 # raise HTTPException(status_code=400, detail=f"Ошибка при поиске пользователя: {str(ex)}")
-#                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден")
-
-#             query_user_project = await db.execute(
-#                     (select(ProjectUserAssociation)
-#                     .where(ProjectUserAssociation.user_id == db_user.id)
-#                     .where(ProjectUserAssociation.project_id == role_info[0])
-#                     ))
-#             user_project = query_user_project.scalar_one_or_none()
-#             if user_project == None:
-#                 invite = True
-#             elif user_project != None:
-#                 invite = False
-
-#             return {"user": db_user, "invite": invite}
-#         except Exception as ex:            
-#             raise HTTPException(status_code=400, detail=f"Ошибка при поиске пользователя: {str(ex)}")
-
-#     else:
-#         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! роль не та")
-#         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role_info[2]} - is not suitable for this action"})
-
-
-# async def invite_to_project_service(role_info: tuple, user_invite: User_invite_to_project_schema, db: AsyncSession):
-#     # role = await parse_role_service(request=request)
-#     # verify = await verify_project_service(role=role, project_id=user_invite.project_id)
-
-#     if role_info[2] == Role.ADMIN.value:
-#         try:
-#             # запросили пользователя
-#             query_user = await db.execute(select(User).where(User.id == user_invite.user_id))    
-#             db_user = query_user.scalar()
-#             # запросили проект
-#             query_project = await db.execute(select(Project).where(Project.id == role_info[0]))    
-#             db_project = query_project.scalar()
-#             # создали связь пользователя с проектом с ролью гость
-#             association = db_project.add_user(db_user)
-#             db.add(association)
-#             await db.commit()
-#             await db.refresh(association)
-
-#             return {"Ответ": "Все отлично!"}
-#         except Exception as ex:
-#             print("Ошибка при добавлении пользователя в проект ниже!!!")
-#             print(ex)
-#             raise HTTPException(status_code=400, detail=f"Ошибка при добавлении пользователя в проект: {str(ex)}")
-#     else:
-#         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! роль не та")
-#         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role_info[2]} - is not suitable for this action"})
-
-
-# async def exclude_from_project_service(role_info: tuple, user_exclude: User_invite_to_project_schema, db: AsyncSession):
-
-#     # role = await parse_role_service(request=request)
-#     # verify = await verify_project_service(role=role, project_id=user_exclude.project_id)
-
-#     if role_info[2] == Role.ADMIN.value:
-
-#         try:
-#             # current_user_id = await verify_user_service(request=request)
-
-#             # query_current_user = await db.execute(select(User).where(User.id == current_user_id))
-#             # current_user = query_current_user.scalar()
-#             # тут проверяем токены пользака из токена и токен которого удаляем
-#             if role_info[1] == user_exclude.user_id:
-#                 return {"answer": "Нельзя удалить себя!"}
-
-
-#             query_user_project = await db.execute(
-#                     (select(ProjectUserAssociation)
-#                     .where(ProjectUserAssociation.user_id == user_exclude.user_id)
-#                     .where(ProjectUserAssociation.project_id == role_info[0])
-#                     ))
-#             user_project = query_user_project.scalar_one_or_none()
-            
-#             await db.delete(user_project)
-            
-#             await db.commit()
-#             return True        
-#         except Exception as ex:
-#             print("Ошибка при удалении пользователя из проекта ниже!!!")
-#             print(ex)
-#             raise HTTPException(status_code=400, detail=f"Ошибка при исключении пользователя из проекта: {str(ex)}")
-#     else:
-#         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! роль не та")
-#         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role_info[2]} - is not suitable for this action"})
-
-
-# async def all_current_users_project_service(role_info: tuple, db: AsyncSession):
-#     # role = await parse_role_service(request=request)
-#     # verify = await verify_project_service(role=role, project_id=project_id)
-
-#     if role_info[2] == Role.ADMIN.value:
-#         try:
-#             query = (
-#                 select(User.name, User.email, User.id, ProjectUserAssociation.role)
-#                 .join(ProjectUserAssociation, User.id == ProjectUserAssociation.user_id)
-#                 .where(ProjectUserAssociation.project_id == role_info[0])
-#             )
-#             users_project = await db.execute(query)        
-#             return users_project        
-#         except Exception as ex:
-#             print("Ошибка валидации!!!!!!!!!!!!!")
-#             print(ex)
-#             raise HTTPException(status_code=400, detail=f"Ошибка при запросе пользователей: {str(ex)}")
-#     else:
-#         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! роль не та")
-#         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role_info[2]} - is not suitable for this action"})
+    except Exception as ex:        
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Ошибка при удалении мапы: {str(ex)}")
     
 
-# async def role_project_change_service(role_info: tuple, user_role: User_role_change_schema, db: AsyncSession):
-#     # role = await parse_role_service(request=request)
-#     # verify = await verify_project_service(role=role, project_id=user_role.project_id)
+async def delete_chapter_service(user_id: int, chapter_id: int, db: AsyncSession) -> bool:
 
-#     if role_info[2] == Role.ADMIN.value:
-    
-#         # 1. Получаем текущую таску 3-мя полями. А с фронта принимаем 2 поля. И возвращаем ответ
-#         query_user_project = await db.execute(
-#                     (select(ProjectUserAssociation)
-#                     .where(ProjectUserAssociation.user_id == user_role.user_id)
-#                     .where(ProjectUserAssociation.project_id == role_info[0])
-#                     ))
-#         user_project = query_user_project.scalar_one_or_none()
-
-#         if not user_project:
-#             raise HTTPException(status_code=404, detail="task not found")
+    try:
+        query = select(Chapter).where(Chapter.id == chapter_id).where(Chapter.user_id == user_id)
+        result = await db.execute(query)
+        db_chapter = result.scalar()
+        if not db_chapter:
+            return False
         
-#         # 2. Обновляем роль
-#         user_project.role = user_role.role    
-#         await db.commit()
-#         await db.refresh(user_project)
+        await db.delete(db_chapter)
         
-#         # возвращаем роль.
-#         return user_project
-#     else:
-#         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! роль не та")
-#         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role[2]} - is not suitable for this action"})
+        await db.commit()
+        return True
 
-
-# # ост тут
-# async def delete_project_service(role_info: tuple, db: AsyncSession) -> bool:
-#     # role = await parse_role_service(request=request)
-#     # verify = await verify_project_service(role=role, project_id=project_id)
-
-#     if role_info[2] == Role.ADMIN.value:
-#         try:
-#             # удаляем связь проекта из таблицы ассоциаций
-#             await db.execute(
-#                 delete(ProjectUserAssociation).where(ProjectUserAssociation.project_id == role_info[0])
-#             )
-#             await db.commit()
-
-#             # удаляем сам проект
-#             query = await db.execute(select(Project).where(Project.id == role_info[0]))    
-#             db_project = query.scalar()
-#             if not db_project:
-#                 return False
-
-#             # 2. Удаляем проект. 
-#             await db.delete(db_project)
-            
-#             await db.commit()
-#             return True
-
-#         except Exception as ex:
-#             print("Ошибка при удалении проекта:", ex)
-#             raise HTTPException(
-#                 status_code=500,
-#                 detail=f"Ошибка при удалении проекта: {str(ex)}"
-#             )
-#     else:
-#         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! роль не та")
-#         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role_info[2]} - is not suitable for this action"})
-
-
-# async def delete_section_service(role_info: tuple, section_id: int, db: AsyncSession) -> bool:
-
-#     # role = await parse_role_service(request=request)
-#     # verify = await verify_project_service(role=role, project_id=project_id)
-
-#     if role_info[2] == Role.ADMIN.value:
-#         try:
-#             query = await db.execute(select(Section).where(Section.id == section_id))
-#             db_section = query.scalar()
-#             if not db_section:
-#                 return False
-
-#             # 2. Удаляем проект. 
-#             await db.delete(db_section)
-            
-#             await db.commit()
-#             return True
-
-#         except Exception as ex:
-#             print("Ошибка при удалении секции:", ex)
-#             raise HTTPException(
-#                 status_code=500,
-#                 detail=f"Ошибка при удалении секции: {str(ex)}"
-#             )
-#     else:
-#         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! роль не та")
-#         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role_info[2]} - is not suitable for this action"})
+    except Exception as ex:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Ошибка при удалении главы: {str(ex)}")
 
 
 
-# # создание токена с ролью для проекта
-# async def create_project_token_service(user_id: int, project_id: User_project_role_schema, db: AsyncSession, expires_delta: timedelta | None = None):
-
-#     # current_user_id = await verify_user_service(request=request)
-
-#     # if not current_user_id:
-#     #     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="401_UNAUTHORIZED")
-
-#     query_user_project = await db.execute(
-#                 (select(ProjectUserAssociation)
-#                 .where(ProjectUserAssociation.user_id == user_id)
-#                 .where(ProjectUserAssociation.project_id == project_id.project_id)
-#                 ))
-#     user_project = query_user_project.scalar_one_or_none()
-#     if not user_project:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error_code": "access_denied", "message": "User is not a member of this project"})    
-    
-#     data = {"project_id": user_project.project_id , "user_id": user_project.user_id, "role": user_project.role.value}
-
-#     to_encode = data.copy()
-#     if expires_delta:#если задано время истекания токена, то к текущему времени мы добавляем время истекания
-#         expire = datetime.utcnow() + expires_delta
-#     #expires_delta это если делать какую-то
-#     else:#иначе задаем время истекания также 30 мин
-#         expire = datetime.utcnow() + timedelta(minutes=int(EXPIRE_TIME_PROJECT_TOKEN))#протестить длительность токена с 0 минут
-#     to_encode.update({"exp": expire})#тут мы добавили элемент в словарь который скопировали выше элемент с ключом "exp" и значением времени, которое сделали строкой выше. 
-#     encoded_jwt = jwt.encode(to_encode, PROJECT_KEY, algorithm=ALG)#тут мы кодируем наш токен.
-#     return {"Project_token": encoded_jwt}

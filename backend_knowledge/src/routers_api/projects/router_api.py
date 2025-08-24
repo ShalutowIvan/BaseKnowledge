@@ -216,11 +216,6 @@ async def role_project_change(
 
 
 
-# @router_project_api.get("/update_project_token/")
-# async def update_project_token(request: Request, project_id: User_project_role_schema, session: AsyncSession = Depends(get_async_session)):
-#     return await create_project_token_service(request=request, project_id=project_id, db=session)
-
-
 # удаление проекта
 @router_project_api.delete("/delete_project/{project_id}")
 async def delete_project(

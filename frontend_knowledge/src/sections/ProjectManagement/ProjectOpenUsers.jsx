@@ -24,6 +24,7 @@ function ProjectOpenUsers() {
 
 	const { project_id } = useParams()
 
+
 	const validateForm = () => {
         if (!email) {
             setError("Для поиска пользователя введите Email!");

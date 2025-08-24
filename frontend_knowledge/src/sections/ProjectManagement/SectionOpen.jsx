@@ -182,12 +182,7 @@ function SectionOpen() {
         }    
     };
 
-
-    const create_task = () => {
-      return navigate(`/project/section/task/create/${section_id}`);
-    }
-
-  
+      
   const [modalOpen, setModalOpen] = useState(false);
   
     const openModalClick = () => {	    

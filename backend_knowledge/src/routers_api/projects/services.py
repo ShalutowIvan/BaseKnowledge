@@ -18,6 +18,8 @@ from routers_api.regusers.verify_user import verify_user_service
 from routers_api.regusers.models import User
 import jwt #это PyJWT
 from settings import PROJECT_KEY, EXPIRE_TIME_PROJECT_TOKEN, ALG
+from db_api.database import logger
+
 
 
 # для проектов
@@ -94,9 +96,7 @@ async def get_project_open(role_info: tuple, db: AsyncSession) -> ProjectsSchema
     project = result.scalar_one_or_none()
     if project == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error_code": "access_denied", "message": "User is not a member of this project"})
-
-        # return "Все плохо тут прописать httpexception с детаил и тд ост тут.....!!! и сразу при запросе проекта будет ошибка с бэка если пользака нет в проекте и в реакт сделать логику..."
-    # return project.scalars().first()
+        
     return project
 
 
@@ -109,8 +109,10 @@ async def get_sections_project(role_info: tuple, db: AsyncSession) -> SectionsSc
         sections = await db.execute(select(Section).where(Section.project_id == project_id))    
         return sections.scalars().all()
     else:
-        print("ошибка тут!!!!!!!!!!!!!!")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role {role} is not suitable for this action"})
+        logger.error(
+            f"Error ROLE in get_sections_project, user_id: {role_info[1]}, project_id: {project_id}",
+        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role {role_info[2]} is not suitable for this action"})
 
     
 # измененние шапки. project_id тут не query параметр, а параметр из ссылки роута. В реакт интерцепторе тоже есть query параметр project_id используемый для обновления Project_token, но он потом удаляется и не передается
@@ -333,7 +335,7 @@ async def task_state_change_service(role_info: tuple, task_id: int, task_state: 
     # verify = await verify_project_service(role=role, project_id=project_id)
 
     if (role_info[2] == Role.ADMIN.value) or (role_info[2] == Role.EDITOR.value):
-        # 1. Получаем текущую таску 3-мя полями. А с фронта принимаем 2 поля. И возвращаем ответ
+        # 1. Получаем текущую таску 2-мя полями. С фронта принимаем 2 поля. И возвращаем ответ
         query = await db.execute(select(Task).where(Task.id == task_id).options(
                     load_only(
                     Task.state,

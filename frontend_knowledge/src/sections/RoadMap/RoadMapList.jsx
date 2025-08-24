@@ -22,7 +22,7 @@ function RoadMapList() {
   const [modalOpen, setModalOpen] = useState(false);
 
     
-	if (roadmapLoad.error === "401_UNAUTHORIZED") {  
+	if (roadmapLoad?.error) {  
     return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {roadmapLoad["error"]}. Пройдите авторизацию.</h1>
   	}
 
@@ -57,7 +57,7 @@ function RoadMapList() {
                           <div className='project-section'>
                           <h1 className="name-knowledge">{roadmap.title}</h1>
                           <h2>Описание: {roadmap.description}</h2>
-                          <NavLink key={roadmap.id} to={`/projects/open/${roadmap.id}`} className={setActive}>
+                          <NavLink key={roadmap.id} to={`/roadmaps/open/${roadmap.id}`} className={setActive}>
                               <button className="toolbar-button">Открыть</button>
                           </NavLink>
                               <p>_____________________________________________________________</p>

@@ -1,14 +1,13 @@
 
 
-function ProjectOpenIndex() {
+function RoadMapOpenIndex() {
 	
 
 	return (
-		<div className="header-chapter">		
+		<div>
     		{/*<h1>Для начала работы веберите (или создайте) раздел слева</h1>								*/}
-    		
 		</div>
 		)
 }
 
-export { ProjectOpenIndex }
+export { RoadMapOpenIndex }

@@ -58,11 +58,12 @@ security = HTTPBearer()
 
 
 async def custom_token_check(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
-    token = credentials.credentials    
+    token = credentials.credentials
 
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing Authorization header"
         )
+
     try:
         check = await access_token_decode(acces_token=str(token))
         return int(check[1])

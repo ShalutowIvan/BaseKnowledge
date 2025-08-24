@@ -62,16 +62,23 @@ class StageUpdateSchema(BaseModel):
     content: str
 
 
-class StageUpdateHeaderSchema(StageCreateSchema):
+class StageChangeHeaderSchema(BaseModel):    
+    title: str
+    description: str
+    state: StatesStage
+
+
+
+class StageUpdateHeaderSchema(StageChangeHeaderSchema):
     updated_at: datetime
 
 
-# class TaskStateSchema(BaseModel):
-#     state: StatesTask
+class StageStateSchema(BaseModel):
+    state: StatesStage
     
 
-# class TaskStateSchemaR(TaskStateSchema):    
-#     updated_at: datetime
+class StageStateSchemaR(StageStateSchema):    
+    updated_at: datetime
 
 
 # class UserSchema(BaseModel):

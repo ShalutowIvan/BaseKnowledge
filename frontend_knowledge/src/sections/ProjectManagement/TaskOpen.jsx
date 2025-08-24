@@ -26,7 +26,8 @@ function TaskOpen() {
 
     
 
-    const { taskLoad, sectionLoad } = useLoaderData();
+    const { taskLoad } = useLoaderData();
+    // , sectionLoad
 
     if (taskLoad.error === "role_denied") {
       return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>У вас нет доступа к проекту!</h1>  
@@ -35,7 +36,7 @@ function TaskOpen() {
     const [editMode, setEditMode] = useState(false);//это для редактирования контента
     const [preview, setPreview] = useState(false);//предварительный просмотр при редактировании контента
     
-    const [section, setSection] = useState(sectionLoad)
+    // const [section, setSection] = useState(sectionLoad)
 
     const [editModeHeader, setEditModeHeader] = useState(false);//это для редактирования шапки
 
@@ -112,7 +113,7 @@ function TaskOpen() {
       axiosRole.delete(`http://127.0.0.1:8000/delete_task/${project_id}/${task.id}`,
         { params: {project_id: project_id} }
         )
-      navigate(`/projects/open/${section.project_id}/section_open/${section.id}`);
+      navigate(`/projects/open/${project_id}/section_open/${section_id}`);
       revalidator.revalidate();//принудительная перезагрузка лоадера после редиректа в списке знаний
     }  
   };
@@ -518,11 +519,12 @@ const TaskOpenLoader = async ({params}) => {
   const section_id = params.section_id
   const project_id = params.project_id
 
-  const requestSection = await getSection(section_id, project_id)
+  // const requestSection = await getSection(section_id, project_id)
+  // , sectionLoad: requestSection
 
   const requestTask = await getTaskOpen(project_id, task_id)  
   
-  return {taskLoad: requestTask, sectionLoad: requestSection}
+  return {taskLoad: requestTask}
 }
 
 

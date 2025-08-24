@@ -34,7 +34,12 @@ import { Registration_after } from "./regusers/Registration_after";
 
 // Дорожные карты
 import { RoadMapList, RoadMapListLoader } from './sections/RoadMap/RoadMapList';
-
+import { RoadMapOpenLayout, RoadMapOpenLoader } from './sections/RoadMap/RoadMapOpenLayout';
+import { RoadMapOpenIndex } from './sections/RoadMap/RoadMapOpenIndex';
+import { ChapterOpen, ChapterOpenLoader } from './sections/RoadMap/ChapterOpenLayout';
+import { ChapterOpenIndex } from './sections/RoadMap/ChapterOpenIndex';
+import { StageOpen, StageOpenLoader } from './sections/RoadMap/StageOpen';
+import { RoadMapOpenSettings } from './sections/RoadMap/RoadMapOpenSettings';
 
 
 const AppRouter = createBrowserRouter(createRoutesFromElements(
@@ -95,6 +100,19 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
           
           {/* дорожные карты */}
           <Route path="roadmaps/" element={<RoadMapList />} loader={RoadMapListLoader} />
+
+          <Route path="roadmaps/open/:roadmap_id" element={<RoadMapOpenLayout />} loader={RoadMapOpenLoader}>
+
+            <Route index element={<RoadMapOpenIndex />} />
+                        
+            <Route path="chapter_open/:chapter_id" element={<ChapterOpen />} loader={ChapterOpenLoader}>
+              <Route index element={<ChapterOpenIndex />} />            
+              <Route path="stage_open/:stage_id" element={<StageOpen />} loader={StageOpenLoader} />
+            </Route>
+
+            <Route path="settings" element={<RoadMapOpenSettings />} />
+            
+          </Route>
         
 
         </Route>       

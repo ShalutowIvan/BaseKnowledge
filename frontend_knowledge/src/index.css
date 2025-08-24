@@ -78,8 +78,9 @@ header {
 main{
   /*text-align: center; */
   /*background-color: seagreen;*/
-  width: 100%; /*сколько занимает по ширине сайта*/
-/*  padding: 50px 0px 100px 0px;*/
+  width: 100%; 
+  /*сколько занимает по ширине сайта*/
+  /*padding: 50px 0px 100px 0px;*/
   /* height: 100vh;*/
   /* padding: 2.5%; */
   /*border-right: 5px solid slategrey;*/
@@ -322,9 +323,9 @@ visibility: hidden;
   padding: 15px;
 }
 
-.editor-toolbar {
+/*.editor-toolbar {
   margin-bottom: 10px;
-}
+}*/
 
 .upload-button {
   background: #4CAF50;
@@ -373,6 +374,8 @@ visibility: hidden;
 }
 
 .markdown-content {
+  /*max-width: 100%;  */
+  /*width: 100%;*/
   text-align: left; /* Выравнивание текста по левому краю */  
   padding: 15px;
   border: 1px solid #eee;
@@ -473,6 +476,18 @@ visibility: hidden;
   /*padding: 20px;*/
   /*padding: 2.5%;*/
 }
+
+.chapter-section {  
+  max-width: 25%;
+  margin-left: 20%;
+  
+  margin-top: 140px;
+  /*auto;*/
+  /*padding: 20px;*/
+  /*padding: 2.5%;*/
+}
+
+
 
 .projects-view {
   margin-top: 140px;
@@ -614,3 +629,39 @@ visibility: hidden;
   padding: 10px;
 }
 
+.container-roadmap-view {
+  display: flex;
+  /*justify-content: space-between;*/
+  padding: 10px;
+}
+
+
+.stage-container {
+  width: 100%;
+  max-width: 100%;  
+  margin-left: 10%;
+  margin-top: 140px;  
+}
+
+
+.list-stage {
+  /* max-width: 60%; */
+  width: 450px;
+  /* display: inline-block; */
+  margin-right: 50px;
+  margin-bottom: 50px;
+  background-color: #34495e;
+  /*margin: 0 auto;*/
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  
+  /* padding: 20px; */
+  /*padding: 2.5%;*/
+}
+
+
+
+.custom-md-editor {
+  width: 70% !important;
+  margin: 0 auto !important; /* центрирование */
+}

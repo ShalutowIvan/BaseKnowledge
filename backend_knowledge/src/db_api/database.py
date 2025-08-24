@@ -21,12 +21,14 @@ logging.basicConfig(
     # logging.FileHandler('test.log')
 )
 
+logger = logging.getLogger(__name__)
+
 # Логируем SQL и важные события
-# logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)  # SQL-запросы
+# logging.getLogger('sqlalchemy').setLevel(logging.DEBUG)  # SQL-запросы, очень много шума
 
 # Пока включил только логирование SQL
-logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)  # SQL-запросы
-logging.getLogger('sqlalchemy.pool').setLevel(logging.DEBUG)  # Пул-дебаг режим 
+# logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)  # SQL-запросы
+# logging.getLogger('sqlalchemy.pool').setLevel(logging.DEBUG)  # Пул-дебаг режим 
 
 
 # logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)  # SQL-запросы

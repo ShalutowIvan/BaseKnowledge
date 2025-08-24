@@ -394,7 +394,7 @@ const usersInvite = () => {
         </div>
     {/* конец шапки проекта */}
 
-          {userRole === ROLES_USERS.ADMIN && <button onClick={usersInvite} className="toolbar-button">Пользователи в проекте</button>}
+          {userRole === ROLES_USERS.ADMIN && <button onClick={usersInvite} className="toolbar-button">Настройки</button>}
           
           
           
