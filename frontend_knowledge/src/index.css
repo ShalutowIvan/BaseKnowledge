@@ -93,17 +93,14 @@ main{
 
   /*margin-bottom: 200px;*/
   /*padding-bottom: 150%;*/
-  margin-bottom: -130px; /* Высота footer с минусом */
-  padding-bottom: 130px; /* Отступ снизу = высота footer */
+
+  /* Высота footer с минусом */
+  /*margin-bottom: -130px; */
+
+  /* Отступ снизу = высота footer */
+  padding-bottom: 130px; 
   
 }
-
-/* aside{
-  float: left;
-  width: 10%;
-  padding: 2.5%; 
-  height: 100%;  
-  } */
 
   aside {
   /* float: left; */
@@ -477,16 +474,51 @@ visibility: hidden;
   /*padding: 2.5%;*/
 }
 
+
+/*стили прокрутки стейджей в чаптере*/
+
 .chapter-section {  
-  max-width: 25%;
-  margin-left: 20%;
-  
-  margin-top: 140px;
-  /*auto;*/
-  /*padding: 20px;*/
-  /*padding: 2.5%;*/
+  max-width: 30%;
+  margin-left: 18%;  
+  margin-top: 110px;    
+  /*height: calc(100vh - 110px - 20px);*/
+  padding: 2.5%;
+  overflow-y: auto;
+
+  color: #E0FFFF;
 }
 
+
+.chapter-section h2 {
+  color: #5F9EA0; 
+}
+
+/*.chapter-section .label {
+  color: #A9B7C6; 
+  font-weight: bold;
+}
+
+.chapter-section .error {
+  color: #FF6B6B; 
+}
+
+.chapter-section .success {
+  color: #4CAF50; 
+}*/
+
+.chapter-section span {
+  color: #E0FFFF; 
+}
+
+
+.stages-section {  
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;  
+}
+
+
+/*конец стилей стейджей*/
 
 
 .projects-view {
@@ -561,6 +593,12 @@ visibility: hidden;
   color: #f1ecec;
 }
 
+.list-section label {
+  font-size: 18px;
+  color: #f1ecec;
+}
+
+
 
 
 .list-section .toolbar-button {
@@ -576,14 +614,8 @@ visibility: hidden;
   background-color: #2980b9;
 }
 
-.header-project {
-  /* max-width: 60%; */
-  width: 190px;
-  /* margin-left: 15%; */
-  /*margin: 0 auto;*/
-  /*auto;*/
-  /*padding: 20px;*/
-  /*padding: 2.5%;*/
+.header-project {  
+  width: 190px;  
 }
 
 
@@ -622,6 +654,19 @@ visibility: hidden;
   transform: scale(1.5);
 }
 
+.close-button {
+  width: 28px;
+  height: 30px;
+  background-image: url('assets/icons/krest.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  transition: transform 0.2s;     
+      
+    }
 
 .container-user {
   display: flex;
@@ -630,14 +675,17 @@ visibility: hidden;
 }
 
 .container-roadmap-view {
+  height: calc(100vh - 110px - 20px);
   display: flex;
   /*justify-content: space-between;*/
   padding: 10px;
+
 }
 
 
 .stage-container {
-  width: 100%;
+  /*width: 100%;*/
+  width: 700px;
   max-width: 100%;  
   margin-left: 10%;
   margin-top: 140px;  
@@ -645,19 +693,30 @@ visibility: hidden;
 
 
 .list-stage {
-  /* max-width: 60%; */
-  width: 450px;
-  /* display: inline-block; */
+  width: 450px;  
   margin-right: 50px;
   margin-bottom: 50px;
-  background-color: #34495e;
-  /*margin: 0 auto;*/
+  background-color: #34495e;  
   transition: all 0.3s ease;
-  border-radius: 4px;
-  
-  /* padding: 20px; */
-  /*padding: 2.5%;*/
+  border-radius: 4px;  
+  cursor: pointer; 
 }
+
+
+.list-stage:hover {
+  background-color: #3d566e;
+  /*transform: translateY(-2px);*/
+}
+
+
+.list-stage.active {
+  background-color: #A9A9A9;
+  border-color: #3498db;
+  box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+}
+
+
+
 
 
 

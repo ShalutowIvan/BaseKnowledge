@@ -285,7 +285,7 @@ function ChapterOpen() {
     <div className='container-roadmap-view'>    
       
     <div className='chapter-section'>
-      <div className="stages-section">        
+      <div className="project-section">        
         {/*функция для тестов*/}
         {/*<button onClick={test}>test</button>*/}
 
@@ -330,8 +330,8 @@ function ChapterOpen() {
           
           <form onSubmit={saveHeaderChanges} style={{ marginBottom: '1rem' }}>
 
-                {/*первая строка */}
-                {/*<div>*/}
+                {/*первая строка без формы*/}
+                <div >
                   <span style={{ fontSize: '15px', color: '#5F9EA0', fontWeight: 'bold' }}>Название раздела:</span>
                   &nbsp;&nbsp;
                   <input 
@@ -342,16 +342,15 @@ function ChapterOpen() {
                         onChange={handleHeaderChangeS}
                         disabled={loading}
                     /> 
-                {/*</div>*/}
+                </div>
 
                 {/*вторая строка с формой названия секции*/}
                 
-                <br/>
+                
 
                 {/*третья строка с чекбоксом*/}
-                {/*<div>*/}                  
+                <div>
                   <span style={{ fontSize: '15px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>
-
                   &nbsp;&nbsp;
                   <textarea
                     placeholder="введите описание"
@@ -362,7 +361,7 @@ function ChapterOpen() {
                     rows={2}
                   />
                                     
-                {/*</div>*/}
+                </div>
 
 
                 {/*четвертая строка с формой описания секции*/}
@@ -413,115 +412,120 @@ function ChapterOpen() {
 		        />
 		      )}
 			      
-        <br/><br/>
-        
+        <br/><br/>                
           {
-                  stages.length === 0 ? (
-                    <div className="name-knowledge">В этой главе пока нет этапов.</div>
-                  ) : (stages?.map(stage => (
-    // Для каждого этапа рендерим либо NavLink, либо форму редактирования
-    stage.isEditing ? (
-      // ФОРМА РЕДАКТИРОВАНИЯ (ВНЕ NavLink)
-      <div className="list-stage project-section" key={`edit-${stage.id}`}>
-        <form onSubmit={(e) => saveHeaderStage(stage.id, stage.title, stage.description, stage.state, e)} style={{ marginBottom: '1rem' }}>
-          <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Название: </span>
-          <input 
-            placeholder="введите название"
-            name="title"
-            type="text"                        
-            value={stage.title}
-            onChange={setHeaderStage(stage.id)}
-            disabled={loading}
-          />                
-          
-          <br/><br/>
-          <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Описание: </span>
-          <textarea
-            placeholder="введите описание"
-            name="description"
-            value={stage.description}
-            onChange={setHeaderStage(stage.id)}
-            disabled={loading}
-            rows={2}
-          />
+                stages.length === 0 ? (<div className="name-knowledge">В этой главе пока нет этапов.</div>)
+                : (stages?.map(stage => (
 
-          <br/><br/>
-          
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-            <div>
-            <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Статус: </span>
-            {/*&nbsp;&nbsp;  */}
-            <select name="state" value={stage.state} onChange={setHeaderStage(stage.id)}>
-              <option value={STAGE_STATES.NOT_STUDIED}>Не изучено</option>
-              <option value={STAGE_STATES.IN_THE_STUDY}>В процессе изучения</option>
-              <option value={STAGE_STATES.COMPLETED}>Завершена</option>
-            </select>
-            </div>
+                				<div className={`list-stage project-section ${activeStageId === stage.id ? 'active' : ''}`} key={stage.id}>
 
-            <div>
-              <button 
-                className="accept-button" 
-                type="submit" 
-                disabled={loading}
-              >
-                {loading ? '...' : ' '}
-              </button>
-              &nbsp;&nbsp;                                  
+                        
 
-              <button 
-                onClick={(e) => { 
-                  e.preventDefault();
-                  cancelEditStage(stage.id); 
-                }}
-                className="close-button"
-                disabled={loading}
-              >                
-              </button>
-            </div>
-          </div>
-          {error && <p style={{ color: 'red'}}>{error}</p>}
-        </form>
-      </div>
-    ) : (
-      // ОБЫЧНЫЙ РЕЖИМ (ВНУТРИ NavLink)
-      <NavLink 
-        key={stage.id}
-        to={`/roadmaps/open/${chapter.roadmap_id}/chapter_open/${chapter_id}/stage_open/${stage.id}`}
-        style={{ textDecoration: 'none' }}
-      >
-        {({ isActive }) => (
-          <div className={`list-stage project-section ${isActive ? "active" : ""}`}>
-            <div className="name-knowledge" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>                            
-              <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Название: {stage.title}</span>
-              <div>
-                <button 
-                  className="change-button" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    editStage(stage.id);
-                  }}
-                ></button>
-                &nbsp;&nbsp;&nbsp;&nbsp;
-              </div>
-            </div>                          
-            <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Описание: {stage.description}</span>
-            <br/>
-            <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Статус: </span>
-            <span style={{ fontSize: '15px', fontWeight: 'bold' }}>
-              {stage.state === STAGE_STATES.NOT_STUDIED && 'Не изучено'}
-              {stage.state === STAGE_STATES.IN_THE_STUDY && 'В процессе изучения'}
-              {stage.state === STAGE_STATES.COMPLETED && 'Завершена'}
-            </span>
-            <br/>
-            <button className="toolbar-button">Открыть</button>
-          </div>
-        )}
-      </NavLink>
-    )
-  )))
-}
+                          {/*если не редактируем */}
+                          {!stage.isEditing &&
+                          <>                         
+                          
+                          <div className="name-knowledge" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>                            
+                            <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Название: {stage.title}</span>
+                            <div>
+                            {/*кнопка редактировать stage*/}
+                            <button className="change-button" onClick={() => editStage(stage.id)}></button>
+                            &nbsp;&nbsp;&nbsp;&nbsp;
+                            </div>
+                          </div>                          
+                          <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Описание: {stage.description}</span>
+                          <br/>
+                          <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Статус: </span>
+                            <span style={{ fontSize: '15px', fontWeight: 'bold' }}>
+                             {stage.state === STAGE_STATES.NOT_STUDIED && 'Не изучено'}
+                             {stage.state === STAGE_STATES.IN_THE_STUDY && 'В процессе изучения'}
+                             {stage.state === STAGE_STATES.COMPLETED && 'Завершена'}
+                            </span>
+                          
+                          
+                          <br/>
+                          <NavLink 
+                            
+                            to={`/roadmaps/open/${chapter.roadmap_id}/chapter_open/${chapter_id}/stage_open/${stage?.id}`}>
+                              <button className="toolbar-button" onClick={(e) => handleOpenClick(stage.id, e)}>
+                              Открыть
+                              </button>
+                          </NavLink>
+                          
+                          </>
+                          }
 
+                          {/*если уже редактируем */}
+                          {stage.isEditing && 
+                          <>                          
+                          {/*если не редачим шапку отображаются поля шапки*/}
+                          {/*отображаются поля формы если редактируем шапку*/}
+                          {/*начало формы*/}
+                          
+                          <form onSubmit={(e) => saveHeaderStage(stage.id, stage.title, stage.description, stage.state, e)} style={{ marginBottom: '1rem' }}>
+
+                                {/*первая форма*/}
+                                  <input 
+                                      placeholder="введите назвнаие"
+                                      name="title"
+                                      type="text"                        
+                                      value={stage.title}
+                                      onChange={setHeaderStage(stage.id)}
+                                      disabled={loading}
+                                  />                
+                                  {/*<span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {stage.updated_at}</span>*/}
+                              
+                                <br/><br/>
+
+                                {/*вторая строка с формой описания этапа*/}
+                                
+                                  <textarea
+                                    placeholder="введите описание"
+                                    name="description"
+                                    value={stage.description}
+                                    onChange={setHeaderStage(stage.id)}
+                                    disabled={loading}
+                                    rows={2}
+                                  />
+
+                                <br/><br/>
+                                {/*третья строка с состоянием*/}
+                                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+
+                                  <select name="state" value={stage.state} onChange={setHeaderStage(stage.id)}>
+                                    <option value={STAGE_STATES.NOT_STUDIED}>Не изучено</option>
+                                    <option value={STAGE_STATES.IN_THE_STUDY}>В процессе изучения</option>
+                                    <option value={STAGE_STATES.COMPLETED}>Завершена</option>
+                                  </select>
+                                  
+                                  <div>
+                                    <button className="save-button" type="submit" disabled={loading}>                    
+                                      {loading ? 'Сохраняем...' : 'Сохранить'}
+                                    </button>
+                                    &nbsp;&nbsp;                                  
+
+                                    {/*в кнопке отмена должно возвращаться значение которое было до изменения состояния в форме. Нужна отдельная функция... проверить это и если что сделать такую функцию!!!!!!!!!!*/}
+                                    <button 
+                                      onClick={() => { cancelEditStage(stage.id); }}
+                                      className="cancel-button"
+                                      disabled={loading}>Отмена</button>
+                                   </div>
+
+                                </div>
+                                {/*конец четвертой строки*/}
+                              {error && <p style={{ color: 'red'}}>{error}</p>}
+                            </form>
+
+
+                          {/*конец формы*/}
+                        
+                          </>
+                          }
+                        </div>
+                    ))
+                )
+            }
+                    
     </div>     
     
     }      
@@ -532,7 +536,6 @@ function ChapterOpen() {
       </div>
 
     </div>
-
     )
 }
 

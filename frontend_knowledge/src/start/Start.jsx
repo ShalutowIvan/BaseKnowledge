@@ -73,20 +73,10 @@ export default function Start() {
 
 
       </header>
-
-
-      {/*<aside>            
-      </aside>*/}
-
+     
       <main>            
           
-          {/*{ !user && <h2 style={{ textAlign: 'center' }}>Для работы с базой данных нужно зарегистрироваться. Перейдите на вкладку "Войти".</h2> }*/}
-
-            {/* { user && 
-            <>
-            <h1 style={{ textAlign: 'center' }}>Добро пожаловать!</h1>
-            </>
-            } */}
+          
 
           <Outlet />
       </main>

@@ -153,7 +153,8 @@ function StageOpen() {
       </div>
       
       {/*тут буждет стиль для поля редактирования*/}
-      <div className="custom-md-editor">
+      {/*className="custom-md-editor"*/}
+      <div >
 
       {editMode ? (
 
@@ -179,9 +180,7 @@ function StageOpen() {
             </div>
           ) : (
             
-            <>
-            {/*<div style={{ width: '50%' }}> {/* ← Добавьте эту обертку */}*/}
-            {/* размер и стили шрифта */}
+            <>            
             <TextStyleToolbar onApplyStyle={(openTag, closeTag = openTag) => {
               const textarea = document.querySelector('.w-md-editor-text-input'); // получаем textarea MDEditor
               if (!textarea) return;

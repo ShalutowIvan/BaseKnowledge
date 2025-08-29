@@ -176,8 +176,8 @@ const handleCreateSuccess = (newChapter) => {
               <span style={{ fontSize: '16px', color: '#E0FFFF' }}>{roadmap?.description}</span>
               <br/><br/>
               
-              <button onClick={() => setEditModeHeader(true)} className="toolbar-button">
-                    Редактировать шапку
+              <button onClick={() => setEditModeHeader(true)} className="change-button">
+                    
               </button>
                             
               </>
@@ -263,7 +263,7 @@ const handleCreateSuccess = (newChapter) => {
           <p>_________________________________</p>
           <h1>Разделы дорожной карты</h1> 
           
-          <button className="toolbar-button" onClick={openModalClick}>Добавить главу</button>
+          <button className="save-button" onClick={openModalClick}>Добавить главу</button>
           
               
         <br/><br/>
@@ -283,7 +283,7 @@ const handleCreateSuccess = (newChapter) => {
                       {({ isActive }) => (
                         <div className={`list-section project-section ${isActive ? "active" : ""}`}>
                           <h2 className="name-knowledge">{chapter.title}</h2>
-                          <label>Описание: </label>{chapter.description}
+                          <label>Описание: {chapter.description}</label>
                           <br/><br/>
                           <button className="toolbar-button">Открыть</button>
                           

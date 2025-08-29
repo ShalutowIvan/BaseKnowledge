@@ -10,16 +10,11 @@ import { useAuth } from './AuthProvider'
 
 
 
-export default function Authorization() {
-    // поля формы
-    // const [username, setUsername] = useState("");
-    // //username - это почта
-    // const [password, setPassword] = useState("");
+export default function Authorization() {    
     
     // для валидации
     const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
-    
+    const [loading, setLoading] = useState(false);    
         
     // переделал под стандартную схему из фастапи OAuth2PasswordRequestForm
     const [formData, setFormData] = useState({
@@ -27,19 +22,7 @@ export default function Authorization() {
         password: ''
         });
 
-
-
-
     const { login } = useAuth();
-
-    // const validateForm = () => {
-    //     if (!username || !password) {
-    //         setError("не введены логин или пароль");
-    //         return false;
-    //     }
-    //     setError('');
-    //     return true;
-    // }
 
     // для схемы OAuth2PasswordRequestForm
     const validateForm = () => {
@@ -53,9 +36,6 @@ export default function Authorization() {
 
     const navigate = useNavigate();
 
-    // const goHome = () => navigate("/");
-	
-
     const handleSubmit = async (event) => {
         event.preventDefault();
         if (!validateForm()) return;
@@ -67,8 +47,7 @@ export default function Authorization() {
             const data = new FormData();
             data.append('username', formData.username);
             data.append('password', formData.password);
-            // ост тут...
-
+            
             //вариант с моей схемой
             // const response = await axios.post("http://127.0.0.1:8000/api/regusers/auth",
             //     {                 
@@ -92,27 +71,12 @@ export default function Authorization() {
             
             if (response.statusText==='OK') {
                 console.log("Все хорошо")          
-                setAccessToken(response.data["Authorization"])
-                // Cookies.set("Authorization", response.data["Authorization"], {
-                // expires: 0.0005, // Кука истечет через 30 дней, тут указывается колво дней
-                // path: "/", // Кука будет доступна на всех страницах        
-                // sameSite: "lax", // Защита от CSRF-атак
-                // });                
+                
+                setAccessToken(response.data["Authorization"])                
 
                 setRefreshToken(response.data["RT"])
-                // Cookies.set("RT", response.data["RT"], {
-                // expires: 30, // Кука истечет через 30 дней, тут указывается колво дней
-                // path: "/", // Кука будет доступна на всех страницах        
-                // sameSite: "lax", // Защита от CSRF-атак
-                // });
                 
-                // setName(response.data["Authorization"].user_name)
-                // goHome()
-                // const decoded = jwtDecode(response.data["Authorization"]);
-
                 login(response.data["Authorization"]);
-
-                // navigate("/", { state: { fullName: decoded.user_name } });
                 
                 navigate("/");
             } 
@@ -120,17 +84,7 @@ export default function Authorization() {
             //     const errorData = await response.data
             //     console.log(errorData, 'тут ошибка после ввода кредов')
             //     setError(errorData.detail || 'аутентификация не прошла');
-            // }
-        
-        // const token = Cookies.get("theme");
-        // console.log(document.cookie)
-
-        // const cookies2 = response.headers;
-        // console.log(token);
-        // if (response.status === 200) {
-        // console.log("Login successful!");
-        // navigate("/profile"); // Перенаправление на страницу профиля
-        // }
+            // }        
 
         } catch (error) {
             setLoading(false);
@@ -141,7 +95,6 @@ export default function Authorization() {
 
     };
 
-
     // для схемы OAuth2PasswordRequestForm
     const handleChange = (e) => {
         setFormData({
@@ -149,8 +102,6 @@ export default function Authorization() {
           [e.target.name]: e.target.value
         });
       };
-
-
 
 	return (
 		<>
