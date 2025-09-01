@@ -40,25 +40,15 @@ function ProjectCreateModal({ onClose, onSuccess }) {
                 
                 );
             setLoading(false);
-
-            // if (!response.data?.id) {
-            //     throw new Error("Некорректный формат ответа сервера");
-            //   }
-            
-            // if (response.status === 201) {
+          
               setTitle("");
               setDescription("");
                 
-              //если все ок, то открываем знание для заполнения                
+              // передаем объект нового проекта, чтобы записать его в массив состояний
               onSuccess(response.data);
               onClose();
       
-              // navigate("/projects/");
-
-            // } else {
-            //     const errorData = await response.data
-            //     console.log(errorData, 'тут ошибка')     
-            // }
+              
         } catch (error) {
             setLoading(false);
             console.log(error)

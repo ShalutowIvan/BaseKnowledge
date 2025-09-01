@@ -4,6 +4,7 @@ import Cookies from "js-cookie";
 import { API } from "../../apiAxios/apiAxios"
 import axios from "axios"
 import { ProjectCreateModal } from './ProjectCreateModal'
+import './CSS/cssProjects.css'
 
 import { updateAccessTokenFromRefreshToken } from "../../regusers/AuthService"
 
@@ -13,47 +14,12 @@ function ProjectPageView() {
 	const {projectLoad} = useLoaderData()
 	const [projects, setProjects] = useState(projectLoad);
 
-
-  // const [projects, setProjects] = useState([]);
-
   const navigate = useNavigate();  
 
 	const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const [modalOpen, setModalOpen] = useState(false);
-
-  
-
-  // useEffect(() => {
-  //     const fetchProjects = async () => {
-  //       try {
-  //         const res = await API.get(`/project_all/`);
-  //         setProjects(res.data);
-  //         setError(null);
-  //       } catch (error) {
-  //         if (error.response?.data?.detail?.error_code === "access_denied") {
-  //           setError("access_denied");
-  //         } else {
-  //           setError("unknown_error");
-  //         }
-  //       } finally {
-  //         setLoading(false);
-  //       }
-  //     };
-
-  //     fetchProjects();
-  //   }, []);
-
-   
-   // if (loading) {
-   //  return <p>Загрузка...</p>;
-   //  }
-
-  // if (error === "access_denied") {
-  //   return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {error}. Пройдите авторизацию.</h1>
-  // }
-
 
 	if (projectLoad?.error) {  
     return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {projectLoad["error"]}. Пройдите авторизацию.</h1>
@@ -74,10 +40,9 @@ function ProjectPageView() {
 
 
 	return (
-		<>			
-      
+		<>     
 			
-			<div className='projects-view'>
+			<div className='central-part'>
         <h1>Проекты</h1>
         <button className="toolbar-button" onClick={openModalClick}>Создать проект</button>
             
@@ -92,8 +57,7 @@ function ProjectPageView() {
                           <h2>Описание: {project.description}</h2>
                           <NavLink key={project.id} to={`/projects/open/${project.id}`} className={setActive}>
                               <button className="toolbar-button">Открыть</button>
-                          </NavLink>
-                              <p>_____________________________________________________________</p>
+                          </NavLink>                              
                           </div>
                           <br/>
                         </>
@@ -120,7 +84,7 @@ async function getProjectList() {
   // const res = await fetch("http://127.0.0.1:8000/project_all/")//тут берутся все элементы с одним и тем же номером документа
 
   try {
-        const res = await API.get(`http://127.0.0.1:8000/project_all/`)
+        const res = await API.get(`/project_all/`)
         console.log(res)
         return res.data
       } catch (error) {

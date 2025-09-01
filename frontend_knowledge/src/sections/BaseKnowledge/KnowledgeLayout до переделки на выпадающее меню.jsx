@@ -2,8 +2,6 @@ import { NavLink, useLoaderData, useNavigate, useLocation, Link, Outlet } from '
 import { useState, useEffect, Fragment, useCallback } from 'react'
 import { API } from '../../apiAxios/apiAxios'
 import { DeleteGroupModal } from './DeleteGroupModal'
-import { GroupCreateModal } from './GroupCreateModal'
-import { KnowledgeCreateModal } from './KnowledgeCreateModal'
 import { FaTrash } from "react-icons/fa";
 import { DropdownMenu } from './DropdownMenu'; 
 
@@ -19,10 +17,7 @@ function KnowledgeLayout() {
   const [error, setError] = useState(null);
 
 
-  const [modalDeleteGroup, setModalDeleteGroup] = useState(false);
-  const [modalCreateGroup, setModalCreateGroup] = useState(false);  
-  const [modalCreateKnowledge, setModalCreateKnowledge] = useState(false);  
-  
+  const [modalOpen, setModalOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
 
   const navigate = useNavigate();
@@ -38,7 +33,7 @@ function KnowledgeLayout() {
   //передаем объект группы в компонент модального окна. 
   const handleDeleteClick = (group) => {
       setSelectedGroup(group);      
-      setModalDeleteGroup(true);
+      setModalOpen(true);
       };
 
 
@@ -69,9 +64,17 @@ function KnowledgeLayout() {
       setLoading(false);
     }
     };
-    fetchData()
-    
-  }, [])
+
+    // Проверяем флаг из навигации или при первом рендере. Это нужно чтобы после добавления группа добавлялась сразу
+      if (!location.state?.needsRefresh) {
+        fetchData();
+      } else {
+        // Если был флаг, обновляем и удаляем его
+        fetchData();
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+
+  }, [location.state?.needsRefresh, navigate, location.pathname])
 
 
   const create_group = () => {
@@ -154,37 +157,21 @@ function KnowledgeLayout() {
           )));      
     }
 
-  const handleRenameClick = (group) => {
+  const editGroup = (groupId) => {
       setGroups(prevGroups => 
         prevGroups.map(item => (
-          item.id === group.id ? { ...item, isEditing: true} : item
+          item.id === groupId ? { ...item, isEditing: true} : item
           )));      
     }
 
-  
+  // const handleRenameClick = (group) => {
+  //   setGroups(prevGroups => 
+  //     prevGroups.map(item => 
+  //       item.id === group.id ? { ...item, isEditing: true } : item
+  //     )
+  //   );
+  // };
 
-  const handleCreateGroup = (newGroup) => {    
-    console.log("Новая группа", newGroup)
-    setGroups(prevGroups => [...prevGroups, newGroup]);
-    setModalCreateGroup(false);
-    };
-
-  const openModalCreateGroup = () => {      
-      setModalCreateGroup(true);
-      };
-
-
-  const handleCreateKnowledge = (newKnowledge) => {   
-    // не знаю как сделать перезагрузку списка знания из компонента KnowledgeIndex или компонента списка знаний в группе
-    
-    // console.log("Новое знание", newKnowledge)
-    // setKnowledges(prevKnowledge => [...prevKnowledge, newKnowledge]);
-    setModalCreateKnowledge(false);
-    };
-
-  const openModalCreateKnowledge = () => {      
-      setModalCreateKnowledge(true);
-      };
 
 
   return (
@@ -205,7 +192,6 @@ function KnowledgeLayout() {
 
                         <div className="list-group-edit section-frame">
                           <form onSubmit={(e) => saveNameGroup(group.id, group.name_group, e)} style={{ marginBottom: '1rem' }}>
-                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                             <input 
                                 placeholder="введите название"
                                 name="name_group"
@@ -215,28 +201,27 @@ function KnowledgeLayout() {
                                 disabled={loading}
                               />
 
-                              <div>
-                                <button 
-                                  className="accept-button" 
-                                  type="submit" 
-                                  disabled={loading}
-                                >
-                                  {loading ? '...' : ' '}
-                                </button>
-                                &nbsp;&nbsp;                                  
+                            <div>
+                              <button 
+                                className="accept-button" 
+                                type="submit" 
+                                disabled={loading}
+                              >
+                                {loading ? '...' : ' '}
+                              </button>
+                              &nbsp;&nbsp;                                  
 
-                                <button 
-                                  onClick={(e) => { 
-                                    e.preventDefault();
-                                    cancelEditGroup(group.id); 
-                                  }}
-                                  className="close-button"
-                                  disabled={loading}
-                                >                
-                                </button>
-                              </div>
-                            
+                              <button 
+                                onClick={(e) => { 
+                                  e.preventDefault();
+                                  cancelEditGroup(group.id); 
+                                }}
+                                className="close-button"
+                                disabled={loading}
+                              >                
+                              </button>
                             </div>
+                          
                           {error && <p style={{ color: 'red'}}>{error}</p>}
                           </form>
                         </div>
@@ -249,18 +234,22 @@ function KnowledgeLayout() {
                               {({ isActive }) => (
                                 <div className={`list-group section-frame ${isActive ? "active" : ""}`}>
                                   <h2 className="name-knowledge">{group.name_group}</h2>                                  
-                                    
-                                  <DropdownMenu
-                                    group={group}
-                                    onDelete={handleDeleteClick}
-                                    onRename={handleRenameClick}
-                                  />
-
-
+                                  <button 
+                                    className="change-button" 
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      editGroup(group.id);
+                                    }}
+                                  ></button>
                                 </div>                        
                               )}
                         </NavLink>
-                        
+                        <button
+                            onClick={() => handleDeleteClick(group)} 
+                            className="delete-btn">
+                              <FaTrash className="trash-icon" size={15} />
+                        </button>
                         <br/>
                     </div>
                     
@@ -269,10 +258,10 @@ function KnowledgeLayout() {
               )
             }            
 
-            {modalDeleteGroup && (
+            {modalOpen && (
               <DeleteGroupModal
                 groupToDelete={selectedGroup}
-                onClose={() => setModalDeleteGroup(false)}
+                onClose={() => setModalOpen(false)}
                 onSuccess={handleDeleteSuccess}
               />
             )}        
@@ -282,24 +271,9 @@ function KnowledgeLayout() {
       {/*центральная часть с кнопками*/}
       <div className="central-part">
           <h1>Знания</h1>       
-          <button className="toolbar-button" onClick={openModalCreateGroup}>Добавить группу</button>
+          <button className="toolbar-button" onClick={create_group}>Добавить группу</button>
           &nbsp;&nbsp;&nbsp;
-          <button className="toolbar-button" onClick={openModalCreateKnowledge}>Добавить знание</button>
-      
-      {modalCreateGroup && (
-            <GroupCreateModal             
-              onClose={() => setModalCreateGroup(false)}
-              onSuccess={handleCreateGroup}
-            />
-          )}  
-
-      {modalCreateKnowledge && (
-            <KnowledgeCreateModal             
-              onClose={() => setModalCreateKnowledge(false)}
-              onSuccess={handleCreateGroup}
-            />
-          )}  
-
+          <button className="toolbar-button" onClick={create_knowledge}>Добавить знание</button>      
       
       {/* Основной контент (меняется) */}      
           <div>

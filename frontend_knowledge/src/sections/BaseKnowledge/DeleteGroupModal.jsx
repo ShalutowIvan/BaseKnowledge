@@ -1,15 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import './CSS/DeleteGroup.css'
+import { API } from "../../apiAxios/apiAxios"
 
 
-
-function DeleteGroupModal({ 
-  groupToDelete, 
-  onClose, 
-  onSuccess 
-}) {
+function DeleteGroupModal({ groupToDelete, onClose, onSuccess }) {
+  
   const [groups, setGroups] = useState([]);
   const [targetGroupId, setTargetGroupId] = useState('');
   const [hasKnowledge, setHasKnowledge] = useState(false);
@@ -25,13 +21,13 @@ function DeleteGroupModal({
     const checkGroup = async () => {
       try {
         // Проверяем есть ли знания в группе
-        const knowledgeRes = await axios.get(`http://127.0.0.1:8000/knowledges_in_group/${groupToDelete.slug}`);
-        // groupToDelete это объект? groupToDelete берется из select формы в другом компоненте формы
+        const knowledgeRes = await API.get(`/knowledges_in_group/${groupToDelete.slug}`);
+        // groupToDelete это объект, groupToDelete берется из select формы в другом компоненте формы
         
         setHasKnowledge(knowledgeRes.data.length > 0);
         
         // Загружаем список всех групп (кроме текущей) в состояние
-        const groupsRes = await axios.get('http://127.0.0.1:8000/groups_all/');
+        const groupsRes = await API.get('/groups_all/');
         setGroups(groupsRes.data.filter(g => g.id !== groupToDelete.id));
         
         // Устанавливаем первую группу как выбранную по умолчанию в select поле
@@ -44,7 +40,10 @@ function DeleteGroupModal({
       }
     };
 
-    if (groupToDelete) checkGroup();
+    if (groupToDelete) {
+        checkGroup()
+      };
+
   }, [groupToDelete]);
 
   const handleDelete = async () => {
@@ -57,7 +56,7 @@ function DeleteGroupModal({
     setError('');
 
     try {
-      await axios.delete(`http://127.0.0.1:8000/group_delete/${groupToDelete.id}`, {
+      await API.delete(`/group_delete/${groupToDelete.id}`, {
         data: {
           move_to_group: hasKnowledge ? targetGroupId : null
         }

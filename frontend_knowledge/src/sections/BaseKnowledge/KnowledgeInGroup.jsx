@@ -1,44 +1,47 @@
-import React from 'react';
-import { useParams, Link, useNavigate, NavLink } from 'react-router-dom'
+//компонент отображения содержания знаний в группе
+
+import { useParams, NavLink } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import axios from "axios"
-import { GroupsAll } from "./GroupsAll"
-// import { API } from "../apiAxios/apiAxios"
+import { API } from "../../apiAxios/apiAxios"
+
 
 function KnowledgeInGroup() {
 	const setActive = ({isActive}) => isActive ? 'active-link' : '';
 	const {slug} = useParams();
 	const [knowledges, setKnowledges] = useState([]);
-	// const navigate = useNavigate();
-
-
+	
 	useEffect(() => {
-		fetch(`http://127.0.0.1:8000/knowledges_in_group/${slug}`)
-			.then(res => res.json())
-			.then(data => setKnowledges(data))
-
-	}, [slug])
+        const fetchData = async () => {
+        try {
+          const response = await API.get(`/knowledges_in_group/${slug}`);
+          setKnowledges(response.data);
+          setLoading(false);
+        } catch (err) {
+          setError(err);
+          setLoading(false);
+        }
+        };        
+        fetchData();
+    }, [slug])
 
 	return (
-		<>	
-		{/*<aside>
-		<GroupsAll />
-		</aside>*/}
-
-		<div className="list-knowledge">
-            {
-                	knowledges?.map(knowledge => (
-                				<>
-                				<h1 className="name-knowledge">{knowledge.title}</h1>
-		                        <h2>Описание: {knowledge.description}</h2>
-		                        <NavLink key={knowledge.id} to={`/knowledges/open/${knowledge.id}`} className={setActive}>
-		                            <button className="toolbar-button">Открыть</button>
-		                        </NavLink>
-                            	<p>_____________________________________________________________</p>
-                        		</>
-                    ))
-            }
-        </div>
+		<>		
+			
+	            {
+	                	knowledges?.map(knowledge => (
+	                				<>
+	                				<br/>
+	                				<div className="section-frame">
+		                				<h1 className="name-knowledge">{knowledge.title}</h1>
+				                        <h2>Описание: {knowledge.description}</h2>
+				                        <NavLink key={knowledge.id} to={`/knowledges/open/${knowledge.id}`} className={setActive}>
+				                            <button className="toolbar-button">Открыть</button>
+				                        </NavLink>
+	                            	</div>
+	                        		</>
+	                    ))
+	            }
+	        
 		</>
 		)
 }

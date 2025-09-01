@@ -10,8 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import *
 from .schemas import *
-from .services import group_create_service, get_knowledges, knowledges_create_service, upload_image_service, update_knowledge_service, get_group_service, get_knowledges_in_group, knowledges_open_service, view_file_image_service, delete_knowledge_service, update_knowledge_header_service, delete_group_service
+from .services import *
 
+from routers_api.regusers.verify_user import verify_user_service
 # from src.regusers.models import User
 # from src.regusers.secure import test_token_expire, access_token_decode
 
@@ -35,44 +36,64 @@ router_knowledge_api = APIRouter(
 
 # создание группы
 @router_knowledge_api.post("/group_create/", response_model=GroupShemaFull)
-async def group_create(group: GroupShema, session: AsyncSession = Depends(get_async_session)):
-    return await group_create_service(db=session, group=group)
+async def group_create(
+    group: GroupShema, 
+    user_id: int = Depends(verify_user_service),
+    session: AsyncSession = Depends(get_async_session)):
+    return await group_create_service(user_id=user_id, db=session, group=group)
 
 
 # удаление группы
 @router_knowledge_api.delete("/group_delete/{group_id}")
-async def group_delete(group_id: int, data: DeleteGroupRequest = Body(...), session: AsyncSession = Depends(get_async_session)):    
-    return await delete_group_service(group_id=group_id, db=session, move_to_group=data.move_to_group)
+async def group_delete(
+    group_id: int, 
+    user_id: int = Depends(verify_user_service),
+    data: DeleteGroupRequest = Body(...), 
+    session: AsyncSession = Depends(get_async_session)):    
+    return await delete_group_service(user_id=user_id, group_id=group_id, db=session, move_to_group=data.move_to_group)
 
-# смотреть ответ дипсик по Body параметру чем он отличается от обычно параметра с указанием схемы Pydantic
 
+# переименование группы
+@router_knowledge_api.patch("/group_name_update/{group_id}", response_model=GroupShemaFull)
+async def group_name_update(
+    group_id: int,
+    group_name_update: GroupShema,
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)) -> GroupShemaFull:
+    return await group_name_update_service(user_id=user_id, group_id=group_id, group_name_update=group_name_update, db=session)
 
 
 #получение всех групп
 @router_knowledge_api.get("/groups_all/", response_model=list[GroupShemaFull])
-async def groups_all(request: Request, session: AsyncSession = Depends(get_async_session)) -> GroupShemaFull:
-    # проверка пользователя
-    # user_id = await verify_user_service(request=request)
-
-    return await get_group_service(db=session)
+async def groups_all(
+    user_id: int = Depends(verify_user_service),
+    session: AsyncSession = Depends(get_async_session)) -> GroupShemaFull:    
+    return await groups_all_service(user_id=user_id, db=session)
 
 
 # получение всех знаний, только список с заголовками и описанием.
 @router_knowledge_api.get("/knowledge_all/", response_model=list[KnowledgesSchema])
-async def knowledges_all(request: Request, session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:
-    return await get_knowledges(db=session)
+async def knowledges_all(
+    user_id: int = Depends(verify_user_service),
+    session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:
+    return await knowledges_all_service(user_id=user_id, db=session)
 
 
 #получение всех знаний по фильтру слага группы
 @router_knowledge_api.get("/knowledges_in_group/{slug}", response_model=list[KnowledgesSchema])
-async def knowledges_in_group(slug: str, session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:
+async def knowledges_in_group(
+    slug: str, 
+    session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:
     return await get_knowledges_in_group(db=session, slug=slug)
 
 
 #сделал создание знания, переделал уже как надо. Возвращаем целое знание, чтобы открыть его. Так как после создания оно открывается и его можно будет редачить. Открытие со стороны фронта делать надо будет, и роут для открытия надо сделать
 @router_knowledge_api.post("/knowledges_create/", response_model=KnowledgesSchemaFull)
-async def knowledges_create(request: Request, knowledge: KnowledgesCreateSchema, session: AsyncSession = Depends(get_async_session)):
-    return await knowledges_create_service(request=request, db=session, knowledge=knowledge)
+async def knowledges_create(
+    knowledge: KnowledgesCreateSchema, 
+    user_id: int = Depends(verify_user_service),    
+    session: AsyncSession = Depends(get_async_session)):
+    return await knowledges_create_service(user_id=user_id, db=session, knowledge=knowledge)
 
 
 # открыть знание, тут фильтр по ID знания. Возможно переделаю на UUID

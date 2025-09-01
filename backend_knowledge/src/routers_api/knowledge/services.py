@@ -15,17 +15,17 @@ from transliterate import translit
 
 from routers_api.regusers.verify_user import verify_user_service
 from routers_api.regusers.models import User
-
+from db_api.database import logger
 
 # для знаний
 ############################################################
 UPLOAD_FOLDER = "uploads"
 
 #создание группы
-async def group_create_service(db: AsyncSession, group: GroupShema) -> GroupShemaFull:
+async def group_create_service(user_id: int, db: AsyncSession, group: GroupShema) -> GroupShemaFull:
     # Создаем новую группу    
     slug = translit(group.name_group, language_code='ru', reversed=True)    
-    new_group = Group(name_group=group.name_group, slug=slug)
+    new_group = Group(name_group=group.name_group, slug=slug, user_id=user_id)
     db.add(new_group)
     await db.commit()
     await db.refresh(new_group)
@@ -33,13 +33,44 @@ async def group_create_service(db: AsyncSession, group: GroupShema) -> GroupShem
 
 
 #получение списка групп
-async def get_group_service(db: AsyncSession) -> GroupShemaFull:
-    query = await db.execute(select(Group))
-    groups = query.scalars().all()
-    
-    # query = select(Group)
-    # groups = await db.scalars(query)
+async def groups_all_service(user_id: int, db: AsyncSession) -> GroupShemaFull:
+    query = await db.execute(select(Group).where(Group.user_id == user_id))
+    groups = query.scalars().all()    
     return groups
+
+
+# изменение имени группы
+async def group_name_update_service(user_id: int, group_id: int, group_name_update: GroupShema, db: AsyncSession):    
+    try:
+        # 1. Получаем поля группы
+        query = select(Group).where(Group.id == group_id).where(Group.user_id == user_id).options(
+                    load_only(
+                    Group.id,
+                    Group.name_group,
+                    Group.slug,                    
+                    )
+                )
+        result = await db.execute(query)
+        group_name = result.scalar_one_or_none()
+
+        if not group_name:            
+            # logger.warning(f"Stage not found - user_id: {user_id}, stage_id: {stage_id}")
+            raise HTTPException(status_code=404, detail="group not found")
+        
+        # 2. Обновляем группу
+        slug = translit(group_name_update.name_group, language_code='ru', reversed=True)
+
+        group_name.name_group = group_name_update.name_group
+        group_name.slug = slug        
+        await db.commit()
+        await db.refresh(group_name)
+        
+        logger.info(f"Stage updated successfully - user_id: {user_id}, stage_id: {group_id}")
+        # возвращаем все 3 поля.
+        return group_name
+
+    except Exception as ex:        
+        raise ex
 
 
 # получение одного знания по ИД. Используется в других функциях
@@ -53,10 +84,7 @@ async def get_knowledge(db: AsyncSession, knowledge_id: int) -> KnowledgesSchema
     return result.scalar()
 
 
-async def knowledges_create_service(request: Request, db: AsyncSession, knowledge: KnowledgesCreateSchema) -> KnowledgesSchemaFull:
-    # Создаем новое знание    
-    user_id = await verify_user_service(request=request)
-
+async def knowledges_create_service(user_id: int, db: AsyncSession, knowledge: KnowledgesCreateSchema) -> KnowledgesSchemaFull:
     slug = translit(knowledge.title, language_code='ru', reversed=True)    
     new_knowledge = Knowledge(title=knowledge.title, description=knowledge.description, group_id=knowledge.group_id, slug=slug, user_id=user_id)
     db.add(new_knowledge)
@@ -78,8 +106,9 @@ async def knowledges_create_service(request: Request, db: AsyncSession, knowledg
     # return result.scalars().all()
 
 # получение всех знаний, пока без пагинации
-async def get_knowledges(db: AsyncSession) -> list[KnowledgesSchema]:
-    knowledges = await db.execute(select(Knowledge).order_by(Knowledge.created_at.desc()))    
+async def knowledges_all_service(user_id: int, db: AsyncSession) -> list[KnowledgesSchema]:
+    query = select(Knowledge).where(Knowledge.user_id == user_id).order_by(Knowledge.created_at.desc())
+    knowledges = await db.execute(query)
     return knowledges.scalars().all()
     
 
@@ -271,7 +300,7 @@ async def delete_knowledge_service(db: AsyncSession, knowledge_id: int) -> bool:
 
 async def update_knowledge_header_service(knowledge_id: int, knowledge_update: KnowledgesUpdateHeaderSchema, db: AsyncSession):
     # 1. Получаем текущее знание 5-ю полями. А с фронта принимаем 3 поля. Включая связанное поле. И возвращаем ответ со связанным полем
-    query = (select(Knowledge).where(Knowledge.id == knowledge_id).options(
+    query = select(Knowledge).where(Knowledge.id == knowledge_id).options(
                 selectinload(Knowledge.group),
                 load_only(
                 Knowledge.title,
@@ -281,7 +310,7 @@ async def update_knowledge_header_service(knowledge_id: int, knowledge_update: K
                 Knowledge.updated_at,
                 Knowledge.group_id
                 )
-            ))    
+            )
     result = await db.execute(query)
     knowledge_header = result.scalar_one_or_none()
 
@@ -302,21 +331,23 @@ async def update_knowledge_header_service(knowledge_id: int, knowledge_update: K
     return knowledge_header
 
 
-# Body - наверно схема, прописать... ост туту
-async def delete_group_service(group_id: int, db: AsyncSession, move_to_group):
+async def delete_group_service(user_id: int, group_id: int, db: AsyncSession, move_to_group=None):
             
     # Проверяем существование группы
-    group = await db.get(Group, group_id)
+    query = select(Group).where(Group.id == group_id).where(Group.user_id == user_id)    
+    result = await db.execute(query)
+    group = result.scalar_one_or_none()
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
     
     # Если указана группа для переноса - проверяем её
-    if move_to_group:
-        target_group = await db.get(Group, move_to_group)
+    if move_to_group:        
+        query_move = await db.execute(select(Group).where(Group.id == move_to_group).where(Group.user_id == user_id))
+        target_group = query_move.scalar_one_or_none()
         if not target_group:
             raise HTTPException(status_code=400, detail="Target group not found")
         
-        # Переносим знания
+        # Переносим знания, меняя у них id группы
         await db.execute(
             update(Knowledge)
             .where(Knowledge.group_id == group_id)

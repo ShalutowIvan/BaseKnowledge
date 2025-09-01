@@ -287,9 +287,9 @@ const handleCreateSuccess = (newChapter) => {
                           <br/><br/>
                           <button className="toolbar-button">Открыть</button>
                           
-                        </div>                     
-                        
+                        </div>                        
                       )}
+                      
                     </NavLink>                  
                   ))
               )

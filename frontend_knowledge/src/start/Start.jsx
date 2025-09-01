@@ -1,16 +1,9 @@
-import { Link, Outlet, NavLink, useLoaderData, useLocation } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { Outlet, NavLink } from 'react-router-dom'
+import { useState } from 'react'
 
 import Cookies from "js-cookie";
-import axios from "axios";
-
-
-// import { getRefreshToken, getAccessToken } from "../regusers/AuthService"
-// import { jwtDecode } from 'jwt-decode'
-
 import { useAuth } from "../regusers/AuthProvider"
-
-// import { API } from "../apiAxios/apiAxios"
+import logo from './icons/glaz.jpg';
 
 
 
@@ -18,21 +11,7 @@ export default function Start() {
 	const setActive = ({isActive}) => isActive ? 'active-link' : '';
   const { user, logout } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-    
-    // useEffect(() => {
-    //     axios.get('http://127.0.0.1:8000')
-    //     .then(response => {
-    //     setState(response.data.fio);
-    //     setLoading(false);
-    //   })
-    //   .catch(error => {
-    //     setError(error);
-    //     setLoading(false);
-    //   });
-            
-         
-    // }, [])
+  const [error, setError] = useState(null);    
 
   const removeCookie = () => {
           Cookies.remove("RT");
@@ -46,7 +25,7 @@ export default function Start() {
 		<>
 		  <header>      
 
-            <h2><NavLink to="/" className={setActive}>Start</NavLink></h2>
+            <h2><NavLink to="/" className={setActive}>Home</NavLink></h2>
 
             <p>Разделы ></p>
             <h2><NavLink to="/knowledges/" className={setActive}>База знаний</NavLink></h2>
@@ -74,19 +53,21 @@ export default function Start() {
 
       </header>
      
-      <main>            
-          
-          
+      <main> 
 
           <Outlet />
+
       </main>
       
       
       <footer className="footer">
-        <h1>ТУТ ПОДВАЛ</h1>
-      	2025 год
+        
 
-      </footer>
+        {/* НИЖНЯЯ ПОЛОСА */}
+        <div className="footer-bottom">
+          <img className="logo-style" src={logo} /> © 2025 База знаний. 
+        </div>
+    </footer>
 
       </>
 		)

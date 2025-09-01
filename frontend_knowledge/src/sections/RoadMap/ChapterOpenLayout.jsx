@@ -138,7 +138,7 @@ function ChapterOpen() {
 
                 if (stagesLoad && !stagesLoad.error) {
                     // Убедимся, что stagesLoad - массив
-                    const stagesArray = Array.isArray(stagesLoad) ? stagesLoad : [];                    
+                    const stagesArray = Array.isArray(stagesLoad) ? stagesLoad : [];
                     setStages(prevItems => 
                         stagesArray.map(item => ({
                           ...item,                        

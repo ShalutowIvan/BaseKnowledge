@@ -43,6 +43,10 @@ class Group(Base):
     # связи
     knowledge: Mapped["Knowledge"] = relationship(back_populates="group")
 
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
+    user: Mapped["User"] = relationship(back_populates="group_user")
+
+
 
 class Image(Base):
     __tablename__ = "image"

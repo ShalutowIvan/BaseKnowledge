@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
 import { useParams, Link, useNavigate, useLoaderData, Await, redirect, useRevalidator } from 'react-router-dom'
-import { GroupsAll } from "./GroupsAll"
+// import { GroupsAll } from "./GroupsAll"
 // import MDEditor from '@uiw/react-markdown-editor';//это посоветовал дипсик
 import MDEditor from '@uiw/react-md-editor';//это посоветовал чатгпт
 // import MDEditor from 'mdeditor';//это по совету гугла

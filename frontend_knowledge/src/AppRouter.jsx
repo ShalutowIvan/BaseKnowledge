@@ -1,13 +1,14 @@
 import { Route, createBrowserRouter, createRoutesFromElements } from "react-router-dom";
 
 import { Start } from './start/Start';
+import { StartIndex } from './start/StartIndex';
 
 //знания
-import { KnowledgeLayout} from './sections/BaseKnowledge/KnowledgeLayout';
-import { KnowledgePageView, KnowledgeListLoader } from './sections/BaseKnowledge/KnowledgePageView';
+import { KnowledgeLayout, KnowledgeGroupsLoader } from './sections/BaseKnowledge/KnowledgeLayout';
+import { KnowledgeIndex, KnowledgeListLoader } from './sections/BaseKnowledge/KnowledgeIndex';
 import { KnowledgeInGroup } from './sections/BaseKnowledge/KnowledgeInGroup';
-import { GroupCreate } from './sections/BaseKnowledge/GroupCreate';
-import { KnowledgeCreate } from './sections/BaseKnowledge/KnowledgeCreate';
+// import { GroupCreate } from './sections/BaseKnowledge/GroupCreate';
+// import { KnowledgeCreate } from './sections/BaseKnowledge/KnowledgeCreate';
 import { KnowledgeOpen, KnowledgeOpenLoader } from './sections/BaseKnowledge/KnowledgeOpen';
 
 
@@ -49,30 +50,27 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
               <Start /> 
          </AuthProvider>
          } >
+         <Route index element={<StartIndex />} />
 
-            {/* пользователи */}
-            <Route path="regusers/authorization/" element={<Authorization />} />
-          
-            <Route path="regusers/registration/" element={<Registration />} />
-            <Route path="regusers/registration/check_mail/" element={<Registration_after />} />
-            <Route path="regusers/registration_verify/:token"
-                  element={<Registration_verify />}                 
-            />
-
-            <Route path="regusers/forgot_password/" element={<Forgot_password />} />
-            <Route path="regusers/forgot_password_verify/:token" element={<Forgot_password_verify />} />
+          {/* пользователи */}
+          <Route path="regusers/authorization/" element={<Authorization />} />          
+          <Route path="regusers/registration/" element={<Registration />} />
+          <Route path="regusers/registration/check_mail/" element={<Registration_after />} />
+          <Route path="regusers/registration_verify/:token" element={<Registration_verify />} />
+          <Route path="regusers/forgot_password/" element={<Forgot_password />} />
+          <Route path="regusers/forgot_password_verify/:token" element={<Forgot_password_verify />} />
 
 
 
           {/* база знаний */}                    
 
-          <Route path="knowledges" element={<KnowledgeLayout />}>
+          <Route path="knowledges" element={<KnowledgeLayout />} loader={KnowledgeGroupsLoader}>
             {/* Основные маршруты знаний */}
-            <Route index element={<KnowledgePageView />} loader={KnowledgeListLoader} />
+            <Route index element={<KnowledgeIndex />} loader={KnowledgeListLoader} />
             <Route path=":slug" element={<KnowledgeInGroup />} />
-            <Route path="create/" element={<KnowledgeCreate />} />
+            {/*<Route path="create/" element={<KnowledgeCreate />} />*/}
             <Route path="open/:slug" element={<KnowledgeOpen />} loader={KnowledgeOpenLoader} />
-            <Route path="group/create/" element={<GroupCreate />}  />
+            {/*<Route path="group/create/" element={<GroupCreate />}  />*/}
           </Route>
 
 
@@ -115,7 +113,7 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
           </Route>
         
 
-        </Route>       
+  </Route>       
 
 
 	))

@@ -44,7 +44,7 @@ function RoadMapList() {
 		<>			
       
 			
-			<div className='projects-view'>
+			<div className='central-part'>
         <h1>Дорожные карты</h1>
         <button className="toolbar-button" onClick={openModalClick}>Создать дорожную карту</button>
             
@@ -59,8 +59,7 @@ function RoadMapList() {
                           <h2>Описание: {roadmap.description}</h2>
                           <NavLink key={roadmap.id} to={`/roadmaps/open/${roadmap.id}`} className={setActive}>
                               <button className="toolbar-button">Открыть</button>
-                          </NavLink>
-                              <p>_____________________________________________________________</p>
+                          </NavLink>                              
                           </div>
                           <br/>
                         </>
