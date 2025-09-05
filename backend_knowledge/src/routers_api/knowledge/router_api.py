@@ -83,8 +83,9 @@ async def knowledges_all(
 @router_knowledge_api.get("/knowledges_in_group/{slug}", response_model=list[KnowledgesSchema])
 async def knowledges_in_group(
     slug: str, 
+    user_id: int = Depends(verify_user_service),
     session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:
-    return await get_knowledges_in_group(db=session, slug=slug)
+    return await knowledges_in_group_service(user_id=user_id, db=session, slug=slug)
 
 
 #сделал создание знания, переделал уже как надо. Возвращаем целое знание, чтобы открыть его. Так как после создания оно открывается и его можно будет редачить. Открытие со стороны фронта делать надо будет, и роут для открытия надо сделать

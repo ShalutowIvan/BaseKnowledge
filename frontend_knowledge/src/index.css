@@ -120,6 +120,11 @@ main{
   overflow-y: auto;
 }
 
+aside h2:hover {
+  /*background-color: #B0C4DE;*/
+  color: #B0C4DE;
+}
+
 /*стили футера*/
 
 .footer {
@@ -383,6 +388,11 @@ visibility: hidden;
   border-radius: 6px;
   cursor: pointer;
 }
+
+.save-button:hover {
+  background-color: #B0C4DE;
+}
+
 
 .cancel-button {
   min-width: 130px;

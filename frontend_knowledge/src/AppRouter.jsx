@@ -5,8 +5,8 @@ import { StartIndex } from './start/StartIndex';
 
 //знания
 import { KnowledgeLayout, KnowledgeGroupsLoader } from './sections/BaseKnowledge/KnowledgeLayout';
-import { KnowledgeIndex, KnowledgeListLoader } from './sections/BaseKnowledge/KnowledgeIndex';
-import { KnowledgeInGroup } from './sections/BaseKnowledge/KnowledgeInGroup';
+import { KnowledgeIndex } from './sections/BaseKnowledge/KnowledgeIndex';
+import { KnowledgeInGroup, KnowledgesInGroupLoader } from './sections/BaseKnowledge/KnowledgeInGroup';
 // import { GroupCreate } from './sections/BaseKnowledge/GroupCreate';
 // import { KnowledgeCreate } from './sections/BaseKnowledge/KnowledgeCreate';
 import { KnowledgeOpen, KnowledgeOpenLoader } from './sections/BaseKnowledge/KnowledgeOpen';
@@ -66,10 +66,11 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
 
           <Route path="knowledges" element={<KnowledgeLayout />} loader={KnowledgeGroupsLoader}>
             {/* Основные маршруты знаний */}
-            <Route index element={<KnowledgeIndex />} loader={KnowledgeListLoader} />
-            <Route path=":slug" element={<KnowledgeInGroup />} />
+            <Route index element={<KnowledgeIndex />} />
+            
+            <Route path=":slug_gr" element={<KnowledgeInGroup />} loader={KnowledgesInGroupLoader} />
             {/*<Route path="create/" element={<KnowledgeCreate />} />*/}
-            <Route path="open/:slug" element={<KnowledgeOpen />} loader={KnowledgeOpenLoader} />
+            <Route path="open/:slug_kn" element={<KnowledgeOpen />} loader={KnowledgeOpenLoader} />
             {/*<Route path="group/create/" element={<GroupCreate />}  />*/}
           </Route>
 

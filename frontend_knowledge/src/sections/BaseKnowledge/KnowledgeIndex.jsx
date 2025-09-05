@@ -2,23 +2,41 @@ import { useParams, Link, useNavigate, useLoaderData, Await, useAsyncValue, NavL
 import { React, Suspense, useState, useEffect, Fragment } from 'react';
 import Cookies from "js-cookie";
 import { API } from "../../apiAxios/apiAxios"
-
+import { KnowledgeCreateModal } from './KnowledgeCreateModal'
 
 
 function KnowledgeIndex() {
-	const setActive = ({isActive}) => isActive ? 'active-link' : '';
-	const {knowledgeLoad} = useLoaderData()
+	// const setActive = ({isActive}) => isActive ? 'active-link' : '';
+	// const {knowledgeLoad} = useLoaderData()
 
-	const [knowledges, setKnowledges] = useState(knowledgeLoad);
-	const [loading, setLoading] = useState(true);	
+	// const [knowledges, setKnowledges] = useState(knowledgeLoad);
+	// const [loading, setLoading] = useState(true);	
+  // const [modalCreateKnowledge, setModalCreateKnowledge] = useState(false);  
 
-  if (knowledgeLoad?.error) {
-    return (<h1>Ошибка: {knowledgeLoad?.error}. Пройдите авторизацию.</h1>)
-  }
+  // if (knowledgeLoad?.error) {
+  //   return (<h1>Ошибка: {knowledgeLoad?.error}. Пройдите авторизацию.</h1>)
+  // }
+
+  // const openModalCreateKnowledge = () => {      
+  //     setModalCreateKnowledge(true);
+  //     };
+
+
+  // const handleCreateKnowledge = (newKnowledge) => {    
+  //   setKnowledges(prevKnowledge => [newKnowledge, ...prevKnowledge]);
+  //   setModalCreateKnowledge(false);
+  //   };
 
 	return (
-		<>			
-				{
+		<>
+
+      <h1>Знания</h1>
+          
+          
+      {/*<button className="save-button" onClick={openModalCreateKnowledge}>Добавить знание</button>
+      <br/>*/}
+
+				{/*{
             knowledges?.map(knowledge => (
             				<Fragment key={knowledge.id}>
             				<br/>
@@ -31,7 +49,12 @@ function KnowledgeIndex() {
                     </div>    
                     </Fragment>
                 ))
-        }
+        }*/}
+
+
+        
+
+
     </>
 		)
 }
@@ -61,4 +84,4 @@ const KnowledgeListLoader = async () => {
 
 
 
-export { KnowledgeIndex, KnowledgeListLoader }
+export { KnowledgeIndex }

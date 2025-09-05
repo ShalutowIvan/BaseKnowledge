@@ -3,7 +3,7 @@ import { useState, useEffect, Fragment, useCallback } from 'react'
 import { API } from '../../apiAxios/apiAxios'
 import { DeleteGroupModal } from './DeleteGroupModal'
 import { GroupCreateModal } from './GroupCreateModal'
-import { KnowledgeCreateModal } from './KnowledgeCreateModal'
+
 import { FaTrash } from "react-icons/fa";
 import { DropdownMenu } from './DropdownMenu'; 
 
@@ -21,7 +21,7 @@ function KnowledgeLayout() {
 
   const [modalDeleteGroup, setModalDeleteGroup] = useState(false);
   const [modalCreateGroup, setModalCreateGroup] = useState(false);  
-  const [modalCreateKnowledge, setModalCreateKnowledge] = useState(false);  
+  
   
   const [selectedGroup, setSelectedGroup] = useState(null);
 
@@ -83,10 +83,6 @@ function KnowledgeLayout() {
       return navigate("/knowledges/create/");
     }  
   
-
-  const test = () => {
-    console.log("группа", groups[0])
-  }
 
   const setGroupName = useCallback((group_id) => (e) => {
       const { name, value } = e.target;
@@ -174,17 +170,9 @@ function KnowledgeLayout() {
       };
 
 
-  const handleCreateKnowledge = (newKnowledge) => {   
-    // не знаю как сделать перезагрузку списка знания из компонента KnowledgeIndex или компонента списка знаний в группе
-    
-    // console.log("Новое знание", newKnowledge)
-    // setKnowledges(prevKnowledge => [...prevKnowledge, newKnowledge]);
-    setModalCreateKnowledge(false);
-    };
+  
 
-  const openModalCreateKnowledge = () => {      
-      setModalCreateKnowledge(true);
-      };
+  
 
 
   return (
@@ -192,9 +180,15 @@ function KnowledgeLayout() {
     <>
       {/* Боковая панель с группами (постоянная) */}      
       <aside>
-        <button onClick={test}>test</button>
+        
+            <button className="save-button" onClick={openModalCreateGroup}>Добавить группу</button>
 
-            <h3><NavLink to="/knowledges/" className={setActive}>Все группы</NavLink></h3>
+            <NavLink to="/knowledges/all" >              
+                      <h2>Все группы</h2>
+                    
+            </NavLink>
+
+            <br/>
       
             {
               groups.length === 0 ? (
@@ -281,10 +275,7 @@ function KnowledgeLayout() {
 
       {/*центральная часть с кнопками*/}
       <div className="central-part">
-          <h1>Знания</h1>       
-          <button className="toolbar-button" onClick={openModalCreateGroup}>Добавить группу</button>
-          &nbsp;&nbsp;&nbsp;
-          <button className="toolbar-button" onClick={openModalCreateKnowledge}>Добавить знание</button>
+          
       
       {modalCreateGroup && (
             <GroupCreateModal             
@@ -293,12 +284,7 @@ function KnowledgeLayout() {
             />
           )}  
 
-      {modalCreateKnowledge && (
-            <KnowledgeCreateModal             
-              onClose={() => setModalCreateKnowledge(false)}
-              onSuccess={handleCreateGroup}
-            />
-          )}  
+      
 
       
       {/* Основной контент (меняется) */}      

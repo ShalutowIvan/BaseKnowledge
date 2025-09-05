@@ -113,8 +113,13 @@ async def knowledges_all_service(user_id: int, db: AsyncSession) -> list[Knowled
     
 
 #получение знаний по фильтру группы
-async def get_knowledges_in_group(db: AsyncSession, slug) -> list[KnowledgesSchema]:    
-    query = select(Knowledge.title, Knowledge.description, Knowledge.id).join(Knowledge.group).where(Group.slug == slug)        
+async def knowledges_in_group_service(user_id: int, db: AsyncSession, slug) -> list[KnowledgesSchema]:    
+    if slug == "all":
+        query_all = select(Knowledge).where(Knowledge.user_id == user_id).order_by(Knowledge.created_at.desc())
+        knowledges_all = await db.execute(query_all)
+        return knowledges_all.scalars().all()
+
+    query = select(Knowledge.title, Knowledge.description, Knowledge.id).join(Knowledge.group).where(Group.slug == slug).where(Knowledge.user_id == user_id)
     knowledges_gr = await db.execute(query)
     return knowledges_gr.all()
 
