@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './CSS/DeleteGroup.css'
 import { API } from "../../apiAxios/apiAxios"
@@ -9,14 +9,14 @@ function KnowledgeCreateModal({ onClose, onSuccess }) {
   
     const [title, setTitle] = useState("_");    
     const [description, setDescription] = useState("_");    
-    const [groupCr, setGroupCr] = useState(null);
+    const [selectedGroupId, setSelectedGroupId] = useState(null);
   
     const [groupsCr, setGroupsCr] = useState([]);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -34,7 +34,7 @@ function KnowledgeCreateModal({ onClose, onSuccess }) {
 
 
     const validateForm = () => {
-        if (!title || !description || !groupCr) {
+        if (!title || !description || !selectedGroupId) {
             setError("Есть пустые поля, заполните, пожалуйста!");
             return false;
         }
@@ -48,19 +48,18 @@ function KnowledgeCreateModal({ onClose, onSuccess }) {
         event.preventDefault();
         if (!validateForm()) return;
         setLoading(true);
+        const group_slug = groupsCr.find(g => g.id === parseInt(selectedGroupId))?.slug;        
 
         try {
             const response = await API.post("/knowledges_create/", 
                 {
                     title: title, 
                     description: description, 
-                    group_id: groupCr,
-                } );
-            setLoading(false);
-            // setTitle("")
-            // setDescription("")
-            // setGroupCr(null);
-            onSuccess(response.data);
+                    group_id: selectedGroupId,                    
+                } );            
+            
+            setLoading(false);            
+            onSuccess(response.data, group_slug);//это функция которая срабатывает в компоненте где открывается модальное окно
             onClose();
             
         } catch (error) {
@@ -107,14 +106,14 @@ function KnowledgeCreateModal({ onClose, onSuccess }) {
 
                 <br/><br/>
 
-                <label htmlFor="id_groupCr">Группа: </label>                
+                <label htmlFor="id_selectedGroupId">Группа: </label>                
                 <select
                     // style={buttonStyle}
-                    name="groupCr"
-                    id="id_groupCr"
+                    name="selectedGroupId"
+                    id="id_selectedGroupId"
                     // className="control"                        
-                    value={groupCr}
-                    onChange={(e) => setGroupCr(e.target.value)}   
+                    value={selectedGroupId}
+                    onChange={(e) => setSelectedGroupId(e.target.value)}   
                     required
                 >
                     <option value="">Выберите группу</option>

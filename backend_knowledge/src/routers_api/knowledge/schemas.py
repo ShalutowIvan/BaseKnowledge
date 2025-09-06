@@ -55,8 +55,9 @@ class KnowledgesSchema(BaseModel):
 
 class KnowledgesCreateSchema(BaseModel):
     title: str
-    description: str
+    description: str    
     group_id: int
+    # group_slug: str
 
 
 class KnowledgesUpdateSchema(BaseModel):        

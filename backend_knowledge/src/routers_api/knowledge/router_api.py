@@ -99,8 +99,11 @@ async def knowledges_create(
 
 # открыть знание, тут фильтр по ID знания. Возможно переделаю на UUID
 @router_knowledge_api.get("/knowledges_open/{kn_id}", response_model=KnowledgesSchemaOpen)
-async def knowledges_open(kn_id: int, session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchemaFull:    
-    return await knowledges_open_service(db=session, kn_id=kn_id)
+async def knowledges_open(
+    kn_id: int, 
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchemaFull:    
+    return await knowledges_open_service(user_id=user_id, db=session, kn_id=kn_id)
 
 
 #создание знания. После создания оно сразу открывается для заполнения. Поэтму тут схема ответа фул знания. Редактирование тела знания будет при открытии знания. При создании мы пишем название и описание знания и валидация идет по KnowledgesSchema. Потом оно открывается, и его заполняем - редактируем по остальным полям.

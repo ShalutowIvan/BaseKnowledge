@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
+import { API } from "../../apiAxios/apiAxios"
 import { useParams, Link, useNavigate, useLoaderData, Await, redirect, useRevalidator } from 'react-router-dom'
 // import { GroupsAll } from "./GroupsAll"
 // import MDEditor from '@uiw/react-markdown-editor';//это посоветовал дипсик
@@ -22,7 +23,7 @@ function KnowledgeOpen() {
     
     const [editModeHeader, setEditModeHeader] = useState(false);//это для редактирования шапки знания
 
-    // const {slug} = useParams();
+    const {slug_gr} = useParams();
     const [knowledge, setKnowledge] = useState(knowledgeLoad);
     
     const [error, setError] = useState("");
@@ -90,7 +91,7 @@ function KnowledgeOpen() {
     const navigate = useNavigate();
 
     const goBack = () => {
-      return navigate('/knowledges/');
+      return navigate(`/knowledges/${slug_gr}`);
     }
 
       
@@ -424,29 +425,27 @@ function KnowledgeOpen() {
 }
 
 
-async function getKnowledgeOpen(slug) { 
-  const res = await fetch(`http://127.0.0.1:8000/knowledges_open/${slug}`)//тут берутся все элементы с одним и тем же номером документа
+async function getKnowledgeOpen(kn_id) {  
 
-  // try {
-  //       const res = await API.get(`/api/checkout_list/orders/${id}`)     
-  //  return res.data
-  //     } catch (error) {
-  //      //если ошибка, то выдаем ошибку
-  //       console.error("Error here: ", error);
-  //       // setError("Failed to fetch user data. Please try again.");
-  //       return "error"
-  //     }
-
-
-  return res.json()
+  try {
+        const res = await API.get(`/knowledges_open/${kn_id}`);
+        // console.log(res)
+        return res.data
+      } catch (error) {
+       
+        console.log("Ошибка из detail:", error.response?.data?.detail)
+                
+        return {"error": error.response?.data?.detail}
+      }
+ 
 }
 
 
 const KnowledgeOpenLoader = async ({params}) => {
   
-  const slug = params.slug//после params писать название параметра которое прописали в файле AppRouter.jsx с урлками
+  const kn_id = params.kn_id//после params писать название параметра которое прописали в файле AppRouter.jsx с урлками
   
-  return {knowledgeLoad: await getKnowledgeOpen(slug)}
+  return {knowledgeLoad: await getKnowledgeOpen(kn_id)}
 }
 
 

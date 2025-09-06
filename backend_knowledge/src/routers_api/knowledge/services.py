@@ -125,8 +125,8 @@ async def knowledges_in_group_service(user_id: int, db: AsyncSession, slug) -> l
 
 
 # открыть знание
-async def knowledges_open_service(db: AsyncSession, kn_id: int):    
-    query = select(Knowledge).options(selectinload(Knowledge.images), selectinload(Knowledge.group)).where(Knowledge.id == kn_id)
+async def knowledges_open_service(user_id: int, kn_id: int, db: AsyncSession):    
+    query = select(Knowledge).options(selectinload(Knowledge.images), selectinload(Knowledge.group)).where(Knowledge.id == kn_id).where(Knowledge.user_id == user_id)
     
     knowledge = await db.execute(query)
     

@@ -1,5 +1,5 @@
 //компонент отображения содержания знаний в группе
-import { useParams, NavLink, useLoaderData } from 'react-router-dom'
+import { useParams, NavLink, useLoaderData, Outlet } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { API } from "../../apiAxios/apiAxios"
 import { KnowledgeCreateModal } from './KnowledgeCreateModal'
@@ -46,18 +46,23 @@ function KnowledgeInGroup() {
       };
 
 
-  const handleCreateKnowledge = (newKnowledge) => {    
-    setKnowledges(prevKnowledge => [newKnowledge, ...prevKnowledge]);
+  const handleCreateKnowledge = (newKnowledge, group_slug) => {   
+	console.log("Новое знание", newKnowledge) 
+	if (slug_gr === "all" || slug_gr === group_slug) {
+		setKnowledges(prevKnowledge => [newKnowledge, ...prevKnowledge]);
+	}
+    
     setModalCreateKnowledge(false);
     };
 
 	return (
-		<>
-			<h1>Знания</h1>
-          
-          
-      <button className="save-button" onClick={openModalCreateKnowledge}>Добавить знание</button>
-      <br/>
+		<div className='container-knowledges-view'>
+
+		<div className='knowledges-section'>
+		<h1>Знания</h1>
+		<button className="save-button" onClick={openModalCreateKnowledge}>Добавить знание</button>
+      	<br/>   
+      	
 			
 	            {
 	                	knowledges?.map(knowledge => (
@@ -66,13 +71,17 @@ function KnowledgeInGroup() {
 	                				<div className="section-frame">
 		                				<h1 className="name-knowledge">{knowledge.title}</h1>
 				                        <h2>Описание: {knowledge.description}</h2>
-				                        <NavLink key={knowledge.id} to={`/knowledges/open/${knowledge.id}`} className={setActive}>
+				                        <NavLink key={knowledge.id} to={`/knowledges/${slug_gr}/knowledge_open/${knowledge.id}`} className={setActive}>
 				                            <button className="toolbar-button">Открыть</button>
 				                        </NavLink>
 	                            	</div>
 	                        		</>
 	                    ))
 	            }
+		
+		
+		</div>
+
 
 	     {modalCreateKnowledge && (
             <KnowledgeCreateModal             
@@ -80,8 +89,12 @@ function KnowledgeInGroup() {
               onSuccess={handleCreateKnowledge}
             />
           )}  
-	        
-		</>
+
+		<div>
+        	<Outlet />
+      	</div>
+
+		</div>
 		)
 }
 
