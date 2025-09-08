@@ -856,7 +856,7 @@ container-roadmap-view
 
 
 .container-knowledges-view {
-  height: 100vh;
+  height: calc(100vh - 110px - 20px);  
   display: flex;
   /*justify-content: space-between;*/
   /* padding: 10px; */

@@ -61,100 +61,64 @@ function KnowledgeInGroup() {
   };
 
 
-   /**
-   * Мемоизированная функция для открытия знания во вкладке
-   * useCallback предотвращает пересоздание функции при каждом рендере
-   * Пустой массив зависимостей [] означает, что функция создается только один раз
-   */
+  // Функция для переключения между вкладками
   const openKnowledgeInTab = useCallback((knowledge) => {
     setActiveTabs(prev => {
-      // Деактивируем все существующие вкладки
       const newTabs = prev.map(tab => ({ ...tab, active: false }));
-      
-      // Проверяем, не открыта ли уже эта вкладка
       const existingTabIndex = newTabs.findIndex(tab => tab.id === knowledge.id);
       
       if (existingTabIndex !== -1) {
-        // Активируем существующую вкладку
         newTabs[existingTabIndex].active = true;
         return newTabs;
       }
 
-      // Добавляем новую вкладку
       return [
         ...newTabs,
         {
           id: knowledge.id,
           title: knowledge.title,
-          knowledge: { ...knowledge }, // Создаем копию объекта
+          knowledge: { ...knowledge },
           active: true
         }
       ];
     });
-  }, []); // Пустой массив зависимостей - функция не пересоздается
+  }, []);
 
-
-  /**
-   * Мемоизированная функция для закрытия вкладки
-   * useCallback сохраняет ссылку на функцию между рендерами
-   * Это важно для стабильности пропсов в дочерних компонентах
-   */
+  // Функция для закрытия вкладки
   const closeTab = useCallback((tabId) => {
     setActiveTabs(prev => {
-      // Фильтруем вкладки, убирая закрываемую
       const filtered = prev.filter(tab => tab.id !== tabId);
-      
       if (filtered.length === 0) return filtered;
       
-      // Проверяем, была ли закрываемая вкладка активной
+      // Активируем последнюю вкладку если закрыли активную
       const wasActive = prev.find(tab => tab.id === tabId)?.active;
-      
       if (wasActive) {
-        // Активируем последнюю вкладку
-        const lastTabIndex = filtered.length - 1;
-        return filtered.map((tab, index) => ({
-          ...tab,
-          active: index === lastTabIndex
-        }));
+        filtered[filtered.length - 1].active = true;
       }
       
       return filtered;
     });
-  }, []); // Нет зависимостей - функция стабильна
+  }, []);
 
-
-  /**
-   * Мемоизированная функция для переключения между вкладками
-   * useCallback обеспечивает, что ссылка на функцию не меняется
-   * Это предотвращает ненужные перерисовки дочерних компонентов
-   */
+  // Функция для переключения между вкладками
   const switchTab = useCallback((tabId) => {
     setActiveTabs(prev => 
       prev.map(tab => ({
         ...tab,
-        active: tab.id === tabId // Активируем только выбранную вкладку
+        active: tab.id === tabId
       }))
     );
-  }, []); // Стабильная ссылка на функцию
+  }, []);
 
-  /**
-   * Мемоизированная функция для обновления данных вкладки
-   * Используется когда знание редактируется и нужно обновить заголовок вкладки
-   */
   const updateTabKnowledge = useCallback((tabId, updatedKnowledge) => {
     setActiveTabs(prev => 
       prev.map(tab => 
         tab.id === tabId 
-          ? { 
-              ...tab, 
-              knowledge: updatedKnowledge, 
-              title: updatedKnowledge.title // Обновляем заголовок вкладки
-            }
+          ? { ...tab, knowledge: updatedKnowledge, title: updatedKnowledge.title }
           : tab
       )
     );
-  }, []); // Функция создается один раз
-  
+  }, []);
 
   // Получаем активное знание
   const activeTab = activeTabs.find(tab => tab.active);
@@ -173,38 +137,17 @@ function KnowledgeInGroup() {
 	                				<div key={knowledge.id} className="section-frame">
 		                				<h3 className="name-knowledge">{knowledge.title}</h3>
 				                    <p>Описание: {knowledge.description}</p>
-				                        <button onClick={() => openKnowledgeInTab(knowledge)} className="toolbar-button">Открыть</button>
-
-				                        
+				                        <NavLink to={`/knowledges/${slug_gr}/knowledge_open/${knowledge.id}`} className={setActive}>
+				                            <button className="toolbar-button">Открыть</button>
+				                        </NavLink>
 	                            	</div>
 	                        		</>
 	                    ))
 	            }
 		
+		
 		</div>
 
-		{/* Панель вкладок - получает стабильные функции через useCallback */}
-      <KnowledgeTabs
-        tabs={activeTabs}
-        onCloseTab={closeTab}       // Стабильная ссылка
-        onSwitchTab={switchTab}     // Стабильная ссылка
-      />
-
-
-    {/* Область контента активной вкладки */}
-      <div className="knowledge-content-area">
-        {activeTab ? (
-          <KnowledgeContent
-            knowledge={activeTab.knowledge}
-            slug_gr={slug_gr}
-            onUpdate={updateTabKnowledge} // Стабильная ссылка
-          />
-        ) : (
-          <div className="no-content-message">
-            <h2>Выберите знание для просмотра</h2>
-          </div>
-        )}
-      </div>
 
 	     {modalCreateKnowledge && (
             <KnowledgeCreateModal             
@@ -213,9 +156,9 @@ function KnowledgeInGroup() {
             />
           )}  
 
-				{/*<div>
+		<div>
         	<Outlet />
-      	</div>*/}
+      	</div>
 
 		</div>
 		)
