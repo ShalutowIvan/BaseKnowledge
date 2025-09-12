@@ -1,28 +1,35 @@
-// components/KnowledgeTabs.jsx
-import { useState } from 'react';
+import React from 'react';
 
-function KnowledgeTabs({ activeTabs, onCloseTab, onTabClick }) {
-  if (activeTabs?.length === 0) return null;
+/**
+ * Компонент отображает список вкладок
+ * Обернут в React.memo для предотвращения ненужных перерисовок
+ * useCallback функции обеспечивают стабильность пропсов
+ */
+const KnowledgeTabs = React.memo(({ tabs, onCloseTab, onSwitchTab }) => {
+  if (tabs.length === 0) return null;
 
   return (
     <div className="knowledge-tabs">
       <div className="tabs-header">
-        <h3>Открытые знания</h3>
+        <h3>Открытые вкладки</h3>
       </div>
       <div className="tabs-list">
-        {activeTabs?.map((tab) => (
-          <div 
-            key={tab.id} 
+        {tabs.map(tab => (
+          <div
+            key={tab.id}
             className={`tab-item ${tab.active ? 'active' : ''}`}
-            onClick={() => onTabClick(tab.id)}
+            onClick={() => onSwitchTab(tab.id)} // Стабильная функция
           >
-            <span className="tab-title">{tab.title}</span>
-            <button 
+            <span className="tab-title" title={tab.title}>
+              {tab.title}
+            </span>
+            <button
               className="tab-close"
               onClick={(e) => {
                 e.stopPropagation();
-                onCloseTab(tab.id);
+                onCloseTab(tab.id); // Стабильная функция
               }}
+              aria-label="Закрыть вкладку"
             >
               ×
             </button>
@@ -31,6 +38,8 @@ function KnowledgeTabs({ activeTabs, onCloseTab, onTabClick }) {
       </div>
     </div>
   );
-}
+});
 
-export { KnowledgeTabs };
+KnowledgeTabs.displayName = 'KnowledgeTabs';
+
+export {KnowledgeTabs};

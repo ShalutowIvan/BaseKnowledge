@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback  } from 'react';
 import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
 import { API } from "../../apiAxios/apiAxios"
@@ -14,109 +14,196 @@ import { markdownPlugins, markdownComponents } from './MDutils/UtilsImageMD';
 import { TextStyleToolbar } from './MDutils/TextStyleToolbar';
 
 
-function KnowledgeOpenContent({ knowledge, slug_gr }) {
-    const revalidator = useRevalidator();    
+function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseTab }) {
+    // const revalidator = useRevalidator();    
 
     // const { knowledgeLoad } = useLoaderData();//лоадер знания
+
+
+
+
     const [editMode, setEditMode] = useState(false);//это для редактирования контента знания
     const [preview, setPreview] = useState(false);//предварительный просмотр при редактировании контента
     
     const [editModeHeader, setEditModeHeader] = useState(false);//это для редактирования шапки знания
 
-    // const {slug_gr} = useParams();
+    const {slug_gr} = useParams();
     // const [knowledge, setCurrentKnowledge] = useState(knowledgeLoad);
     const [currentKnowledge, setCurrentKnowledge] = useState(knowledge);
     
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
+    const [groups, setGroups] = useState([]);
+
+    const navigate = useNavigate();
         
+    // Синхронизация с пропсом knowledge
+    useEffect(() => {
+      setCurrentKnowledge(knowledge);
+    }, [knowledge]);
+
+    // Загрузка групп для контекстного меню при редактировании шапки знания
+    useEffect(() => {
+      const fetchGroups = async () => {
+        try {
+          const response = await API.get('/groups_all/');
+          setGroups(response.data);
+        } catch (error) {
+          console.error('Ошибка загрузки групп:', error);
+        }
+      };
+      fetchGroups();
+    }, []);
+
     // Обработчик изменений для MDEditor. Это пока убрали, так как у МД есть свой проп onChange
     const handleTextChange = (value) => {
-      setCurrentKnowledge({ ...knowledge, content: value || '' });
+      setCurrentKnowledge({ ...currentKnowledge, content: value || '' });
     };
 
-    
+  //переделанный новый обработчик для сохранения состояния контента
+  // const handleTextChange = useCallback((value) => {
+  //   setCurrentKnowledge((prev) => ({ ...prev, content: value || '' }));
+  // }, []);
 
-    
+        
     //это для загрузки фото
-    const handleImageUpload = async (e) => {
+    // const handleImageUpload = async (e) => {
+    //   const file = e.target.files[0];
+    //   if (!file) return;
+
+    //   try {
+    //     // 1. Загружаем файл
+    //     setLoading(true);
+    //     const formData = new FormData();
+    //     formData.append('file', file);
+    //    // Отправляем изображение на сервер через эндпоинт бэка в папку и БД запись, и файл грузим
+    //     const response = await API.post(`/upload-image/${knowledge.id}`, formData, {
+    //       headers: {
+    //         'Content-Type': 'multipart/form-data'
+    //       }
+    //     });
+    //     // 2. Вставляем Markdown-код изображения в текст. При вставке изображения оно происходит переход на следующую строку из-за \n        
+    //     const imageMarkdown = `![${file.name}](${response.data.url})`;
+    //     setCurrentKnowledge(prev => ({
+    //       ...prev,
+    //       content: prev.content + imageMarkdown
+    //     }));
+
+    //   } catch (error) {
+    //     console.error('Upload failed:', error);
+    //     // alert('Image upload failed');
+    //     setError('Image upload failed');
+    //   } finally {
+    //     setLoading(false);
+    //   }
+    // };
+
+  /**
+  * Мемоизированный обработчик загрузки изображений
+  * Сложная логика - useCallback предотвращает пересоздание
+  */
+  const handleImageUpload = useCallback(async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
       try {
-        // 1. Загружаем файл
         setLoading(true);
         const formData = new FormData();
         formData.append('file', file);
-       // Отправляем изображение на сервер через эндпоинт бэка в папку и БД запись, и файл грузим
-        const response = await axios.post(`http://127.0.0.1:8000/upload-image/${knowledge.id}`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        // 2. Вставляем Markdown-код изображения в текст. При вставке изображения оно происходит переход на следующую строку из-за \n        
-        const imageMarkdown = `![${file.name}](${response.data.url})`;
-        setCurrentKnowledge(prev => ({
+        
+        const response = await API.post(`/upload-image/${currentKnowledge.id}`,
+          formData,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+        
+        const imageMarkdown = `\n![${file.name}](${response.data.url})\n`;
+        setCurrentKnowledge((prev) => ({
           ...prev,
           content: prev.content + imageMarkdown
         }));
 
       } catch (error) {
         console.error('Upload failed:', error);
-        // alert('Image upload failed');
-        setError('Image upload failed');
+        setError('Ошибка загрузки изображения');
       } finally {
         setLoading(false);
       }
-    };
+    }, [currentKnowledge.id]); // Зависимость от ID знания
+
+  
+
+    /**
+     * Мемоизированный обработчик сохранения контента. Он сохраняет контент знания на сервере
+     * useCallback обеспечивает стабильность для обработчиков событий
+     */
+    const handleSave = useCallback(async () => {
+      try {
+        setLoading(true);
+        const updatedKnowledgeServer = await API.put(`/knowledges_update/${currentKnowledge.id}`,
+          { content: currentKnowledge.content }
+        );
+
+        // ФИКС: Создаем обновленный объект знания
+        const updatedKnowledge = {
+          ...currentKnowledge,
+          content: currentKnowledge.content,
+          // updated_at: new Date().toISOString(), // или с сервера
+          updated_at: updatedKnowledgeServer.updated_at
+        };// тут муть, скоре всего норм, но проверить
+
+        setEditMode(false);
+        // Сообщаем родителю об обновлении, обновление в массиве вкладок делаем setActiveTabs
+        onUpdate(currentKnowledge.id, updatedKnowledge);
+      } catch (error) {
+        console.error('Error saving knowledge: ', error);
+        setError('Ошибка сохранения');
+      } finally {
+        setLoading(false);
+      }
+    }, [currentKnowledge, onUpdate]); // Зависимости от текущего знания и функции обновления
+
+
     
-    // сохранение после редактирования знания
-    const handleSave = async () => {
-    try {
-      //тут идет отправка текста знания на сервер. Если ссылку на изображение удалить сервер удалит и изображение из БД и файл с сервера
-      setLoading(true);
-      await axios.put(`http://127.0.0.1:8000/knowledges_update/${knowledge.id}`, {
-            // title: knowledge.title,
-            content: knowledge.content
-          });      
-      setEditMode(false);
-    } catch (error) {
-      console.error('Error saving knowledge: ', error);
-      setError('Failed to save changes');
-    } finally {
-      setLoading(false);
-    }
-    };
-
-    const navigate = useNavigate();
-
-    // const goBack = () => {
-    //   return navigate(`/knowledges/${slug_gr}`);
-    // }
-
       
-  const deleteKnowledge = () => {
+  const deleteKnowledge = useCallback( () => {
     if (window.confirm('Вы уверены, что хотите удалить?')) {
       // Действие при подтверждении
-      axios.delete(`http://127.0.0.1:8000/delete_knowledge/${knowledge.id}`)      
-      navigate("/knowledges/");
-      revalidator.revalidate();//принудительная перезагрузка лоадера после редиректа в списке знаний
+      API.delete(`/delete_knowledge/${knowledge.id}`)
+      onCloseTab(knowledge.id)
+      onDeleteKnowledge(knowledge.id)
+      // не меняется состояние списка знаний! Возможно сделать ревалидатор лоадера ОСТ ТУТУ!!!!!!!!!!!!!
+      // navigate(`/knowledges/${group_slug}`);
+      // revalidator.revalidate();//принудительная перезагрузка лоадера после редиректа в списке знаний
     }  
-  };
+  }, []);
 
 
   // Обработчики изменений для полей шапки. Тут в зависимости от имени поля в input поле в jsx вставится значение из этого поля в нужное поле
-  const handleHeaderChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setCurrentKnowledge(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
+  // const handleHeaderChange = (e) => {
+  //   const { name, value, type, checked } = e.target;
+  //   setCurrentKnowledge(prev => ({
+  //     ...prev,
+  //     [name]: type === 'checkbox' ? checked : value
+  //   }));
+  // };
 
+  /**
+     * Мемоизированный обработчик изменений в шапке
+     * useCallback оптимизирует производительность формы
+     */
+  const handleHeaderChange = useCallback((e) => {
+      const { name, value, type, checked } = e.target;
+      setCurrentKnowledge(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }, []);
+
+
+  // валидацию не оборачивал в колбек...
   const validateForm = () => {
-        if (!knowledge.title || !knowledge.description ) {
+        if (!currentKnowledge.title || !currentKnowledge.description ) {
             setError("Есть пустые поля, заполните, пожалуйста!");
             return false;
         }
@@ -124,45 +211,59 @@ function KnowledgeOpenContent({ knowledge, slug_gr }) {
         return true;
     }
 
-  //функция для формы
-  const saveHeaderChanges = async (event) => {
+  //функция для формы шапки знания
+  const saveHeaderChanges = useCallback(async (event) => {
         event.preventDefault();
         if (!validateForm()) return;
         try {            
             setLoading(true);
-            const response = await axios.patch(
-                `http://127.0.0.1:8000/knowledge_update_header/${knowledge.id}`,
+            const response = await API.patch(`/knowledge_update_header/${knowledge.id}`,
                 {                 
-                  title: knowledge.title,
-                  description: knowledge.description,
-                  free_access: knowledge.free_access,
-                  group_id: knowledge.group_id
+                  title: currentKnowledge.title,
+                  description: currentKnowledge.description,
+                  free_access: currentKnowledge.free_access,
+                  group_id: currentKnowledge.group_id
                 }                
                 );
-            setEditModeHeader(false)            
+            
             if (response.statusText==='OK') {
-                setCurrentKnowledge({ ...knowledge, updated_at: response.data.updated_at});
-                setCurrentKnowledge({ ...knowledge, group: response.data.group});                
+                // ФИКС: Создаем обновленный объект
+                const updatedKnowledge = {
+                  ...currentKnowledge,
+                  updated_at: response.data.updated_at,
+                  group: response.data.group,
+                };
+
+                // ост тут!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                setCurrentKnowledge(updatedKnowledge);
+                onUpdate(knowledge.id, updatedKnowledge);//это обновление таба и кеша в основном компоненте. Там функция называется updateTabKnowledge
+                
+                // setCurrentKnowledge({ ...knowledge, updated_at: response.data.updated_at});
+                // setCurrentKnowledge({ ...knowledge, group: response.data.group});                
                 console.log("Update complete!")                
             } else {
                 const errorData = await response.data
                 console.log(errorData, 'тут ошибка')     
             }
+
+            
+            setEditModeHeader(false);
+            
+
         } catch (error) {            
             console.log(error)
             setError('что-то пошло не так');            
         } finally {
           setLoading(false);
         }    
-    };
+    }, [currentKnowledge, knowledge.id, onUpdate]);
 
-  const [groups, setGroups] = useState([]);
-
-  useEffect(() => {
-            fetch(`http://127.0.0.1:8000/groups_all/`)
-                .then(res => res.json())
-                .then(data => setGroups(data));
-        }, [])
+  // ФИКС: Восстановление исходных данных при отмене
+  const cancelHeaderEdit = useCallback(() => {
+    setCurrentKnowledge(knowledge);
+    setEditModeHeader(false);
+  }, [knowledge]);
+  
       
   return (
     <>
@@ -186,15 +287,15 @@ function KnowledgeOpenContent({ knowledge, slug_gr }) {
 
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>            
             <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{currentKnowledge.title}</span>
-            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {knowledge.updated_at}</span>
+            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {currentKnowledge.updated_at}</span>
           </div>
           <br/>
           
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
             <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>            
               <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Свободный доступ: 
-              {!knowledge.free_access && <> Не разрешен</>}
-              {knowledge.free_access && <> Разрешен</>}</span>
+              {!currentKnowledge.free_access && <> Не разрешен</>}
+              {currentKnowledge.free_access && <> Разрешен</>}</span>
           </div>
 
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>            
@@ -216,13 +317,11 @@ function KnowledgeOpenContent({ knowledge, slug_gr }) {
                 <label htmlFor="id_group">Группа: </label>                
                 <select
                     // className="control"
-                    name="group_id"                
-                    // value={knowledge.group.name_group}
+                    name="group_id"                    
                     value={currentKnowledge.group_id}
                     onChange={handleHeaderChange}
                     // required
-                >
-                    {/* <option value="">{knowledge.group.name_group}</option> */}
+                >                    
                     {groups?.map(group => (
                         <option key={group.id} value={group.id}>
                             {group.name_group}
@@ -250,7 +349,7 @@ function KnowledgeOpenContent({ knowledge, slug_gr }) {
                     <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {currentKnowledge.updated_at}</span>
                 </div>
                 <br/>
-
+                
                 {/*третья строка с чекбоксом*/}
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                   <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>          
@@ -272,19 +371,21 @@ function KnowledgeOpenContent({ knowledge, slug_gr }) {
                   <textarea
                     placeholder="введите описание"
                     name="description"
-                    value={currentKnowledgecurrentKnowledge.description}
+                    value={currentKnowledge.description}
                     onChange={handleHeaderChange}
                     disabled={loading}
                     rows={2}
                   />
                 
                   <div>
+
                   <button className="save-button" type="submit" disabled={loading}>                    
                     {loading ? 'Сохраняем...' : 'Сохранить'}
                   </button>
+
                   &nbsp;&nbsp;
                   <button 
-                    onClick={() => {setCurrentKnowledge(knowledge); setEditModeHeader(false);}}
+                    onClick={() => {cancelHeaderEdit}}
                     className="cancel-button"
                     disabled={loading}>Отмена</button>
                   </div>                  
@@ -340,7 +441,7 @@ function KnowledgeOpenContent({ knowledge, slug_gr }) {
               rehypePlugins={markdownPlugins.rehype}
               components={markdownComponents}
               >
-                {knowledge.content}
+                {currentKnowledge.content}
               </ReactMarkdown>
             </div>
           ) : (
@@ -363,7 +464,7 @@ function KnowledgeOpenContent({ knowledge, slug_gr }) {
             }} />
             
             <MDEditor              
-              value={knowledge.content}
+              value={currentKnowledge.content}
               onChange={handleTextChange}
               height={500}
               preview="edit"            
@@ -405,7 +506,7 @@ function KnowledgeOpenContent({ knowledge, slug_gr }) {
                 rehypePlugins={markdownPlugins.rehype}
                 components={markdownComponents}
                 >
-                {knowledge.content}
+                {currentKnowledge.content}
               </ReactMarkdown>
             </div>
             <br/>
@@ -426,29 +527,30 @@ function KnowledgeOpenContent({ knowledge, slug_gr }) {
 }
 
 
-async function getKnowledgeOpen(kn_id) {  
+// async function getKnowledgeOpen(kn_id) {  
 
-  try {
-        const res = await API.get(`/knowledges_open/${kn_id}`);
-        // console.log(res)
-        return res.data
-      } catch (error) {
+//   try {
+//         const res = await API.get(`/knowledges_open/${kn_id}`);
+//         // console.log(res)
+//         return res.data
+//       } catch (error) {
        
-        console.log("Ошибка из detail:", error.response?.data?.detail)
+//         console.log("Ошибка из detail:", error.response?.data?.detail)
                 
-        return {"error": error.response?.data?.detail}
-      }
+//         return {"error": error.response?.data?.detail}
+//       }
  
-}
+// }
 
 
-const KnowledgeOpenLoader = async ({params}) => {
+// const KnowledgeOpenLoader = async ({params}) => {
   
-  const kn_id = params.kn_id//после params писать название параметра которое прописали в файле AppRouter.jsx с урлками
+//   const kn_id = params.kn_id//после params писать название параметра которое прописали в файле AppRouter.jsx с урлками
   
-  return {knowledgeLoad: await getKnowledgeOpen(kn_id)}
-}
+//   return {knowledgeLoad: await getKnowledgeOpen(kn_id)}
+// }
 
 
 
-export { KnowledgeOpenContent };
+// export { KnowledgeOpenContent };
+export default React.memo(KnowledgeOpenContent);

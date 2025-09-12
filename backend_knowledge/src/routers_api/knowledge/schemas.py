@@ -48,9 +48,10 @@ class GroupShemaFull(GroupShema):
 
 #это вывода списка знаний. Открыть их по ID, чтобы была ссылка
 class KnowledgesSchema(BaseModel):
+    id: int
     title: str
     description: str
-    id: int
+    
 
 
 class KnowledgesCreateSchema(BaseModel):
