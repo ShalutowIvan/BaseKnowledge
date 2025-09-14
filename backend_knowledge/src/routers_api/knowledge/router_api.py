@@ -105,8 +105,14 @@ async def knowledges_open(
     session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchemaFull:    
     return await knowledges_open_service(user_id=user_id, db=session, kn_id=kn_id)
 
+# При создании мы пишем название и описание знания и валидация идет по KnowledgesSchema. Потом оно открывается, и его заполняем - редактируем по остальным полям.
 
-#создание знания. После создания оно сразу открывается для заполнения. Поэтму тут схема ответа фул знания. Редактирование тела знания будет при открытии знания. При создании мы пишем название и описание знания и валидация идет по KnowledgesSchema. Потом оно открывается, и его заполняем - редактируем по остальным полям.
+#энпоинт для открытия ссылки если для знания открыт свободный доступ. без запроса юзера
+@router_knowledge_api.get("/knowledges_open_free/{slug}", response_model=KnowledgesSchemaOpen)
+async def knowledges_open_free(
+    slug: str,     
+    session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchemaFull:    
+    return await knowledges_open_free_service(db=session, slug=slug)
 
 
 

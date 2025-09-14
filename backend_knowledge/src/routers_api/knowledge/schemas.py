@@ -78,7 +78,7 @@ class KnowledgesUpdateHeaderResponseSchema(BaseModel):
     free_access: bool
     updated_at: datetime
     slug: str
-    group: GroupShema
+    group: GroupShemaFull
 
 
 
@@ -89,6 +89,7 @@ class KnowledgesSchemaFull(KnowledgesSchema):
     images: Optional[List[ImageBaseSchema]] = None    
     group_id: int    
     free_access: bool
+    slug: str
 
     
     class Config:

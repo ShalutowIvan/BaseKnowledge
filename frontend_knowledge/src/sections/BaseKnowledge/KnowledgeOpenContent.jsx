@@ -13,6 +13,8 @@ import 'highlight.js/styles/atom-one-dark.css'; // стили подсветки
 import { markdownPlugins, markdownComponents } from './MDutils/UtilsImageMD';
 import { TextStyleToolbar } from './MDutils/TextStyleToolbar';
 
+import { CopyLinkButton } from './CopyLinkButton';
+
 
 function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseTab }) {
     // const revalidator = useRevalidator();    
@@ -61,43 +63,7 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
       setCurrentKnowledge({ ...currentKnowledge, content: value || '' });
     };
 
-  //переделанный новый обработчик для сохранения состояния контента
-  // const handleTextChange = useCallback((value) => {
-  //   setCurrentKnowledge((prev) => ({ ...prev, content: value || '' }));
-  // }, []);
-
-        
-    //это для загрузки фото
-    // const handleImageUpload = async (e) => {
-    //   const file = e.target.files[0];
-    //   if (!file) return;
-
-    //   try {
-    //     // 1. Загружаем файл
-    //     setLoading(true);
-    //     const formData = new FormData();
-    //     formData.append('file', file);
-    //    // Отправляем изображение на сервер через эндпоинт бэка в папку и БД запись, и файл грузим
-    //     const response = await API.post(`/upload-image/${knowledge.id}`, formData, {
-    //       headers: {
-    //         'Content-Type': 'multipart/form-data'
-    //       }
-    //     });
-    //     // 2. Вставляем Markdown-код изображения в текст. При вставке изображения оно происходит переход на следующую строку из-за \n        
-    //     const imageMarkdown = `![${file.name}](${response.data.url})`;
-    //     setCurrentKnowledge(prev => ({
-    //       ...prev,
-    //       content: prev.content + imageMarkdown
-    //     }));
-
-    //   } catch (error) {
-    //     console.error('Upload failed:', error);
-    //     // alert('Image upload failed');
-    //     setError('Image upload failed');
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // };
+  
 
   /**
   * Мемоизированный обработчик загрузки изображений
@@ -232,14 +198,13 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
                   ...currentKnowledge,
                   updated_at: response.data.updated_at,
                   group: response.data.group,
+                  title: response.data.title,
+                  description: response.data.description
                 };
 
-                // ост тут!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                setCurrentKnowledge(updatedKnowledge);
-                onUpdate(knowledge.id, updatedKnowledge);//это обновление таба и кеша в основном компоненте. Там функция называется updateTabKnowledge
                 
-                // setCurrentKnowledge({ ...knowledge, updated_at: response.data.updated_at});
-                // setCurrentKnowledge({ ...knowledge, group: response.data.group});                
+                setCurrentKnowledge(updatedKnowledge);//в текущем знании главное обновить группу и время обновления
+                onUpdate(knowledge.id, updatedKnowledge);//это обновление таба в основном компоненте. Там функция называется updateTabKnowledge. Она меняет и названия в списке знаний                
                 console.log("Update complete!")                
             } else {
                 const errorData = await response.data
@@ -264,14 +229,12 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
     setEditModeHeader(false);
   }, [knowledge]);
   
+  const urlToCopy = `localhost:5173/knowledge_open_free/${currentKnowledge.slug}`
       
   return (
     <>
-      
-      <br/><br/>
-      {/*<button onClick={goBack} className="toolbar-button">Назад</button>          */}
-      <br/><br/>
-      <div className="post-container header-section">
+            
+      <div className="knowledges-container section-frame">
         
         {/*это шапка знания*/}        
         
@@ -279,7 +242,11 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
         {/*если не редачим шапку отображаются поля шапки*/}
         {!editModeHeader ? (
           <>
-          <p>Группа: {currentKnowledge?.group.name_group}</p>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>            
+            <span style={{ fontSize: '20px', color: '#E0FFFF' }}>Группа: {currentKnowledge?.group.name_group}</span>
+            <button onClick={() => setEditModeHeader(true)} className="change-button">              
+              </button>
+          </div>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
             <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
             <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {currentKnowledge.created_at}</span>
@@ -295,16 +262,18 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
             <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>            
               <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Свободный доступ: 
               {!currentKnowledge.free_access && <> Не разрешен</>}
-              {currentKnowledge.free_access && <> Разрешен</>}</span>
+              {currentKnowledge.free_access && 
+              <> Разрешен              
+              </>}
+              </span>
           </div>
 
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>            
             <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{currentKnowledge.description}</span>
-            
-            <button onClick={() => setEditModeHeader(true)} className="toolbar-button">
-              Редактировать шапку
-            </button>
-            
+            {/*кнопка для копирования ссылки*/}
+            {currentKnowledge.free_access &&
+            <CopyLinkButton textUrl={urlToCopy} />}
+          
           </div>
           </>
           ) : (
@@ -406,11 +375,11 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
     <br/>
     
     {/*ниже редактор контента знания*/}
-    <div className="post-container">
+    <div className="knowledges-container">
       <h1>Содержание знания</h1>
       {editMode ? (
 
-        <div className="editor-section">
+        <div>
           <h3>Редактор знания</h3>
           <div className="editor-toolbar">
             <button type="button" className="toolbar-button" onClick={() => setPreview(!preview)}>
@@ -499,7 +468,7 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
       ) : (
         
         // отображение сохраненного контента
-        <div className="view-mode">         
+        <div>         
           <div className="markdown-content" data-color-mode="light">
               <ReactMarkdown
                 remarkPlugins={markdownPlugins.remark}

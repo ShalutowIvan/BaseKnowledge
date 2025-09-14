@@ -197,7 +197,7 @@ function KnowledgeLayout() {
 
                       group.isEditing ? (                      
 
-                        <div className="list-group-edit section-frame">
+                        <div key={group.id} className="list-group-edit section-frame">
                           <form onSubmit={(e) => saveNameGroup(group.id, group.name_group, e)} style={{ marginBottom: '1rem' }}>
                             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                             <input 
@@ -238,7 +238,7 @@ function KnowledgeLayout() {
 
                     ) : ( 
 
-                    <div>
+                    <div key={group.id}>
                         <NavLink to={`/knowledges/${group.slug}`} className={setActive}>                              
                               {({ isActive }) => (
                                 <div className={`list-group section-frame ${isActive ? "active" : ""}`}>
@@ -274,7 +274,7 @@ function KnowledgeLayout() {
       </aside>
 
       {/*центральная часть с кнопками*/}
-      <div className="central-part">
+      <div className="central-part-knowledges">
           
       
       {modalCreateGroup && (

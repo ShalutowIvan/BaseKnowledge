@@ -346,6 +346,19 @@ container-roadmap-view
   /*padding: 2.5%;*/
 }
 
+.post-container-free {
+  max-width: 70%;
+  margin-left: 20%;
+  margin-right: 20%;
+  margin-top: 50px;
+  /*margin: 0 auto;*/
+  /*auto;*/
+  /*padding: 20px;*/
+  /*padding: 2.5%;*/
+}
+
+
+
 /* рамка для шапки */
 .section-frame {
   border: 2px solid #ddd;
@@ -420,8 +433,9 @@ container-roadmap-view
   /*width: 100%;*/
   text-align: left; /* Выравнивание текста по левому краю */  
   padding: 15px;
-  border: 1px solid #eee;
-  border-radius: 4px;
+  /*border: 1px solid #eee;*/
+  border: 2px solid #ddd;
+  border-radius: 8px;
   line-height: 1.6; /* Комфортный межстрочный интервал */
   font-size: 16px;
   word-wrap: break-word;  /* Перенос длинных строк */
@@ -855,23 +869,110 @@ container-roadmap-view
 }
 
 
-.container-knowledges-view {
+/*.container-knowledges-view {
   height: calc(100vh - 110px - 20px);  
   display: flex;
-  /*justify-content: space-between;*/
-  /* padding: 10px; */
-
-}
+}*/
 
 
-.knowledges-section {  
-  /* max-width: 30%; */
-  /* margin-left: 18%;   */
-  /* margin-top: 110px;     */
-  /*height: calc(100vh - 110px - 20px);*/
+.knowledges-list {
   padding: 2.5%;
   overflow-y: auto;
 
   color: #E0FFFF;
 }
 
+
+
+.knowledges-container {
+  /*max-width: 70%;*/
+  margin-left: 5%;
+  /*margin-top: 140px;*/
+  /*margin: 0 auto;*/
+  /*auto;*/
+  /*padding: 20px;*/
+  /*padding: 2.5%;*/
+}
+
+/*стили для вкладок знания*/
+
+.container-knowledges-view {
+  display: flex;
+  height: 100vh;
+  /*background: #fff;*/
+}
+
+.knowledges-section {
+  width: 300px;
+  padding: 20px;
+  border-right: 1px solid #e1e4e8;
+  overflow-y: auto;  
+}
+
+.knowledge-tabs {
+  width: 250px;
+  /*background: #fafbfc;*/
+  border-right: 1px solid #e1e4e8;
+  display: flex;
+  flex-direction: column;
+}
+
+.knowledge-content-area {
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+  /*background: white;*/
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e1e4e8;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.tab-item:hover {
+  background: #d5d5d5;
+}
+
+.tab-item.active {
+  background: #2E8B57;
+  color: white;
+}
+
+.tab-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.tab-close {
+  background: none;
+  border: none;
+  padding: 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.tab-close:hover {
+  opacity: 1;
+}
+
+.tab-item.active .tab-close {
+  color: white;
+}
+
+
+.central-part-knowledges {
+  margin-top: 140px;
+  max-width: 60%;
+  margin-left: 20%;
+  /* border: 2px solid #ddd; */
+  border-radius: 8px;  
+}

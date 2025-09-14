@@ -1,4 +1,4 @@
-from fastapi import HTTPException, Request, UploadFile, File, Body
+from fastapi import HTTPException, Request, UploadFile, File, Body, status
 from fastapi.responses import FileResponse
 from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload, joinedload, load_only
@@ -132,6 +132,18 @@ async def knowledges_open_service(user_id: int, kn_id: int, db: AsyncSession):
     
     return knowledge.scalar()
 
+
+# открыть знание - свободный доступ, не проверяется пользователь
+async def knowledges_open_free_service(slug: str, db: AsyncSession):    
+    try:
+        query = await db.execute(select(Knowledge).options(selectinload(Knowledge.images), selectinload(Knowledge.group)).where(Knowledge.slug == slug))
+        knowledge = query.scalar()
+        if knowledge.free_access == False:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Error: free access denied")
+        
+        return knowledge
+    except Exception as ex:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Knowledge not found!")            
 
 # для изображений
 

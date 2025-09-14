@@ -10,7 +10,7 @@ import { KnowledgeInGroup, KnowledgesInGroupLoader } from './sections/BaseKnowle
 // import { GroupCreate } from './sections/BaseKnowledge/GroupCreate';
 // import { KnowledgeCreate } from './sections/BaseKnowledge/KnowledgeCreate';
 import { KnowledgeInGroupIndex } from './sections/BaseKnowledge/KnowledgeInGroupIndex';
-import { KnowledgeOpen, KnowledgeOpenLoader } from './sections/BaseKnowledge/KnowledgeOpen';
+import { KnowledgeOpenFree, KnowledgeOpenFreeLoader } from './sections/BaseKnowledge/KnowledgeOpenFree';
 
 
 //проекты
@@ -45,7 +45,9 @@ import { RoadMapOpenSettings } from './sections/RoadMap/RoadMapOpenSettings';
 
 
 const AppRouter = createBrowserRouter(createRoutesFromElements(
-       
+  
+  <>
+
 	<Route path="/" element={
         <AuthProvider>
               <Start /> 
@@ -65,7 +67,7 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
 
           {/* база знаний */}                    
 
-          <Route path="knowledges" element={<KnowledgeLayout />} loader={KnowledgeGroupsLoader}>
+          <Route path="knowledges" element={<KnowledgeLayout />} loader={KnowledgeGroupsLoader}>            
             {/* Основные маршруты знаний */}
             <Route index element={<KnowledgeIndex />} />
             
@@ -75,6 +77,9 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
             {/*</Route>*/}
             
           </Route>
+
+
+          
 
 
           {/* проекты */}
@@ -116,7 +121,12 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
           </Route>
         
 
-  </Route>       
+    
+  </Route>
+
+  <Route path="knowledge_open_free/:slug_kn" element={<KnowledgeOpenFree />} loader={KnowledgeOpenFreeLoader} />
+  
+  </>
 
 
 	))

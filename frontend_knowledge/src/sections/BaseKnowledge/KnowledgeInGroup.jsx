@@ -1,6 +1,6 @@
 //компонент отображения содержания знаний в группе
 import { useParams, NavLink, useLoaderData, Outlet } from 'react-router-dom'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { API } from "../../apiAxios/apiAxios"
 import { KnowledgeCreateModal } from './KnowledgeCreateModal'
 import { KnowledgeTabs } from './KnowledgeTabs';
@@ -74,28 +74,16 @@ function KnowledgeInGroup() {
         active: tab.id === tabId // Активируем только выбранную вкладку
       }))
     );
-  }, []); // Стабильная ссылка на функцию
+  }, []);  на функцию
 
-
-   /**
-   * Мемоизированная функция для открытия знания во вкладке
-   * Загружает полные данные только при необходимости
-   */
-  const openKnowledgeInTab = useCallback(async (knowledge) => {
-    
-      // Если у нас уже есть полные данные в кэше - используем их
-      // let fullKnowledge = knowledgeCache.get(knowledge.id);
-      
-      // Если нет - загружаем
-      // if (!fullKnowledge) {
-      //   fullKnowledge = await loadFullKnowledge(knowledge.id);
-      // }
+   
+   // Загружает полные данные только при необходимости
+  const openKnowledgeInTab = useCallback(async (knowledge) => {      
 
     if (activeTabs.some(tab => tab.id === knowledge.id)) {
         switchTab(knowledge.id);
         return;
       }
-
 
     try {
       setLoading(true);
@@ -169,48 +157,49 @@ function KnowledgeInGroup() {
 
   
 
-  /**
-   * Мемоизированная функция для обновления данных вкладки
-   * Используется когда знание редактируется и нужно обновить заголовок вкладки
-   */
-  const updateTabKnowledge = useCallback((tabId, updatedKnowledge) => {
-     // Обновляем кэш
-      // setKnowledgeCache((prev) => {
-      //   const newCache = new Map(prev);
-      //   newCache.set(tabId, updatedKnowledge);
-      //   return newCache;
-      // });
-    // console.log("знание: ", updatedKnowledge)
-    // // если меняется группа знания то меняем и список знаний
-    // setKnowledges(prev => 
-    //   prev.map(kn => 
-    //     kn.id === tabId ? {
-    //       ...kn, 
+  // функция используется когда знание редактируется
+  const updateTabKnowledge = useCallback((tabId, updatedKnowledge) => {    
+    // если группа слева (slug_gr) не равна выбранной группе при редактировании шапки, то удаляем знание
+    if (slug_gr !== updatedKnowledge.group.slug) {
+      setKnowledges(prev => prev.filter(kn => kn.id !== tabId)); 
+    }
 
-    //     }
-    //     )
-    //   )
+    // если группа слева (slug_gr) равна выбранной группе при редактировании шапки и знания нет в текущем списке, то добавляем знание
+    if (slug_gr === updatedKnowledge.group.slug) {
+      // делаем сет из id списка загруженных знаний    
+      const knowledgeIdsSet = new Set(knowledges.map(item => item.id));
+      //если знания нет в списке, то добавляем его
+      if (!knowledgeIdsSet.has(tabId)) {
+        setKnowledges(prevKnowledge =>         
+        [
+          {id: updatedKnowledge.id, title: updatedKnowledge.title, description: updatedKnowledge.description}, ...prevKnowledge
+        ]
+        );}      
 
+    //это для изменения названия в списке знаний
+    if (knowledgeIdsSet.has(tabId)) {
+        setKnowledges(prevKnowledges =>
+              prevKnowledges.map(item =>
+                item.id === tabId
+                  ? { ...item, title: updatedKnowledge.title, description: updatedKnowledge.description } 
+                  : item
+              )
+          );}
+          }
+
+    // обновление состояния вкладок знаний
     setActiveTabs(prev => 
       prev.map(tab => 
         tab.id === tabId 
           ? { 
               ...tab, 
               knowledge: updatedKnowledge, 
-              title: updatedKnowledge.title // Обновляем заголовок вкладки
+              title: updatedKnowledge.title
             }
           : tab
       )
     );
-  }, []); // Функция создается один раз
-
-// условия для изменения группы
-
-// проще
-
-// если группа слева не равна выбранной группе при редактировании шапки фильтруем знания на неравенство ид знания(удаление знания) если знания там не было то ничего не произойдет
-
-// если группа слева равна выбранной группе при редактировании шапки и если знания в списке нет, то добавляем знание(добавление знания)
+  }, [slug_gr, knowledges]); //зависимости, чтобы функция срабатывала при изменении слага и знания
 
 
   const deleteKnowledge = useCallback((KnId) => {     
@@ -224,25 +213,24 @@ function KnowledgeInGroup() {
   // Получаем активное знание
   const activeTab = activeTabs.find(tab => tab.active);
 
-  // ост тут, jsx пока не проверял
-
 	return (
 		<div className='container-knowledges-view'>
 		{/* Левая панель со списком знаний */}
-		<div className='knowledges-section'>
+		<div className='knowledges-list'>
 		<h1>Знания</h1>
-		<button className="save-button" onClick={openModalCreateKnowledge}>Добавить знание</button>
-     <br/>			
+		<button className="save-button" onClick={openModalCreateKnowledge}>Добавить знание</button>    
+     <br/><br/>
 	            {
 	                	knowledges?.map((knowledge) => (
-	                				
-	                				
-	                				<div key={knowledge.id} className="section-frame">
-		                				<h3 className="name-knowledge">{knowledge.title}</h3>
-				                    <p>Описание: {knowledge.description}</p>
-				                        <button onClick={() => openKnowledgeInTab(knowledge)} className="toolbar-button">
-                                  Открыть</button>				                        
-	                       	</div>
+                          <div key={knowledge.id}>
+  	                				<div className="section-frame">
+  		                				<h3 className="name-knowledge">{knowledge.title}</h3>
+  				                    <p>Описание: {knowledge.description}</p>
+  				                        <button onClick={() => openKnowledgeInTab(knowledge)} className="toolbar-button">
+                                    Открыть</button>                            
+  	                       	</div>
+                            <br/>
+                          </div>
 	                      
 	                    ))
 	            }		
@@ -251,8 +239,8 @@ function KnowledgeInGroup() {
 		{/* Панель вкладок - получает стабильные функции через useCallback */}
       <KnowledgeTabs
         tabs={activeTabs}
-        onCloseTab={closeTab}       // Стабильная ссылка
-        onSwitchTab={switchTab}     // Стабильная ссылка
+        onCloseTab={closeTab}       
+        onSwitchTab={switchTab}     
       />
 
 
@@ -267,7 +255,7 @@ function KnowledgeInGroup() {
           />
         ) : (
           <div className="no-content-message">
-            <h2>Выберите знание для просмотра</h2>
+            <h2 style={{ marginTop: '50px', marginLeft: '50px', color: 'white' }}>Выберите знание для просмотра</h2>
           </div>
         )}
       </div>
