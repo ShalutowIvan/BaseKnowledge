@@ -379,3 +379,9 @@ async def delete_group_service(user_id: int, group_id: int, db: AsyncSession, mo
 
 
 
+
+
+
+
+
+

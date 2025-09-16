@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, Cookie, Form, Body, Header, status, UploadFile, File
+from fastapi import APIRouter, Depends, Request, Body, UploadFile, File, Query
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, PlainTextResponse, FileResponse
 from sqlalchemy import insert, select, text
 # from sqlalchemy.orm import joinedload
@@ -78,11 +78,14 @@ async def knowledges_all(
     session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:
     return await knowledges_all_service(user_id=user_id, db=session)
 
+# ост тут, делаю пагинацию....
 
 #получение всех знаний по фильтру слага группы
 @router_knowledge_api.get("/knowledges_in_group/{slug}", response_model=list[KnowledgesSchema])
 async def knowledges_in_group(
     slug: str, 
+    page: int = Query(1, ge=1, description="Номер страницы (начинается с 1)"),
+    per_page: int = Query(20, ge=1, le=100, description="Количество элементов на странице"),
     user_id: int = Depends(verify_user_service),
     session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:
     return await knowledges_in_group_service(user_id=user_id, db=session, slug=slug)
@@ -188,3 +191,9 @@ async def knowledge_update_header(kn_id: int, knowledge_update: KnowledgesUpdate
 #     await db.refresh(db_post)
 
 #     return db_post
+
+
+# теория пагинации
+# смещение в пагинации это выисление количества страниц предшествующих текущей выбранной, которые необходимо пропустить и запросить только результат на выбранной странице
+# например мы зашли на 10 страницу и в каждой странице по 20 элементов. Соответственно нужно отобразить элементы 10 страницы за минусом предыщущих 9 страниц
+# offset это начальная точка запроса в таблице при пагинации
