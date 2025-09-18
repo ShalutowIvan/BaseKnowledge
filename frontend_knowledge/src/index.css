@@ -875,12 +875,6 @@ container-roadmap-view
 }*/
 
 
-.knowledges-list {
-  padding: 2.5%;
-  overflow-y: auto;
-
-  color: #E0FFFF;
-}
 
 
 
@@ -896,11 +890,7 @@ container-roadmap-view
 
 /*стили для вкладок знания*/
 
-.container-knowledges-view {
-  display: flex;
-  height: 100vh;
-  /*background: #fff;*/
-}
+
 
 .knowledges-section {
   width: 300px;
@@ -969,10 +959,56 @@ container-roadmap-view
 }
 
 
-.central-part-knowledges {
-  margin-top: 140px;
-  max-width: 60%;
-  margin-left: 20%;
-  /* border: 2px solid #ddd; */
+
+.knowledges-list {
+  padding: 2.5%;
+  
+  width: 450px;
+  min-width: 450px;
+
+  /*display: flex;
+  flex-direction: column;*/
+
+  color: #E0FFFF;
+
+  /*margin-bottom: 120px;*/
+  overflow-y: auto;
+  
+}
+
+
+.container-knowledges-view {
+  display: flex;
+  position: absolute;
+  top: 120px; /* Отступ от header */
+  bottom: 120px; /* Отступ от footer */
+  max-width: 100%;
+  /*margin-left: 20%;  */
+  left: 20%;  
+  right: 0;
+  overflow: hidden;
+}
+
+.central-part-knowledges {  
+
+
   border-radius: 8px;  
 }
+
+/*.knowledges-list-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  padding-bottom: 80px; 
+}*/
+
+/*.knowledges-list-header {
+  padding: 15px;
+  border-bottom: 1px solid #ddd;
+  background-color: #fff;
+  flex-shrink: 0;
+}*/
+
+
+
+

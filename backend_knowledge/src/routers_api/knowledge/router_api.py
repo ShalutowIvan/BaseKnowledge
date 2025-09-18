@@ -81,14 +81,15 @@ async def knowledges_all(
 # ост тут, делаю пагинацию....
 
 #получение всех знаний по фильтру слага группы
-@router_knowledge_api.get("/knowledges_in_group/{slug}", response_model=list[KnowledgesSchema])
+@router_knowledge_api.get("/knowledges_in_group/{slug}", response_model=PaginatedResponse)
 async def knowledges_in_group(
     slug: str, 
     page: int = Query(1, ge=1, description="Номер страницы (начинается с 1)"),
-    per_page: int = Query(20, ge=1, le=100, description="Количество элементов на странице"),
+    per_page: int = Query(10, ge=1, le=50, description="Количество элементов на странице"),
     user_id: int = Depends(verify_user_service),
-    session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:
-    return await knowledges_in_group_service(user_id=user_id, db=session, slug=slug)
+    session: AsyncSession = Depends(get_async_session)) -> PaginatedResponse:
+
+    return await knowledges_in_group_service(slug=slug, page=page, per_page=per_page, user_id=user_id, db=session)
 
 
 #сделал создание знания, переделал уже как надо. Возвращаем целое знание, чтобы открыть его. Так как после создания оно открывается и его можно будет редачить. Открытие со стороны фронта делать надо будет, и роут для открытия надо сделать

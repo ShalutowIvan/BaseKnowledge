@@ -31,65 +31,40 @@ function KnowledgeInGroup() {
 
 	// Состояние для активных вкладок
   const [activeTabs, setActiveTabs] = useState([]);
-
-  // сравнить эффекты с последним промтом дипсика. ОСТ ТУТ............
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [slug_gr]); // Срабатывает только при изменении slug_gr
 	
-  useEffect(() => {
-    const abortController = new AbortController();
-    let isCurrent = true; 
-
-    const fetchData = async () => {
-      setLoading(true);
-      setError('');    
-      try {      
-        const response = await API.get(
-          `/knowledges_in_group/${slug_gr}?page=${currentPage}&per_page=${perPage}`,
-           { signal: abortController.signal }
-           );
-
-        // Проверяем, актуален ли еще этот запрос. Это для предотврашения повторных запросов. Надо проверить это... 
-        if (!isCurrent) return;
+  const fetchItems = async (page, limit) => {
+    setLoading(true);
+    setError('');
+    
+    try {      
+      const response = await API.get(`/knowledges_in_group/${slug_gr}?page=${page}&per_page=${limit}`);
+            
+      const data = response.data;
       
-              
-        const data = response.data;
-        
-        setKnowledges(data.items);
-        setTotal(data.total);
-        setTotalPages(data.total_pages);
-        setHasNext(data.has_next);
-        setHasPrev(data.has_prev);
-        
-      } catch (err) {
-
-        if (!isCurrent) return;//доп проверка чтобы убрать повторные запросы
-
-        if (err.name === 'AbortError') {
-          console.log('Запрос прерван');
-          return;
-        }
-
-        setError('Не удалось загрузить данные');
-        console.error('Ошибка загрузки:', err);
-      } finally {
-        if (isCurrent) setLoading(false);//доп проверка чтобы убрать повторные запросы
-        // setLoading(false);
-      }
-    };
-
-    fetchData();
-
-    return () => { 
-      isCurrent = false;//доп проверка чтобы убрать повторные запросы
-      abortController.abort();
+      // Обновляем состояния данными из ответа
+      setKnowledges(data.items);
+      setTotal(data.total);
+      setTotalPages(data.total_pages);
+      setCurrentPage(data.page);
+      setPerPage(data.per_page);
+      setHasNext(data.has_next);
+      setHasPrev(data.has_prev);
+      
+    } catch (err) {
+      setError('Не удалось загрузить данные');
+      console.error('Ошибка загрузки:', err);
+    } finally {
+      setLoading(false);
     }
-  }, [currentPage, perPage, slug_gr]);
-  
+  };
 
-  // если номер страницы больше 1 и slug_gr из параметра не равен slug_gr из 
+
+  /**
+   * Эффект для загрузки данных при изменении страницы или количества элементов
+   */
+  useEffect(() => {
+    fetchItems(currentPage, perPage);
+  }, [currentPage, perPage]);
 
 
   if (knowledges?.error) {
@@ -113,10 +88,12 @@ function KnowledgeInGroup() {
     setPerPage(newPerPage);
     setCurrentPage(1); // Сбрасываем на первую страницу при изменении размера
   };
+
   
   const openModalCreateKnowledge = () => {      
       setModalCreateKnowledge(true);
       };
+
 
   const handleCreateKnowledge = (newKnowledge, group_slug) => {   
 	console.log("Новое знание", newKnowledge) 
@@ -281,107 +258,95 @@ function KnowledgeInGroup() {
 
 	return (
 		<div className='container-knowledges-view'>
-      {/* Левая панель со списком знаний */}
-      <div className='knowledges-list'>
-        {/* Заголовок - фиксированный */}
-        <div className="knowledges-list-header">
-          <h1>Знания</h1>
-          
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-              <button className="save-button" onClick={openModalCreateKnowledge}>
-                Добавить знание
-              </button>
-              {/* Селектор количества элементов */}
-              <div className="per-page-selector">
-                <label>Элементов на странице:</label>
-                <select value={perPage} onChange={handlePerPageChange}>
-                  <option value="2">2</option>
-                  <option value="10">10</option>
-                  <option value="20">20</option>
-                </select>
-              </div>
+  		{/* Левая панель со списком знаний */}
+  		<div className='knowledges-list'>
+      		<h1>Знания</h1>
+      		<button className="save-button" onClick={openModalCreateKnowledge}>Добавить знание</button>    
+           <br/><br/>
+
+         {/* Селектор количества элементов на странице */}
+          <div className="per-page-selector">
+            <label>
+              Элементов на странице:
+              <select value={perPage} onChange={handlePerPageChange}>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                
+              </select>
+            </label>
           </div>
-
-        </div>
-
-        {/* Прокручиваемая область списка */}
-        <div className="knowledges-list-content">
-          
 
           <br/>
 
           {/* Информация о пагинации */}
           <div className="pagination-info">
-            Показано {knowledges.length} из {total} записей
+            Показано {knowledges.length} из {total} записей | Страница {currentPage} из {totalPages}
           </div>
 
           <br/>
 
-          {/* Список знаний */}
-          {knowledges?.map((knowledge) => (
-            <div key={knowledge.id}>
-              <div className="section-frame">
-                <h3 className="name-knowledge">{knowledge.title}</h3>
-                <p>Описание: {knowledge.description}</p>
-                <button onClick={() => openKnowledgeInTab(knowledge)} className="toolbar-button">
-                  Открыть
-                </button>
-              </div>
-              <br/>
-            </div>
-          ))}
-
-          {/* Сообщение если нет данных */}
-          {knowledges.length === 0 && !loading && (
-            <div className="no-data">Нет данных для отображения</div>
-          )}
-        </div>
-
-        {/* Пагинация - фиксированная внизу */}
-        <div className="knowledges-list-footer">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            hasNext={hasNext}
-            hasPrev={hasPrev}
-          />
-        </div>
-      </div>
-
-      {/* Правая часть с вкладками и контентом */}
-      <div className="knowledges-content">
-        {/* Панель вкладок */}
-        <KnowledgeTabs
-          tabs={activeTabs}
-          onCloseTab={closeTab}
-          onSwitchTab={switchTab}
+    	            {
+    	                	knowledges?.map((knowledge) => (
+                              <div key={knowledge.id}>
+      	                				<div className="section-frame">
+      		                				<h3 className="name-knowledge">{knowledge.title}</h3>
+      				                    <p>Описание: {knowledge.description}</p>
+      				                        <button onClick={() => openKnowledgeInTab(knowledge)} className="toolbar-button">
+                                        Открыть</button>                            
+      	                       	</div>
+                                <br/>
+                              </div>
+    	                      
+    	                    ))
+    	            }		
+  		</div>
+      {/* Пагинация */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          hasNext={hasNext}
+          hasPrev={hasPrev}
         />
 
-        {/* Область контента активной вкладки */}
+      {/* Сообщение если нет данных */}
+      {knowledges.length === 0 && !loading && (
+          <div className="no-data">Нет данных для отображения</div>
+        )}
+
+  		{/* Панель вкладок - получает стабильные функции через useCallback */}
+        <KnowledgeTabs
+          tabs={activeTabs}
+          onCloseTab={closeTab}       
+          onSwitchTab={switchTab}     
+        />
+
+
+      {/* Область контента активной вкладки */}
         <div className="knowledge-content-area">
           {activeTab ? (
             <KnowledgeOpenContent
-              knowledge={activeTab.knowledge}
+              knowledge={activeTab.knowledge}            
               onCloseTab={closeTab}
-              onUpdate={updateTabKnowledge}
+              onUpdate={updateTabKnowledge} // обновление данных в массиве вкладок - состояние массива вкладок
               onDeleteKnowledge={deleteKnowledge}
             />
           ) : (
             <div className="no-content-message">
-              <h2>Выберите знание для просмотра</h2>
+              <h2 style={{ marginTop: '50px', marginLeft: '50px', color: 'white' }}>Выберите знание для просмотра</h2>
             </div>
           )}
         </div>
-      </div>
 
-      {modalCreateKnowledge && (
-        <KnowledgeCreateModal
-          onClose={() => setModalCreateKnowledge(false)}
-          onSuccess={handleCreateKnowledge}
-        />
-      )}
-    </div>
+  	     {modalCreateKnowledge && (
+              <KnowledgeCreateModal             
+                onClose={() => setModalCreateKnowledge(false)}
+                onSuccess={handleCreateKnowledge}
+              />
+            )}  				
+
+		</div>
 		)
 }
 

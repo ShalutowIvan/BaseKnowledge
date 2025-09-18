@@ -1,6 +1,6 @@
 from fastapi import HTTPException, Request, UploadFile, File, Body, status
 from fastapi.responses import FileResponse
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, func
 from sqlalchemy.orm import selectinload, joinedload, load_only
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
@@ -16,6 +16,8 @@ from transliterate import translit
 from routers_api.regusers.verify_user import verify_user_service
 from routers_api.regusers.models import User
 from db_api.database import logger
+import math
+
 
 # для знаний
 ############################################################
@@ -112,16 +114,132 @@ async def knowledges_all_service(user_id: int, db: AsyncSession) -> list[Knowled
     return knowledges.scalars().all()
     
 
-#получение знаний по фильтру группы
-async def knowledges_in_group_service(user_id: int, db: AsyncSession, slug) -> list[KnowledgesSchema]:    
-    if slug == "all":
-        query_all = select(Knowledge).where(Knowledge.user_id == user_id).order_by(Knowledge.created_at.desc())
-        knowledges_all = await db.execute(query_all)
-        return knowledges_all.scalars().all()
+# это код запросов без пагинации для фильтра группы
+    # if slug == "all":
+    #     query_all = select(Knowledge).where(Knowledge.user_id == user_id).order_by(Knowledge.created_at.desc())
+    #     knowledges_all = await db.execute(query_all)
+    #     return knowledges_all.scalars().all()
 
-    query = select(Knowledge.title, Knowledge.description, Knowledge.id).join(Knowledge.group).where(Group.slug == slug).where(Knowledge.user_id == user_id)
-    knowledges_gr = await db.execute(query)
-    return knowledges_gr.all()
+    # query = select(Knowledge.title, Knowledge.description, Knowledge.id).join(Knowledge.group).where(Group.slug == slug).where(Knowledge.user_id == user_id)
+    # knowledges_gr = await db.execute(query)
+
+    # return knowledges_gr.all()
+
+
+#получение знаний по фильтру группы с пагинацией
+async def knowledges_in_group_service(
+    user_id: int, 
+    db: AsyncSession, 
+    slug: str, 
+    page: int = 1, 
+    per_page: int = 20) -> PaginatedResponse:
+
+    try:
+
+        if page < 0 or per_page < 0:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Значения {page} или {per_page} не может быть отрицательным."
+            )
+
+        """
+        Получает пагинированный список элементов из базы данных
+        """
+        # Шаг 1: Вычисляем смещение для SQL запроса
+        offset = (page - 1) * per_page
+        
+        # Шаг 2: Запрос для получения элементов текущей страницы
+        # ORDER BY обязателен для стабильной пагинации    
+        
+        # формируем запросы
+        # условие все группы или есть фильтр
+        if slug == "all":
+            data_query = (
+                select(Knowledge.id, Knowledge.title, Knowledge.description)
+                .where(Knowledge.user_id == user_id)
+                .order_by(Knowledge.created_at.desc())
+                .limit(per_page).offset(offset)
+                )            
+            count_query = (
+                select(func.count(Knowledge.id))
+                .where(Knowledge.user_id == user_id)
+                )
+        else:
+            data_query = (
+                select(Knowledge.id, Knowledge.title, Knowledge.description)
+                .join(Knowledge.group)
+                .where(Group.slug == slug)
+                .where(Knowledge.user_id == user_id)
+                .order_by(Knowledge.created_at.desc())
+                .limit(per_page).offset(offset)
+                )
+            count_query = (
+                select(func.count(Knowledge.id))
+                .join(Knowledge.group)
+                .where(Group.slug == slug)
+                .where(Knowledge.user_id == user_id)
+                )
+        
+        # выполняем запросы
+        data_result = await db.execute(data_query)
+        
+        count_result = await db.execute(count_query)
+
+        # или так параллельно: 
+        # data_result, count_result = await asyncio.gather(
+        #     db.execute(data_query),
+        #     db.execute(count_query)
+        # )
+
+        items = data_result.all()
+                
+        total_count = count_result.scalar()
+        
+        # Шаг 4: Вычисляем общее количество страниц
+        total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
+
+        if page > total_pages and total_pages > 0:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Страница {page} не найдена. Всего страниц: {total_pages}"
+            )
+        
+        # Шаг 5: Получаем ID первого и последнего элемента на странице
+        first_item = items[0].id if items else None
+        last_item = items[-1].id if items else None
+        
+        # Шаг 6: Проверяем наличие следующей и предыдущей страниц
+        has_next = page < total_pages
+        has_prev = page > 1
+
+        # Проверяем, существует ли запрашиваемая страница
+        
+
+        return PaginatedResponse(
+                items=items,
+                total=total_count,
+                page=page,
+                per_page=per_page,
+                total_pages=total_pages,
+                has_next=has_next,
+                has_prev=has_prev,
+                first_item=first_item,
+                last_item=last_item
+            )
+    
+    except HTTPException:        
+        raise
+
+    except Exception as ex:
+        # Логируем ошибку и возвращаем пользователю
+        raise HTTPException(
+            status_code=500, 
+            detail="Ошибка при получении данных"
+        )
+
+
+
+    
 
 
 # открыть знание

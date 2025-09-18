@@ -3,12 +3,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import math
 from .models import Knowledge
 from .schemas import PaginatedResponse
+from typing import Type
+from sqlalchemy.ext.declarative import DeclarativeMeta
 
 
 class Repository_pagination:
     @staticmethod
     async def get_items_paginated(
         session: AsyncSession,
+        model_db: Type[DeclarativeMeta],
         page: int = 1,
         per_page: int = 20
     ) -> PaginatedResponse:
@@ -20,12 +23,12 @@ class Repository_pagination:
         
         # Шаг 2: Запрос для получения элементов текущей страницы
         # ORDER BY обязателен для стабильной пагинации
-        items_query = select(Item).order_by(Item.id).limit(per_page).offset(offset)
+        items_query = select(model_db).order_by(model_db.id).limit(per_page).offset(offset)
         items_result = await session.execute(items_query)
         items = items_result.scalars().all()
         
         # Шаг 3: Запрос общего количества элементов в таблице
-        count_result = await session.execute(select(func.count(Item.id)))
+        count_result = await session.execute(select(func.count(model_db.id)))
         total_count = count_result.scalar()
         
         # Шаг 4: Вычисляем общее количество страниц
@@ -50,3 +53,7 @@ class Repository_pagination:
             first_item=first_item,
             last_item=last_item
         )
+
+# Дполнение. PaginatedResponse надо сделать под конкретную модель схемы в поле items, а у меня везде разные схемы и запросы в БД по разному строятся. Не получится создать прям универсальную функцию с универсальной схемой. Универсальная функция для совсем простых случаев. Но как теория очень хороший пример, его можно кастимизировать как угодно. 
+
+
