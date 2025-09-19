@@ -959,22 +959,34 @@ container-roadmap-view
 }
 
 
-
 .knowledges-list {
-  padding: 2.5%;
-  
-  width: 450px;
-  min-width: 450px;
-
-  /*display: flex;
-  flex-direction: column;*/
-
-  color: #E0FFFF;
-
-  /*margin-bottom: 120px;*/
+  padding: 2.5%;  
+  width: 600px;
+  min-width: 600px;
+  color: #E0FFFF;  
   overflow-y: auto;
-  
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  transform-origin: left center;
 }
+
+.knowledges-list.collapsed {
+  transform: scaleX(0);
+  opacity: 0;
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+
+.collapse-toggle {
+  /*padding: 20px;  */
+  /*position: fixed;*/
+  /*top: 20px;*/
+  /*left: 20px;*/
+  /*z-index: 1000;*/
+}
+
 
 
 .container-knowledges-view {
@@ -989,9 +1001,7 @@ container-roadmap-view
   overflow: hidden;
 }
 
-.central-part-knowledges {  
-
-
+.central-part-knowledges {
   border-radius: 8px;  
 }
 

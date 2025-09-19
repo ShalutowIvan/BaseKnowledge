@@ -1,4 +1,5 @@
 import React from 'react';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 const Pagination = ({ 
             currentPage, 
@@ -62,7 +63,7 @@ const Pagination = ({
         disabled={!hasPrev}
         className={`pagination-btn ${!hasPrev ? 'disabled' : ''}`}
       >
-        ← Назад
+        <FaChevronLeft />
       </button>
       
       {/* Номера страниц */}
@@ -83,7 +84,7 @@ const Pagination = ({
         disabled={!hasNext}
         className={`pagination-btn ${!hasNext ? 'disabled' : ''}`}
       >
-        Вперед →
+        <FaChevronRight />
       </button>
     </nav>
   );

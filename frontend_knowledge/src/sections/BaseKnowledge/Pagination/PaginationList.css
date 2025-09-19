@@ -84,7 +84,7 @@
   justify-content: center;
   align-items: center;
   gap: 8px;
-  margin: 30px 0;
+  margin: 10px 0;
   flex-wrap: wrap;
 }
 
@@ -95,8 +95,9 @@
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 44px;
-  height: 44px;
+  /*min-width: 35px;*/
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -122,11 +123,20 @@
 
 .pagination-btn.ellipsis {
   cursor: default;
-  background: transparent;
-  border: none;
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+  color: #6c757d;
 }
 
-.pagination-btn.ellipsis:hover {
+/*.pagination-btn.ellipsis:hover {
   background: transparent;
   color: inherit;
+}*/
+
+/* Убираем hover эффект для многоточия */
+.pagination-btn.ellipsis:hover {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
 }
+
+

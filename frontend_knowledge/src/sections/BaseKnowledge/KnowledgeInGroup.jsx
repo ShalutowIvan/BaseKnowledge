@@ -17,6 +17,9 @@ function KnowledgeInGroup() {
 	
 	const [modalCreateKnowledge, setModalCreateKnowledge] = useState(false);
 
+  //состояние открыт ли список вкладок
+  const [openListKnowledges, setOpenListKnowledges] = useState(true);
+
   const [knowledges, setKnowledges] = useState([]);
   // состояния для пагинации
   const [currentPage, setCurrentPage] = useState(1);//номер текущей страницы
@@ -32,8 +35,7 @@ function KnowledgeInGroup() {
 	// Состояние для активных вкладок
   const [activeTabs, setActiveTabs] = useState([]);
 
-  // сравнить эффекты с последним промтом дипсика. ОСТ ТУТ............
-
+  
   useEffect(() => {
     setCurrentPage(1);
   }, [slug_gr]); // Срабатывает только при изменении slug_gr
@@ -281,73 +283,86 @@ function KnowledgeInGroup() {
 
 	return (
 		<div className='container-knowledges-view'>
-      {/* Левая панель со списком знаний */}
-      <div className='knowledges-list'>
-        {/* Заголовок - фиксированный */}
-        <div className="knowledges-list-header">
-          <h1>Знания</h1>
-          
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-              <button className="save-button" onClick={openModalCreateKnowledge}>
-                Добавить знание
-              </button>
-              {/* Селектор количества элементов */}
-              <div className="per-page-selector">
-                <label>Элементов на странице:</label>
-                <select value={perPage} onChange={handlePerPageChange}>
-                  <option value="2">2</option>
-                  <option value="10">10</option>
-                  <option value="20">20</option>
-                </select>
-              </div>
-          </div>
 
-        </div>
-
-        {/* Прокручиваемая область списка */}
-        <div className="knowledges-list-content">
-          
-
-          <br/>
-
-          {/* Информация о пагинации */}
-          <div className="pagination-info">
-            Показано {knowledges.length} из {total} записей
-          </div>
-
-          <br/>
-
-          {/* Список знаний */}
-          {knowledges?.map((knowledge) => (
-            <div key={knowledge.id}>
-              <div className="section-frame">
-                <h3 className="name-knowledge">{knowledge.title}</h3>
-                <p>Описание: {knowledge.description}</p>
-                <button onClick={() => openKnowledgeInTab(knowledge)} className="toolbar-button">
-                  Открыть
-                </button>
-              </div>
-              <br/>
-            </div>
-          ))}
-
-          {/* Сообщение если нет данных */}
-          {knowledges.length === 0 && !loading && (
-            <div className="no-data">Нет данных для отображения</div>
-          )}
-        </div>
-
-        {/* Пагинация - фиксированная внизу */}
-        <div className="knowledges-list-footer">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            hasNext={hasNext}
-            hasPrev={hasPrev}
-          />
-        </div>
+      <div className="collapse-toggle">
+        <button className="toolbar-button" onClick={() => {setOpenListKnowledges(!openListKnowledges);}}>
+              {openListKnowledges ? "< Свернуть" : "Развернуть >"}
+        </button>
+        <br/><br/>
       </div>
+
+      {/* Левая панель со списком знаний */}
+      <div className={`knowledges-list ${!openListKnowledges ? 'collapsed' : ''}`}>
+                    
+                    {/* Шапка */}
+                    <div className="knowledges-list-header">
+
+                        <h1>Знания</h1>
+                          
+
+                       
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                            <button className="save-button" onClick={openModalCreateKnowledge}>
+                              Добавить знание
+                            </button>
+                            {/* Селектор количества элементов */}
+                            <div className="per-page-selector">
+                              <label>Элементов на странице:</label>
+                              <select value={perPage} onChange={handlePerPageChange}>
+                                <option value="2">2</option>
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                              </select>
+                            </div>
+                        </div>
+                    
+                    </div>
+
+
+
+                    {/* Прокручиваемая область списка */}                  
+                    <div>
+                      <br/>
+                      {/* Информация о пагинации */}          
+                      <div className="pagination-info">
+                        Показано {knowledges.length} из {total} записей
+                      </div>                        
+                      <br/>
+                      {/* Список знаний */}
+                      {knowledges?.map((knowledge) => (
+                        <div key={knowledge.id}>
+                          <div className="section-frame">
+                            <h3 className="name-knowledge">{knowledge.title}</h3>
+                            <p>Описание: {knowledge.description}</p>
+                            <button onClick={() => openKnowledgeInTab(knowledge)} className="toolbar-button">
+                              Открыть
+                            </button>
+                          </div>
+                          <br/>
+                        </div>
+                      ))}
+                      {/* Сообщение если нет данных */}
+                      {knowledges.length === 0 && !loading && (
+                        <div className="no-data">Нет данных для отображения</div>
+                      )}
+                    </div>
+                  
+
+                    {/* Пагинация - фиксированная внизу */}
+                    <div className="knowledges-list-footer">
+                      <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                        hasNext={hasNext}
+                        hasPrev={hasPrev}
+                      />
+                    </div>
+                  
+    </div>
+
+  
+
 
       {/* Правая часть с вкладками и контентом */}
       <div className="knowledges-content">
