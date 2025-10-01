@@ -78,7 +78,6 @@ async def knowledges_all(
     session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchema:
     return await knowledges_all_service(user_id=user_id, db=session)
 
-# ост тут, делаю пагинацию....
 
 #получение всех знаний по фильтру слага группы
 @router_knowledge_api.get("/knowledges_in_group/{slug}", response_model=PaginatedResponse)
@@ -86,13 +85,14 @@ async def knowledges_in_group(
     slug: str, 
     page: int = Query(1, ge=1, description="Номер страницы (начинается с 1)"),
     per_page: int = Query(10, ge=1, le=50, description="Количество элементов на странице"),
+    search: str = Query(None),
     user_id: int = Depends(verify_user_service),
     session: AsyncSession = Depends(get_async_session)) -> PaginatedResponse:
 
-    return await knowledges_in_group_service(slug=slug, page=page, per_page=per_page, user_id=user_id, db=session)
+    return await knowledges_in_group_service(search=search, slug=slug, page=page, per_page=per_page, user_id=user_id, db=session)
 
 
-#сделал создание знания, переделал уже как надо. Возвращаем целое знание, чтобы открыть его. Так как после создания оно открывается и его можно будет редачить. Открытие со стороны фронта делать надо будет, и роут для открытия надо сделать
+# создание знания
 @router_knowledge_api.post("/knowledges_create/", response_model=KnowledgesSchemaFull)
 async def knowledges_create(
     knowledge: KnowledgesCreateSchema, 
@@ -109,7 +109,7 @@ async def knowledges_open(
     session: AsyncSession = Depends(get_async_session)) -> KnowledgesSchemaFull:    
     return await knowledges_open_service(user_id=user_id, db=session, kn_id=kn_id)
 
-# При создании мы пишем название и описание знания и валидация идет по KnowledgesSchema. Потом оно открывается, и его заполняем - редактируем по остальным полям.
+
 
 #энпоинт для открытия ссылки если для знания открыт свободный доступ. без запроса юзера
 @router_knowledge_api.get("/knowledges_open_free/{slug}", response_model=KnowledgesSchemaOpen)
@@ -198,3 +198,12 @@ async def knowledge_update_header(kn_id: int, knowledge_update: KnowledgesUpdate
 # смещение в пагинации это выисление количества страниц предшествующих текущей выбранной, которые необходимо пропустить и запросить только результат на выбранной странице
 # например мы зашли на 10 страницу и в каждой странице по 20 элементов. Соответственно нужно отобразить элементы 10 страницы за минусом предыщущих 9 страниц
 # offset это начальная точка запроса в таблице при пагинации
+
+
+
+# поисковик знаний
+
+
+
+
+

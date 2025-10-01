@@ -1,12 +1,14 @@
 import enum
-
-from sqlalchemy import Integer, String, TIMESTAMP, ForeignKey, Float, Boolean, Text, Table, Column, JSON, text, Enum, func
+from sqlalchemy import Integer, String, TIMESTAMP, ForeignKey, Float, Boolean, Text, Table, Column, JSON, text, Enum, func, Computed
+from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Annotated, Optional, List
 from datetime import datetime
 from ..regusers.models import User
 
 from db_api import Base
+
+
 
 class Knowledge(Base):
     __tablename__ = "knowledge"
@@ -33,6 +35,20 @@ class Knowledge(Base):
         cascade="all, delete-orphan", # Автоматическое удаление связанных изображений
         lazy="selectin" # Жадная загрузка при использовании selectinload
         )
+
+    #вектор для улучшенного поиска
+    search_vector: Mapped[TSVECTOR] = mapped_column(
+        TSVECTOR,
+        Computed(
+            "setweight(to_tsvector('simple', coalesce(title, '')), 'A') || "
+            "setweight(to_tsvector('simple', coalesce(description, '')), 'B') || "
+            "setweight(to_tsvector('simple', coalesce(content, '')), 'C')",
+            persisted=True
+        )
+    )
+
+    
+
 
     
 class Group(Base):

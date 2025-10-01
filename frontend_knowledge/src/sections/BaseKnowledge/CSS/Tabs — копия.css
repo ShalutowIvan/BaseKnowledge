@@ -1,0 +1,145 @@
+.knowledge-tabs {
+  width: 100%;
+  margin-left: 5%;
+  /*background: #f5f5f5;*/
+  /*border-bottom: 1px solid #ddd;*/
+  min-height: 60px;
+  padding: 0;
+}
+
+.tabs-header {
+  padding: 10px 15px;
+  /*background: #e0e0e0;*/
+  border-bottom: 1px solid #ddd;
+}
+
+.tabs-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: white;
+}
+
+.tabs-list {
+  display: flex;
+  flex-wrap: wrap; /* Разрешаем перенос на новую строку */
+  gap: 5px; /* Отступ между вкладками */
+  padding: 10px;
+  width: 100%;
+  align-items: flex-start;
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  background: white;
+  border: 1px solid #ddd;
+  border-bottom: none;
+  min-width: 120px;
+  max-width: 250px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  position: relative;
+  color: black;
+}
+
+.tab-item:hover {
+  background: #d5d5d5;
+  border-color: #ccc;
+}
+
+.tab-item.active {
+  background: #1976d2;
+  color: white;
+  border-color: #0056b3;
+  z-index: 2; /* Активная вкладка поверх остальных */
+}
+
+.tab-item.active:hover {
+  background: #1976d2;
+  border-color: #0056b3;
+}
+
+.tab-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+.tab-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.tab-item:not(.active) .tab-close {
+  color: #666;
+}
+
+.tab-item.active .tab-close {
+  color: white;
+}
+
+.tab-close:hover {
+  opacity: 1;
+}
+
+.tab-item.active .tab-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.tab-item:not(.active) .tab-close:hover {
+  background: #e0e0e0;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .tabs-list {
+    gap: 3px;
+    padding: 5px;
+  }
+  
+  .tab-item {
+    min-width: 100px;
+    max-width: 200px;
+    padding: 6px 10px;
+  }
+  
+  .tab-title {
+    font-size: 12px;
+  }
+  
+  .tab-close {
+    padding: 1px 4px;
+    font-size: 14px;
+  }
+}
+
+/* Для очень маленьких экранов */
+@media (max-width: 480px) {
+  .tab-item {
+    min-width: 80px;
+    max-width: 150px;
+    padding: 4px 8px;
+  }
+  
+  .tab-title {
+    font-size: 11px;
+    margin-right: 4px;
+  }
+}
+
+

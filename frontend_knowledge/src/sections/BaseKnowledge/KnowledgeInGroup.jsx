@@ -7,7 +7,7 @@ import { KnowledgeTabs } from './KnowledgeTabs';
 import KnowledgeOpenContent from './KnowledgeOpenContent';
 import Pagination from './Pagination/Pagination';
 import './Pagination/PaginationList.css';
-
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 
 function KnowledgeInGroup() {
@@ -283,17 +283,21 @@ function KnowledgeInGroup() {
 
 	return (
 		<div className='container-knowledges-view'>
-
+      <br/><br/>
+      
       <div className="collapse-toggle">
-        <button className="toolbar-button" onClick={() => {setOpenListKnowledges(!openListKnowledges);}}>
-              {openListKnowledges ? "< Свернуть" : "Развернуть >"}
+        <button className="hidden-button" onClick={() => {setOpenListKnowledges(!openListKnowledges);}}>
+              {openListKnowledges ? <FaChevronLeft /> : <FaChevronRight /> }
         </button>
         <br/><br/>
       </div>
+      
 
       {/* Левая панель со списком знаний */}
       <div className={`knowledges-list ${!openListKnowledges ? 'collapsed' : ''}`}>
                     
+
+
                     {/* Шапка */}
                     <div className="knowledges-list-header">
 
@@ -365,13 +369,15 @@ function KnowledgeInGroup() {
 
 
       {/* Правая часть с вкладками и контентом */}
-      <div className="knowledges-content">
+      <div className="knowledge-tabs-container">
         {/* Панель вкладок */}
         <KnowledgeTabs
           tabs={activeTabs}
           onCloseTab={closeTab}
           onSwitchTab={switchTab}
         />
+
+        <br/>
 
         {/* Область контента активной вкладки */}
         <div className="knowledge-content-area">

@@ -552,18 +552,6 @@ container-roadmap-view
   color: #5F9EA0; 
 }
 
-/*.chapter-section .label {
-  color: #A9B7C6; 
-  font-weight: bold;
-}
-
-.chapter-section .error {
-  color: #FF6B6B; 
-}
-
-.chapter-section .success {
-  color: #4CAF50; 
-}*/
 
 .chapter-section span {
   color: #E0FFFF; 
@@ -875,98 +863,34 @@ container-roadmap-view
 }*/
 
 
-
-
-
-.knowledges-container {
-  /*max-width: 70%;*/
-  margin-left: 5%;
-  /*margin-top: 140px;*/
-  /*margin: 0 auto;*/
-  /*auto;*/
-  /*padding: 20px;*/
-  /*padding: 2.5%;*/
-}
-
-/*стили для вкладок знания*/
-
-
-
-.knowledges-section {
-  width: 300px;
-  padding: 20px;
-  border-right: 1px solid #e1e4e8;
+/* Основной контейнер для вкладок и содержимого */
+.knowledge-tabs-container {
+  
+  width: 100%;
+  max-width: 70%; /* Фиксированная максимальная ширина */
+  margin: 0;
+  padding: 2%;  
   overflow-y: auto;  
 }
 
-.knowledge-tabs {
-  width: 250px;
-  /*background: #fafbfc;*/
-  border-right: 1px solid #e1e4e8;
-  display: flex;
-  flex-direction: column;
-}
+
 
 .knowledge-content-area {
   flex: 1;
   padding: 0;
-  overflow-y: auto;
-  /*background: white;*/
+  overflow-y: auto;  
 }
-
-.tab-item {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  border-bottom: 1px solid #e1e4e8;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.tab-item:hover {
-  background: #d5d5d5;
-}
-
-.tab-item.active {
-  background: #2E8B57;
-  color: white;
-}
-
-.tab-title {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 14px;
-}
-
-.tab-close {
-  background: none;
-  border: none;
-  padding: 4px;
-  border-radius: 3px;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-
-.tab-close:hover {
-  opacity: 1;
-}
-
-.tab-item.active .tab-close {
-  color: white;
-}
-
 
 .knowledges-list {
-  padding: 2.5%;  
+  padding: 2%;  
   width: 600px;
   min-width: 600px;
   color: #E0FFFF;  
   overflow-y: auto;
-  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  /*transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;*/
+  transition: all 0.3s ease-in-out;
   transform-origin: left center;
+  transition-property: transform, opacity, width, min-width, padding;
 }
 
 .knowledges-list.collapsed {
@@ -978,11 +902,30 @@ container-roadmap-view
   overflow: hidden;
 }
 
+.hidden-button {
+  /*padding: 8px 16px;*/
+  border: 1px solid #ddd;
+  background-color: #2E8B57;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;  
+  width: 40px;
+  height: 40px;
+  /*display: flex;*/
+  /*align-items: center;*/
+  /*justify-content: center;*/
+}
+
+.hidden-button:hover {
+  background-color: #d5d5d5;
+}
+
 
 .collapse-toggle {
-  /*padding: 20px;  */
+  margin-top: 65px;
+  /*padding: 2.5%;  */
   /*position: fixed;*/
-  /*top: 20px;*/
+  /*top: 200px;*/
   /*left: 20px;*/
   /*z-index: 1000;*/
 }
@@ -1005,19 +948,8 @@ container-roadmap-view
   border-radius: 8px;  
 }
 
-/*.knowledges-list-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 15px;
-  padding-bottom: 80px; 
-}*/
 
-/*.knowledges-list-header {
-  padding: 15px;
-  border-bottom: 1px solid #ddd;
-  background-color: #fff;
-  flex-shrink: 0;
-}*/
+
 
 
 

@@ -126,20 +126,176 @@ async def knowledges_all_service(user_id: int, db: AsyncSession) -> list[Knowled
     # return knowledges_gr.all()
 
 
-#получение знаний по фильтру группы с пагинацией
+# полнотекстовый поиск жесть.... там сначала формируется поиск с параметром как сырой sql, а потом указывается параметр для него из формы запроса с фронта. 
+
+# вопрос дипсику:
+# Вопросы есть. 
+# В чем отличие этой записи в модели:
+# search_vector = Column(
+#         TSVECTOR,
+#         Computed(
+#             "to_tsvector('russian', coalesce(title, '') || ' ' || coalesce(description, '') || ' ' || coalesce(content, ''))",
+#             persisted=True
+#         )
+#     )
+# От этой:
+# search_vector: Mapped[TSVECTOR] = mapped_column(TSVECTOR, nullable=True)
+
+# Какую лучше и выгоднее использовать?
+
+# После добавления вектора в модель можно ли использовать обычные alembic миграции? Или как я должен выполнить такие миграции:
+# -- В миграции выполните:
+# CREATE INDEX idx_knowledge_search_vector 
+# ON knowledge USING gin(search_vector);
+
+# -- Опционально: индекс для русского языка с учетом морфологии
+# CREATE INDEX idx_knowledge_search_vector_ru 
+# ON knowledge USING gin(to_tsvector('russian', coalesce(title, '') || ' ' || coalesce(description, '') || ' ' || coalesce(content, '')));
+
+
+# Ранжирование. Откуда берется ранжирование? Его надо где-то прописывать? 
+# data_query = data_query.add_columns(
+#                     text("ts_rank_cd(knowledge.search_vector, plainto_tsquery('russian', :search)) as search_score")
+# Не понятно откуда тут берется ранжирование? Его же здесь не прописали? Не указаны поля из модели тут. 
+# Или ранжирование будет указывается когда мы возвращаем объекты с релевантностью циклом? 
+
+
+
+
+
+
+#получение знаний по фильтру группы с пагинацией без поиска
+# async def knowledges_in_group_service(
+#     user_id: int, 
+#     db: AsyncSession, 
+#     slug: str, 
+#     page: int = 1, 
+#     per_page: int = 20) -> PaginatedResponse:
+#     try:
+
+#         if page < 0 or per_page < 0:
+#             raise HTTPException(
+#                 status_code=403,
+#                 detail=f"Значения {page} или {per_page} не может быть отрицательным."
+#             )
+
+#         """
+#         Получает пагинированный список элементов из базы данных
+#         """
+#         # Шаг 1: Вычисляем смещение для SQL запроса
+#         offset = (page - 1) * per_page
+        
+#         # Шаг 2: Запрос для получения элементов текущей страницы
+#         # ORDER BY обязателен для стабильной пагинации    
+        
+#         # формируем запросы
+#         # условие все группы или есть фильтр
+#         if slug == "all":
+#             data_query = (
+#                 select(Knowledge.id, Knowledge.title, Knowledge.description)
+#                 .where(Knowledge.user_id == user_id)
+#                 .order_by(Knowledge.created_at.desc())
+#                 .limit(per_page).offset(offset)
+#                 )            
+#             count_query = (
+#                 select(func.count(Knowledge.id))
+#                 .where(Knowledge.user_id == user_id)
+#                 )
+#         else:
+#             data_query = (
+#                 select(Knowledge.id, Knowledge.title, Knowledge.description)
+#                 .join(Knowledge.group)
+#                 .where(Group.slug == slug)
+#                 .where(Knowledge.user_id == user_id)
+#                 .order_by(Knowledge.created_at.desc())
+#                 .limit(per_page).offset(offset)
+#                 )
+#             count_query = (
+#                 select(func.count(Knowledge.id))
+#                 .join(Knowledge.group)
+#                 .where(Group.slug == slug)
+#                 .where(Knowledge.user_id == user_id)
+#                 )
+        
+#         # выполняем запросы
+#         data_result = await db.execute(data_query)
+        
+#         count_result = await db.execute(count_query)
+
+#         # или так параллельно: 
+#         # data_result, count_result = await asyncio.gather(
+#         #     db.execute(data_query),
+#         #     db.execute(count_query)
+#         # )
+
+#         items = data_result.all()
+                
+#         total_count = count_result.scalar()
+        
+#         # Шаг 4: Вычисляем общее количество страниц
+#         total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
+
+#         if page > total_pages and total_pages > 0:
+#             raise HTTPException(
+#                 status_code=404,
+#                 detail=f"Страница {page} не найдена. Всего страниц: {total_pages}"
+#             )
+        
+#         # Шаг 5: Получаем ID первого и последнего элемента на странице
+#         first_item = items[0].id if items else None
+#         last_item = items[-1].id if items else None
+        
+#         # Шаг 6: Проверяем наличие следующей и предыдущей страниц
+#         has_next = page < total_pages
+#         has_prev = page > 1
+
+#         # Проверяем, существует ли запрашиваемая страница
+        
+
+#         return PaginatedResponse(
+#                 items=items,
+#                 total=total_count,
+#                 page=page,
+#                 per_page=per_page,
+#                 total_pages=total_pages,
+#                 has_next=has_next,
+#                 has_prev=has_prev,
+#                 first_item=first_item,
+#                 last_item=last_item
+#             )
+    
+#     except HTTPException:        
+#         raise
+
+#     except Exception as ex:
+#         # Логируем ошибку и возвращаем пользователю
+#         raise HTTPException(
+#             status_code=500, 
+#             detail="Ошибка при получении данных"
+#         )
+
+
 async def knowledges_in_group_service(
     user_id: int, 
     db: AsyncSession, 
     slug: str, 
+    search: str = None,
+    search_type: str = "plain",  # plain, phrase, advanced
+    use_fts: bool = True,
     page: int = 1, 
     per_page: int = 20) -> PaginatedResponse:
-
     try:
 
-        if page < 0 or per_page < 0:
+        if page < 1 or per_page < 1:
             raise HTTPException(
                 status_code=403,
-                detail=f"Значения {page} или {per_page} не может быть отрицательным."
+                detail="Номер страницы и размер страницы должны быть положительными числами"
+            )
+
+        if per_page > 100:
+            raise HTTPException(
+                status_code=400, 
+                detail="Размер страницы не может превышать 100"
             )
 
         """
@@ -148,37 +304,79 @@ async def knowledges_in_group_service(
         # Шаг 1: Вычисляем смещение для SQL запроса
         offset = (page - 1) * per_page
         
-        # Шаг 2: Запрос для получения элементов текущей страницы
-        # ORDER BY обязателен для стабильной пагинации    
-        
-        # формируем запросы
-        # условие все группы или есть фильтр
-        if slug == "all":
-            data_query = (
-                select(Knowledge.id, Knowledge.title, Knowledge.description)
-                .where(Knowledge.user_id == user_id)
-                .order_by(Knowledge.created_at.desc())
-                .limit(per_page).offset(offset)
-                )            
-            count_query = (
-                select(func.count(Knowledge.id))
-                .where(Knowledge.user_id == user_id)
+        # Базовые запросы
+        data_query = select(
+            Knowledge.id, 
+            Knowledge.title, 
+            Knowledge.description,
+            Knowledge.created_at
+        ).where(Knowledge.user_id == user_id)
+
+        count_query = select(func.count(Knowledge.id)).where(Knowledge.user_id == user_id)
+
+        # Фильтр по группе
+        if slug != "all":
+            data_query = data_query.join(Knowledge.group).where(Group.slug == slug)
+            count_query = count_query.join(Knowledge.group).where(Group.slug == slug)
+
+
+        # ОБРАБОТКА ПОИСКА
+        if search and search.strip():
+            search_cleaned = search.strip()
+            
+            if use_fts:
+                # 🔥 ПОЛНОТЕКСТОВЫЙ ПОИСК с использованием весов из модели
+                
+                # Создаем условие поиска в зависимости от типа
+                if search_type == "phrase":
+                    search_condition = text("knowledge.search_vector @@ phraseto_tsquery('simple', :search)")
+                elif search_type == "advanced":
+                    search_condition = text("knowledge.search_vector @@ to_tsquery('simple', :search)")
+                else:  # plain
+                    search_condition = text("knowledge.search_vector @@ plainto_tsquery('simple', :search)")
+
+
+                # 🔥 РАНЖИРОВАНИЕ с использованием ТОЧНО ТАКИХ ЖЕ ВЕСОВ как в модели
+                rank_expression = text("""
+                    ts_rank_cd(
+                        setweight(to_tsvector('simple', coalesce(title, '')), 'A') ||
+                        setweight(to_tsvector('simple', coalesce(description, '')), 'B') ||
+                        setweight(to_tsvector('simple', coalesce(content, '')), 'C'),
+                        plainto_tsquery('simple', :search)
+                    ) as search_score
+                """)
+
+                # Применяем условие поиска и ранжирование
+                data_query = (
+                    data_query
+                    .where(search_condition)
+                    .add_columns(rank_expression)  # Добавляем score в SELECT
+                    .order_by(text("search_score DESC"), Knowledge.created_at.desc())
+                    .order_by(Knowledge.created_at.desc())
+                    .params(search=search_cleaned)
                 )
+
+                count_query = count_query.where(search_condition).params(search=search_cleaned)
+                
+            else:
+                # Резервный вариант: LIKE поиск (медленный)
+                search_term = f"%{search_cleaned}%"
+                search_condition = or_(
+                    Knowledge.title.ilike(search_term),
+                    Knowledge.description.ilike(search_term),
+                    Knowledge.content.ilike(search_term)
+                )
+                data_query = data_query.where(search_condition)
+                count_query = count_query.where(search_condition)
+                data_query = data_query.order_by(Knowledge.created_at.desc())
         else:
-            data_query = (
-                select(Knowledge.id, Knowledge.title, Knowledge.description)
-                .join(Knowledge.group)
-                .where(Group.slug == slug)
-                .where(Knowledge.user_id == user_id)
-                .order_by(Knowledge.created_at.desc())
-                .limit(per_page).offset(offset)
-                )
-            count_query = (
-                select(func.count(Knowledge.id))
-                .join(Knowledge.group)
-                .where(Group.slug == slug)
-                .where(Knowledge.user_id == user_id)
-                )
+            # Без поиска - обычная сортировка
+            data_query = data_query.order_by(Knowledge.created_at.desc())
+
+        # Применяем пагинацию к основному запросу
+        data_query = data_query.limit(per_page).offset(offset)
+
+
         
         # выполняем запросы
         data_result = await db.execute(data_query)
@@ -191,30 +389,59 @@ async def knowledges_in_group_service(
         #     db.execute(count_query)
         # )
 
-        items = data_result.all()
+        items_data = data_result.all()
                 
         total_count = count_result.scalar()
+            
         
+        # ОБРАБОТКА РЕЗУЛЬТАТОВ
+        if use_fts and search and search.strip():
+            # Для FTS возвращаем объекты с релевантностью
+            processed_items = []
+            for item in items_data:
+                # Структура: (id, title, description, created_at, search_score)
+                knowledge_data = {
+                    "id": item[0],
+                    "title": item[1],
+                    "description": item[2],
+                    "created_at": item[3],
+                    "relevance_score": float(item[4]) if item[4] is not None else 0.0
+                }
+                processed_items.append(knowledge_data)
+            items = processed_items
+        else:
+            # Обычные результаты без релевантности
+            items = [
+                {
+                    "id": item[0],
+                    "title": item[1], 
+                    "description": item[2],
+                    "created_at": item[3]
+                } 
+                for item in items_data
+            ]
+
+
         # Шаг 4: Вычисляем общее количество страниц
         total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
 
+        # Проверка существования страницы
         if page > total_pages and total_pages > 0:
             raise HTTPException(
                 status_code=404,
                 detail=f"Страница {page} не найдена. Всего страниц: {total_pages}"
             )
         
+        print("ПРОВЕРКА: ", items)
         # Шаг 5: Получаем ID первого и последнего элемента на странице
-        first_item = items[0].id if items else None
-        last_item = items[-1].id if items else None
+        first_item = items[0]["id"] if items else None
+        last_item = items[-1]["id"] if items else None
         
         # Шаг 6: Проверяем наличие следующей и предыдущей страниц
         has_next = page < total_pages
         has_prev = page > 1
 
-        # Проверяем, существует ли запрашиваемая страница
         
-
         return PaginatedResponse(
                 items=items,
                 total=total_count,
@@ -232,14 +459,13 @@ async def knowledges_in_group_service(
 
     except Exception as ex:
         # Логируем ошибку и возвращаем пользователю
+        print(f"Ошибка в knowledges_in_group_service: {str(ex)}")
         raise HTTPException(
             status_code=500, 
             detail="Ошибка при получении данных"
         )
 
 
-
-    
 
 
 # открыть знание
@@ -249,6 +475,9 @@ async def knowledges_open_service(user_id: int, kn_id: int, db: AsyncSession):
     knowledge = await db.execute(query)
     
     return knowledge.scalar()
+
+
+
 
 
 # открыть знание - свободный доступ, не проверяется пользователь
@@ -388,12 +617,6 @@ async def update_knowledge_service(request: Request, knowledge_id: int, knowledg
         for url in images_to_delete:
             if url.startswith(base_url + '/uploads/'):  # Удаляем локальные файлы по ссылкам которые начинаются с текста base_url + '/uploads/'
                 await delete_image_by_url(db=db, image_url=url)
-
-    # 4. Добавляем новые изображения в БД
-    # for url in new_images - old_images:
-    #     if url.startswith('/uploads/'):
-    #         filename = url.split('/')[-1]
-    #         await upload_image_service(db, filename, post_id)#!!!!!!!!!!!!!! ост тут assign_to_post. Это скорее всего не нужно, так как у нас идет автоматическая загрузка на сервер при вставке изображения в посте. Как я понял тут файл не загрузится, так как он автоматом грузится при вставке, и тут мы файл передать не сможем. Это пока не надо
 
     # 5. Обновляем пост
     db_knowledge.updated_at = datetime.utcnow()
