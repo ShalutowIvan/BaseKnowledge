@@ -8,7 +8,6 @@ import KnowledgeOpenContent from './KnowledgeOpenContent';
 import Pagination from './Pagination/Pagination';
 import './Pagination/PaginationList.css';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import './CSS/Search.css';
 
 
 function KnowledgeInGroup() {
@@ -81,10 +80,8 @@ function KnowledgeInGroup() {
 
 
         const response = await API.get(
-          `/knowledges_in_group/${slug_gr}`,
-           { 
-            params,
-            signal: abortController.signal }
+          `/knowledges_in_group/${slug_gr}?page=${currentPage}&per_page=${perPage}`,
+           { signal: abortController.signal }
            );
 
         // Проверяем, актуален ли еще этот запрос. Это для предотврашения повторных запросов. Надо проверить это... 
@@ -122,10 +119,12 @@ function KnowledgeInGroup() {
       isCurrent = false;//доп проверка чтобы убрать повторные запросы
       abortController.abort();
     }
-  }, [currentPage, perPage, slug_gr, activeSearchTerm, searchType, isSearchActive]);
+  }, [currentPage, perPage, slug_gr]);
   
 
-  
+  // если номер страницы больше 1 и slug_gr из параметра не равен slug_gr из 
+
+
   if (knowledges?.error) {
     return (<h1>Ошибка: {knowledges?.error}. Пройдите авторизацию.</h1>)
   }
@@ -147,51 +146,6 @@ function KnowledgeInGroup() {
     setPerPage(newPerPage);
     setCurrentPage(1); // Сбрасываем на первую страницу при изменении размера
   };
-
-  // методы для поиска ниже
-
-  // 🔥 ОБРАБОТЧИКИ ПОИСКА
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  // 🔥 ПОИСК ПО КНОПКЕ "НАЙТИ"
-  const handleSearchSubmit = () => {
-    if (searchTerm.trim()) {
-      setActiveSearchTerm(searchTerm.trim());
-      setIsSearchActive(true);
-      setCurrentPage(1); // Сбрасываем на первую страницу при новом поиске
-    }
-  };
-
-  // 🔥 ПОИСК ПО КЛАВИШЕ ENTER
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSearchSubmit();
-    }
-  };
-
-  // 🔥 ОЧИСТКА ПОИСКА
-  const clearSearch = () => {
-    setSearchTerm('');
-    setActiveSearchTerm('');
-    setIsSearchActive(false);
-    setCurrentPage(1);
-  };
-
-  const handleSearchTypeChange = (e) => {
-    setSearchType(e.target.value);
-    // Если поиск активен - перезапускаем его с новым типом
-    if (isSearchActive && activeSearchTerm) {
-      setCurrentPage(1);
-    }
-  };
-
-  // конец методов для поиска
-
-
-
-
   
   const openModalCreateKnowledge = () => {      
       setModalCreateKnowledge(true);
@@ -266,11 +220,7 @@ function KnowledgeInGroup() {
 
     } catch (error) {
       console.error('Не удалось открыть знание:', error);
-    }    
-    finally {
-        setLoading(false);        
-      }
-
+    }
   // }, [knowledgeCache, loadFullKnowledge]);
   }, []);
 
@@ -377,57 +327,12 @@ function KnowledgeInGroup() {
       {/* Левая панель со списком знаний */}
       <div className={`knowledges-list ${!openListKnowledges ? 'collapsed' : ''}`}>
                     
+
+
                     {/* Шапка */}
                     <div className="knowledges-list-header">
 
                         <h1>Знания</h1>
-
-                        {/* 🔥 ПОИСКОВАЯ СТРОКА С КНОПКОЙ */}
-                            <div className="search-container">
-                              <div className="search-input-with-button">
-                                <div className="search-input-wrapper">
-                                  <input
-                                    type="text"
-                                    placeholder="Поиск по названию, описанию или содержанию..."
-                                    value={searchTerm}
-                                    onChange={handleSearchChange}
-                                    onKeyPress={handleKeyPress} // 🔥 Обработка Enter
-                                    className="search-input"
-                                  />
-                                  {searchTerm && (
-                                    <button onClick={clearSearch} className="search-clear-btn">
-                                      ×
-                                    </button>
-                                  )}
-                                </div>
-                                <button 
-                                  onClick={handleSearchSubmit}
-                                  disabled={!searchTerm.trim() || loading}
-                                  className="search-submit-btn"
-                                >
-                                  {loading ? 'Поиск...' : 'Найти'}
-                                </button>
-                              </div>
-                              
-                              {/* ВЫБОР ТИПА ПОИСКА */}
-                              {isSearchActive && (
-                                <div className="search-type-selector">
-                                  <label>Тип поиска:</label>
-                                  <select value={searchType} onChange={handleSearchTypeChange}>
-                                    <option value="plain">Обычный поиск</option>
-                                    <option value="phrase">Точная фраза</option>
-                                    <option value="advanced">Продвинутый поиск</option>
-                                  </select>
-                                  {searchType === 'advanced' && (
-                                    <div className="search-hint">
-                                      Используйте: & (И), | (ИЛИ), ! (НЕ)
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-
-                            {/*конец поисковой системы*/}
                           
 
                        
@@ -444,21 +349,9 @@ function KnowledgeInGroup() {
                                 <option value="20">20</option>
                               </select>
                             </div>
-                        </div>                    
+                        </div>
+                    
                     </div>
-
-
-                    {/* 🔥 ИНФОРМАЦИЯ О РЕЗУЛЬТАТАХ ПОИСКА */}
-                    {isSearchActive && activeSearchTerm && (
-                      <div className="search-info">
-                        <p>
-                          Результаты поиска: "{activeSearchTerm}" · Найдено: {total} записей
-                          <button onClick={clearSearch} className="search-clear-link">
-                            Очистить поиск
-                          </button>
-                        </p>
-                      </div>
-                    )}
 
 
 
@@ -476,14 +369,6 @@ function KnowledgeInGroup() {
                           <div className="section-frame">
                             <h3 className="name-knowledge">{knowledge.title}</h3>
                             <p>Описание: {knowledge.description}</p>
-
-                            {/* 🔥 ОТОБРАЖЕНИЕ РЕЛЕВАНТНОСТИ ЕСЛИ ЕСТЬ */}
-                            {knowledge.relevance_score !== undefined && (
-                              <div className="relevance-badge">
-                                Релевантность: {(knowledge.relevance_score * 100).toFixed(1)}%
-                              </div>
-                            )}
-
                             <button onClick={() => openKnowledgeInTab(knowledge)} className="toolbar-button">
                               Открыть
                             </button>

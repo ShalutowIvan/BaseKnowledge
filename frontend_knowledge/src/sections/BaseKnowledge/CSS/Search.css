@@ -1,0 +1,144 @@
+/* Стили для поиска с кнопкой */
+.search-container {
+  margin: 15px 0;
+  padding: 15px;
+  background: #696969;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.search-input-with-button {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  max-width: 600px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.search-input {
+  width: 85%;
+  padding: 12px 45px 12px 15px;
+  border: 2px solid #e9ecef;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;  
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #6c757d;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-clear-btn:hover {
+  background: #5a6268;
+}
+
+.search-submit-btn {
+  padding: 12px 20px;
+  background: #2E8B57;  
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s;
+}
+
+.search-submit-btn:hover:not(:disabled) {
+  background: #d5d5d5;
+}
+
+.search-submit-btn:disabled {
+  background: #2E8B57;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.search-type-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.search-type-selector label {
+  font-weight: 500;
+  /*color: #495057;*/
+}
+
+.search-type-selector select {
+  padding: 6px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background: white;
+}
+
+.search-hint {
+  font-size: 12px;
+  color: black;
+  /*background: #e9ecef;*/
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.search-info {
+  background: #696969;
+  padding: 12px 15px;
+  border-radius: 6px;
+  margin: 10px 0;
+  border-left: 4px solid #007bff;
+}
+
+.search-clear-link {
+  margin-left: 15px;
+  color: #007bff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 14px;
+}
+
+.search-clear-link:hover {
+  color: #0056b3;
+}
+
+.relevance-info {
+  color: #28a745;
+  font-weight: 500;
+  margin-left: 10px;
+}
+
+.relevance-badge {
+  display: inline-block;
+  background: #28a745;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin: 5px 0;
+}

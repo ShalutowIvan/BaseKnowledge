@@ -350,8 +350,8 @@ async def knowledges_in_group_service(
                 data_query = (
                     data_query
                     .where(search_condition)
-                    .add_columns(rank_expression)  # Добавляем score в SELECT
-                    .order_by(text("search_score DESC"), Knowledge.created_at.desc())
+                    # .add_columns(rank_expression)  # Добавляем score в SELECT
+                    # .order_by(text("search_score DESC"), Knowledge.created_at.desc())
                     .order_by(Knowledge.created_at.desc())
                     .params(search=search_cleaned)
                 )
@@ -405,7 +405,7 @@ async def knowledges_in_group_service(
                     "title": item[1],
                     "description": item[2],
                     "created_at": item[3],
-                    "relevance_score": float(item[4]) if item[4] is not None else 0.0
+                    # "relevance_score": float(item[4]) if item[4] is not None else 0.0
                 }
                 processed_items.append(knowledge_data)
             items = processed_items

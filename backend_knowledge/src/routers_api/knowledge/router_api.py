@@ -86,10 +86,11 @@ async def knowledges_in_group(
     page: int = Query(1, ge=1, description="Номер страницы (начинается с 1)"),
     per_page: int = Query(10, ge=1, le=50, description="Количество элементов на странице"),
     search: str = Query(None),
+    search_type: str = "plain",
     user_id: int = Depends(verify_user_service),
     session: AsyncSession = Depends(get_async_session)) -> PaginatedResponse:
 
-    return await knowledges_in_group_service(search=search, slug=slug, page=page, per_page=per_page, user_id=user_id, db=session)
+    return await knowledges_in_group_service(search=search, search_type=search_type, slug=slug, page=page, per_page=per_page, user_id=user_id, db=session)
 
 
 # создание знания
