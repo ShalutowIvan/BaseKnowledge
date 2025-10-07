@@ -21,17 +21,26 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     #связи
-    knowledge_user: Mapped["Knowledge"] = relationship(back_populates="user")
-    group_user: Mapped["Group"] = relationship(back_populates="user")
-    roadmap_user: Mapped["RoadMap"] = relationship(back_populates="user")
-    chapter_user: Mapped["Chapter"] = relationship(back_populates="user")
-    stage_user: Mapped["Stage"] = relationship(back_populates="user")
+    knowledge_user: Mapped["Knowledge"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+    group_user: Mapped["Group"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+    roadmap_user: Mapped["RoadMap"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+    chapter_user: Mapped["Chapter"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+    stage_user: Mapped["Stage"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
 
-    tokens: Mapped["Token"] = relationship(back_populates="user")    
-    client_generate: Mapped["Code_verify_client"] = relationship(back_populates="user")
+    # сохранение поиска пока решил не делать. Пока не нужно
+    # saved_search_user: Mapped["SavedSearch"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+
+    # сохранение списка вкладок
+    tab_list_user: Mapped["Tab_list"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+
+
+
+
+    tokens: Mapped["Token"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")    
+    client_generate: Mapped["Code_verify_client"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
 
     # Связь с проектами через ассоциативную таблицу
-    projects: Mapped[list["ProjectUserAssociation"]] = relationship(back_populates="user")
+    projects: Mapped[list["ProjectUserAssociation"]] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
 
 
     def create_project(self, title, description):

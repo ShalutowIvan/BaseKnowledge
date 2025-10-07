@@ -158,53 +158,95 @@ async def knowledge_update_header(kn_id: int, knowledge_update: KnowledgesUpdate
 
 
 
+# сохранение поиска знаний, скопировал эндпониты, пока не исправил...
 
-
-# @router_knowledge_api.put("/posts/{post_id}")
-# async def update_post(
-#     post_id: int,
-#     post_update: schemas.PostUpdate,
-#     db: AsyncSession = Depends(get_db)
+# @router_knowledge_api.post("/saved_searches/", response_model=SavedSearchResponse)
+# async def create_saved_search(
+#     search_data: SavedSearchCreate,
+#     session: AsyncSession = Depends(get_async_session),
+#     user_id: int = Depends(verify_user_service)
 # ):
-#     # 1. Получаем текущий пост с изображениями
-#     db_post = await services.posts.get_post(db, post_id)
-#     if not db_post:
-#         raise HTTPException(status_code=404, detail="Post not found")
-
-#     # 2. Извлекаем URL изображений из старого и нового контента
-#     old_images = {img.filepath for img in db_post.images}
-#     new_images = set(re.findall(r'!\[.*?\]\((.*?)\)', post_update.content))
-
-#     # 3. Находим изображения для удаления
-#     images_to_delete = old_images - new_images
-
-#     # от старых отнимаем новые и в это пойдет на удаление
-#     # от новых отнимаем старые это пойдет на добавление. Про добавление уточнить
+#     return await create_saved_search_service(
+#         user_id=user_id,
+#         db=session,
+#         name_search=search_data.name_search,
+#         search_query=search_data.search_query,
+#         search_type=search_data.search_type,
+#         group_slug=search_data.group_slug
+#     )
 
 
-#     # 4. Удаляем изображения
-#     for image_url in images_to_delete:
-#         await services.images.delete_image_by_url(db, image_url)
-
-#     # 5. Обновляем пост
-#     db_post.title = post_update.title
-#     db_post.content = post_update.content
-#     await db.commit()
-#     await db.refresh(db_post)
-
-#     return db_post
-
-
-# теория пагинации
-# смещение в пагинации это выисление количества страниц предшествующих текущей выбранной, которые необходимо пропустить и запросить только результат на выбранной странице
-# например мы зашли на 10 страницу и в каждой странице по 20 элементов. Соответственно нужно отобразить элементы 10 страницы за минусом предыщущих 9 страниц
-# offset это начальная точка запроса в таблице при пагинации
+# @router_knowledge_api.get("/saved_searches/", response_model=List[SavedSearchResponse])
+# async def get_saved_searches(
+#     group_slug: str = None,
+#     session: AsyncSession = Depends(get_async_session),
+#     user_id: int = Depends(verify_user_service)
+# ):
+#     return await get_saved_searches_service(
+#         user_id=user_id,
+#         db=session,
+#         group_slug=group_slug
+#     )
 
 
+# @router_knowledge_api.delete("/saved_searches/{search_id}")
+# async def delete_saved_search(
+#     search_id: int,
+    # session: AsyncSession = Depends(get_async_session),
+    # user_id: int = Depends(verify_user_service)
+# ):
+#     success = await delete_saved_search_service(
+#         user_id=user_id,
+#         search_id=search_id,
+#         db=session
+#     )
+#     return {"message": "Сохраненный поиск удален"}
 
-# поисковик знаний
+
+# Ниже сохранение списка вкладок или табов
+
+@router_knowledge_api.get("/get_tab_lists/", response_model=List[TabList])
+async def get_tab_lists(
+    session: AsyncSession = Depends(get_async_session),
+    user_id: int = Depends(verify_user_service)
+):
+    """Получить все мои списки вкладок"""
+    return await get_tab_lists_service(db=session, user_id=user_id)
 
 
+@router_knowledge_api.post("/create_tab_list/", response_model=TabList)
+async def create_tab_list(
+    tab_list_data: TabListCreate,
+    session: AsyncSession = Depends(get_async_session),
+    user_id: int = Depends(verify_user_service)
+):
+    """Создать новый список вкладок из текущих открытых"""
+    return await create_tab_list_service(db=session, user_id=user_id, tab_list_data=tab_list_data)
 
+
+@router_knowledge_api.post("/open_tab_list/{tab_list_id}/open")
+async def open_tab_list(
+    tab_list_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    user_id: int = Depends(verify_user_service)
+):
+    """Открыть список вкладок - возвращает данные для открытия вкладок"""
+    return await open_tab_list_service(db=session, user_id=user_id, tab_list_id=tab_list_id)
+
+
+@router_knowledge_api.delete("/delete_tab_list/{tab_list_id}")
+async def delete_tab_list(
+    tab_list_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    user_id: int = Depends(verify_user_service)
+):
+    """Удалить список вкладок"""
+    await delete_tab_list_service(db=session, user_id=user_id, tab_list_id=tab_list_id)
+    return {"message": "Tab list deleted"}
+
+
+# нет метода для сохранения измененного списка вкладок
+
+# конец списка вкладок
 
 

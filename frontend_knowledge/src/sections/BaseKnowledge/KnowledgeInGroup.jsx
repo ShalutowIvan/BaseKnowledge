@@ -42,8 +42,6 @@ function KnowledgeInGroup() {
   const [isSearchActive, setIsSearchActive] = useState(false); // Флаг активного поиска
 
   // понять зачем второе состояние activeSearchTerm для поиска
-
-
   
   useEffect(() => {
     setCurrentPage(1);

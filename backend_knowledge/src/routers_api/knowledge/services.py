@@ -329,29 +329,29 @@ async def knowledges_in_group_service(
                 
                 # Создаем условие поиска в зависимости от типа
                 if search_type == "phrase":
-                    search_condition = text("knowledge.search_vector @@ phraseto_tsquery('simple', :search)")
+                    search_condition = text("knowledge.search_vector @@ phraseto_tsquery('russian', :search)")
                 elif search_type == "advanced":
-                    search_condition = text("knowledge.search_vector @@ to_tsquery('simple', :search)")
+                    search_condition = text("knowledge.search_vector @@ to_tsquery('russian', :search)")
                 else:  # plain
-                    search_condition = text("knowledge.search_vector @@ plainto_tsquery('simple', :search)")
-
-
+                    search_condition = text("knowledge.search_vector @@ plainto_tsquery('russian', :search)")
+                
                 # 🔥 РАНЖИРОВАНИЕ с использованием ТОЧНО ТАКИХ ЖЕ ВЕСОВ как в модели
                 rank_expression = text("""
                     ts_rank_cd(
-                        setweight(to_tsvector('simple', coalesce(title, '')), 'A') ||
-                        setweight(to_tsvector('simple', coalesce(description, '')), 'B') ||
-                        setweight(to_tsvector('simple', coalesce(content, '')), 'C'),
-                        plainto_tsquery('simple', :search)
+                        setweight(to_tsvector('russian', coalesce(title, '')), 'A') ||
+                        setweight(to_tsvector('russian', coalesce(description, '')), 'B') ||
+                        setweight(to_tsvector('russian', coalesce(content, '')), 'C'),
+                        plainto_tsquery('russian', :search)
                     ) as search_score
                 """)
+
 
                 # Применяем условие поиска и ранжирование
                 data_query = (
                     data_query
                     .where(search_condition)
-                    # .add_columns(rank_expression)  # Добавляем score в SELECT
-                    # .order_by(text("search_score DESC"), Knowledge.created_at.desc())
+                    .add_columns(rank_expression)  # Добавляем score в SELECT
+                    .order_by(text("search_score DESC"), Knowledge.created_at.desc())
                     .order_by(Knowledge.created_at.desc())
                     .params(search=search_cleaned)
                 )
@@ -465,6 +465,165 @@ async def knowledges_in_group_service(
             detail="Ошибка при получении данных"
         )
 
+
+
+# функции сохранения поиска. Пока решил не делать
+# services/saved_search_service.py
+# async def create_saved_search_service(
+#     user_id: int,
+#     db: AsyncSession,
+#     name_search: str,
+#     search_query: str,
+#     search_type: str,
+#     group_slug: str
+# ) -> SavedSearch:
+#     """Создание сохраненного поиска"""
+    
+#     # Проверяем, не существует ли уже такой поиск
+#     existing_search = await db.execute(
+#         select(SavedSearch).where(
+#             SavedSearch.user_id == user_id,
+#             SavedSearch.search_query == search_query,
+#             SavedSearch.search_type == search_type,
+#             SavedSearch.group_slug == group_slug
+#         )
+#     )
+#     existing_search = existing_search.scalar_one_or_none()
+    
+#     if existing_search:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="Такой поиск уже сохранен"
+#         )
+    
+#     # Создаем новый сохраненный поиск
+#     saved_search = SavedSearch(
+#         user_id=user_id,
+#         name_search=name_search,
+#         search_query=search_query,
+#         search_type=search_type,
+#         group_slug=group_slug
+#     )
+    
+#     db.add(saved_search)
+#     await db.commit()
+#     await db.refresh(saved_search)
+    
+#     return saved_search
+
+
+# # получить сохраненный поиск
+# async def get_saved_searches_service(
+#     user_id: int,
+#     db: AsyncSession,
+#     group_slug: str = None
+# ) -> List[SavedSearch]:
+#     """Получение списка сохраненных поисков"""
+    
+#     query = select(SavedSearch).where(SavedSearch.user_id == user_id)
+    
+#     if group_slug:
+#         query = query.where(SavedSearch.group_slug == group_slug)
+    
+#     query = query.order_by(SavedSearch.created_at.desc())
+    
+#     result = await db.execute(query)
+#     return result.scalars().all()
+
+
+# # удалить сохраненный поиск
+# async def delete_saved_search_service(
+#     user_id: int,
+#     search_id: int,
+#     db: AsyncSession
+# ) -> bool:
+#     """Удаление сохраненного поиска"""
+    
+#     result = await db.execute(
+#         select(SavedSearch).where(
+#             SavedSearch.id == search_id,
+#             SavedSearch.user_id == user_id
+#         )
+#     )
+#     saved_search = result.scalar_one_or_none()
+    
+#     if not saved_search:
+#         raise HTTPException(
+#             status_code=404,
+#             detail="Сохраненный поиск не найден"
+#         )
+    
+#     await db.delete(saved_search)
+#     await db.commit()
+    
+#     return True
+
+
+# конец функций сохранения поиска
+
+
+# начало функций по сохранению списка вкладок
+# tab_list_service.py
+class TabListService:
+    
+    async def create_tab_list(self, db: Session, user_id: int, tab_list_data: TabListCreate, active_tabs: List) -> TabList:
+        """Создает список вкладок из текущих активных вкладок"""
+        
+        # Создаем запись списка
+        db_tab_list = TabListModel(
+            name=tab_list_data.name,
+            description=tab_list_data.description,
+            user_id=user_id
+        )
+        db.add(db_tab_list)
+        await db.flush()
+        
+        # Добавляем вкладки с позициями
+        for position, tab in enumerate(active_tabs):
+            db_saved_tab = SavedTabModel(
+                tab_list_id=db_tab_list.id,
+                knowledge_id=tab['id'],
+                position=position
+            )
+            db.add(db_saved_tab)
+        
+        await db.commit()
+        await db.refresh(db_tab_list)
+        return db_tab_list
+    
+    async def open_tab_list(self, db: Session, user_id: int, tab_list_id: int) -> List[dict]:
+        """Открывает список вкладок - возвращает данные знаний для открытия"""
+        
+        # Получаем список с вкладками
+        tab_list = await db.get(TabListModel, tab_list_id)
+        if not tab_list or tab_list.user_id != user_id:
+            raise HTTPException(404, "Tab list not found")
+        
+        # ONE QUERY: получаем все знания для всех вкладок списка одним запросом
+        knowledge_ids = [tab.knowledge_id for tab in tab_list.saved_tabs]
+        
+        if not knowledge_ids:
+            return []
+            
+        # Загружаем все знания одним запросом
+        knowledges = await db.execute(
+            select(KnowledgeModel).where(KnowledgeModel.id.in_(knowledge_ids))
+        )
+        knowledges_dict = {k.id: k for k in knowledges.scalars().all()}
+        
+        # Формируем результат с сохранением позиций
+        result = []
+        for saved_tab in sorted(tab_list.saved_tabs, key=lambda x: x.position):
+            knowledge = knowledges_dict.get(saved_tab.knowledge_id)
+            if knowledge:
+                result.append({
+                    'id': knowledge.id,
+                    'title': knowledge.title,
+                    'description': knowledge.description,
+                    # Только базовые данные - полные загрузим при открытии вкладки
+                })
+        
+        return result
 
 
 

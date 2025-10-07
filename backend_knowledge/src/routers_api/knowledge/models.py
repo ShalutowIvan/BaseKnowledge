@@ -28,6 +28,10 @@ class Knowledge(Base):
     # юзеры
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
     user: Mapped["User"] = relationship(back_populates="knowledge_user")
+
+    # сохраненные вкладки
+    saved_tab_connect: Mapped["Saved_tab"] = relationship(back_populates="knowledge_connect", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+
     
     # изображения. тут определил список изображений, а не одно изображение - [List["Images"]]
     images: Mapped[List["Image"]] = relationship(
@@ -40,9 +44,9 @@ class Knowledge(Base):
     search_vector: Mapped[TSVECTOR] = mapped_column(
         TSVECTOR,
         Computed(
-            "setweight(to_tsvector('simple', coalesce(title, '')), 'A') || "
-            "setweight(to_tsvector('simple', coalesce(description, '')), 'B') || "
-            "setweight(to_tsvector('simple', coalesce(content, '')), 'C')",
+            "setweight(to_tsvector('russian', coalesce(title, '')), 'A') || "
+            "setweight(to_tsvector('russian', coalesce(description, '')), 'B') || "
+            "setweight(to_tsvector('russian', coalesce(content, '')), 'C')",
             persisted=True
         )
     )
@@ -78,9 +82,79 @@ class Image(Base):
 
 
 
+# class SavedSearch(Base):
+#     __tablename__ = "saved_searches"
+    
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True)    
+#     name_search: Mapped[str] = mapped_column(nullable=False)    
+#     search_query: Mapped[str] = mapped_column(nullable=False) # Поисковый запрос
+#     search_type: Mapped[str] = mapped_column(default="plain") # Тип поиска
+#     group_slug: Mapped[str] = mapped_column(unique=True, nullable=False) # Группа, в которой выполнялся поиск
+#     created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))    
+#     # Связь с пользователем
+#     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
+#     user: Mapped["User"] = relationship(back_populates="saved_search_user")
+    
+
+# вроде сделал модель для сохранения поиска. Перепроверить... 
+# и продумать самому как будет реализовано сохранение поиска, логику продумать
+# как сделать так, чтобы именно сами найденные знания сохранились... поисковый запрос тоже норм, но лучше знания сохранять,
+# чтобы был аналог сохранения ссылки на знание
+
+
+
+
+
+# tab_lists (списки вкладок)
+# ├── id (PK)
+# ├── name
+# ├── description
+# ├── user_id (FK → users)
+# ├── created_at
+# └── updated_at
+
+# saved_tab (сохраненные вкладки)
+# ├── id (PK) 
+# ├── tab_list_id (FK → tab_lists)
+# ├── knowledge_id (FK → knowledges)
+# ├── position (порядковый номер)
+# └── created_at
+
+
+
+class Tab_list(Base):
+    __tablename__ = "tab_list"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(default="_", nullable=False)
+    description: Mapped[str] = mapped_column(default="_")
+    created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
+    updated_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"), server_onupdate=text("TIMEZONE('utc', now())"))
+    # связи
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
+    user: Mapped["User"] = relationship(back_populates="tab_list_user")
+
+    saved_tab_connect: Mapped["Saved_tab"] = relationship(back_populates="tab_list_connect", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
 
 
     
+class Saved_tab(Base):
+    __tablename__ = "saved_tab"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    position: Mapped[int] = mapped_column(unique=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
+    
+    # связь с таблистом
+    tab_list_id: Mapped[int] = mapped_column(ForeignKey("tab_list.id", ondelete="CASCADE"))
+    tab_list_connect: Mapped["Tab_list"] = relationship(back_populates="saved_tab_connect")
+
+    # связь со знаниями
+    knowledge_id: Mapped[int] = mapped_column(ForeignKey("knowledge.id", ondelete="CASCADE"))
+    knowledge_connect: Mapped["Knowledge"] = relationship(back_populates="saved_tab_connect")
+
+    
+    
+    
+# вроде сделал, перепроверить....
 
 
 # памятка для миграций БД

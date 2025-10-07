@@ -117,3 +117,22 @@ class PaginatedResponse(BaseModel):
     last_item: int | None           # ID последнего элемента на странице
 
 
+
+# схемы для сохранения поискового запроса
+class SavedSearchBase(BaseModel):
+    name_search: str
+    search_query: str
+    search_type: str = "plain"
+    group_slug: str
+
+
+class SavedSearchCreate(SavedSearchBase):
+    pass
+    
+
+class SavedSearchResponse(SavedSearchBase):
+    id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
