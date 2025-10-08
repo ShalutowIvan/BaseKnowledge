@@ -1,11 +1,7 @@
-# a = {"a",}
-# b = {"q", "w", "e"}
+lst = [1, 33, 55, 66]
 
-# res = a - b
+for i, j in enumerate(lst):
+	print(i, j)
 
-# print(res)
-
-a = "asd"
-b = "qwe"
-print(a + b)
-
+        
+    

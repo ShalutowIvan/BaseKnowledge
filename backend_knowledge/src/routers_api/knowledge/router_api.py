@@ -205,18 +205,18 @@ async def knowledge_update_header(kn_id: int, knowledge_update: KnowledgesUpdate
 
 # Ниже сохранение списка вкладок или табов
 
-@router_knowledge_api.get("/get_tab_lists/", response_model=List[TabList])
-async def get_tab_lists(
-    session: AsyncSession = Depends(get_async_session),
-    user_id: int = Depends(verify_user_service)
-):
-    """Получить все мои списки вкладок"""
-    return await get_tab_lists_service(db=session, user_id=user_id)
+# @router_knowledge_api.get("/get_tab_lists/", response_model=List[TabList])
+# async def get_tab_lists(
+#     session: AsyncSession = Depends(get_async_session),
+#     user_id: int = Depends(verify_user_service)
+# ):
+#     """Получить все мои списки вкладок"""
+#     return await get_tab_lists_service(db=session, user_id=user_id)
 
 
-@router_knowledge_api.post("/create_tab_list/", response_model=TabList)
+@router_knowledge_api.post("/create_tab_list/", response_model=TabListSchema)
 async def create_tab_list(
-    tab_list_data: TabListCreate,
+    tab_list_data: TabListCreateSchema,
     session: AsyncSession = Depends(get_async_session),
     user_id: int = Depends(verify_user_service)
 ):
@@ -224,7 +224,7 @@ async def create_tab_list(
     return await create_tab_list_service(db=session, user_id=user_id, tab_list_data=tab_list_data)
 
 
-@router_knowledge_api.post("/open_tab_list/{tab_list_id}/open")
+@router_knowledge_api.post("/open_tab_list/{tab_list_id}/open", response_model=list[KnowledgesSchemaOpen])
 async def open_tab_list(
     tab_list_id: int,
     session: AsyncSession = Depends(get_async_session),
@@ -234,15 +234,15 @@ async def open_tab_list(
     return await open_tab_list_service(db=session, user_id=user_id, tab_list_id=tab_list_id)
 
 
-@router_knowledge_api.delete("/delete_tab_list/{tab_list_id}")
-async def delete_tab_list(
-    tab_list_id: int,
-    session: AsyncSession = Depends(get_async_session),
-    user_id: int = Depends(verify_user_service)
-):
-    """Удалить список вкладок"""
-    await delete_tab_list_service(db=session, user_id=user_id, tab_list_id=tab_list_id)
-    return {"message": "Tab list deleted"}
+# @router_knowledge_api.delete("/delete_tab_list/{tab_list_id}")
+# async def delete_tab_list(
+#     tab_list_id: int,
+#     session: AsyncSession = Depends(get_async_session),
+#     user_id: int = Depends(verify_user_service)
+# ):
+#     """Удалить список вкладок"""
+#     await delete_tab_list_service(db=session, user_id=user_id, tab_list_id=tab_list_id)
+#     return {"message": "Tab list deleted"}
 
 
 # нет метода для сохранения измененного списка вкладок

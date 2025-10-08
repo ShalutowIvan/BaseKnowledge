@@ -1,11 +1,12 @@
 from fastapi import HTTPException, Request, UploadFile, File, Body, status
 from fastapi.responses import FileResponse
-from sqlalchemy import select, update, delete, func
+from sqlalchemy import select, update, delete, func, and_
 from sqlalchemy.orm import selectinload, joinedload, load_only
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from .models import *
 from .schemas import *
+from typing import List
 # from main import UPLOAD_FOLDER
 import os
 import uuid
@@ -564,66 +565,97 @@ async def knowledges_in_group_service(
 
 # начало функций по сохранению списка вкладок
 # tab_list_service.py
-class TabListService:
+
     
-    async def create_tab_list(self, db: Session, user_id: int, tab_list_data: TabListCreate, active_tabs: List) -> TabList:
-        """Создает список вкладок из текущих активных вкладок"""
-        
-        # Создаем запись списка
-        db_tab_list = TabListModel(
-            name=tab_list_data.name,
-            description=tab_list_data.description,
-            user_id=user_id
-        )
-        db.add(db_tab_list)
-        await db.flush()
-        
-        # Добавляем вкладки с позициями
-        for position, tab in enumerate(active_tabs):
-            db_saved_tab = SavedTabModel(
-                tab_list_id=db_tab_list.id,
-                knowledge_id=tab['id'],
-                position=position
-            )
-            db.add(db_saved_tab)
-        
-        await db.commit()
-        await db.refresh(db_tab_list)
-        return db_tab_list
+async def create_tab_list_service(db: AsyncSession, user_id: int, tab_list_data: TabListCreateSchema) -> TabListSchema:
+    """Создает список вкладок из текущих активных вкладок"""
     
-    async def open_tab_list(self, db: Session, user_id: int, tab_list_id: int) -> List[dict]:
-        """Открывает список вкладок - возвращает данные знаний для открытия"""
-        
-        # Получаем список с вкладками
-        tab_list = await db.get(TabListModel, tab_list_id)
-        if not tab_list or tab_list.user_id != user_id:
-            raise HTTPException(404, "Tab list not found")
-        
-        # ONE QUERY: получаем все знания для всех вкладок списка одним запросом
-        knowledge_ids = [tab.knowledge_id for tab in tab_list.saved_tabs]
-        
-        if not knowledge_ids:
-            return []
-            
-        # Загружаем все знания одним запросом
-        knowledges = await db.execute(
-            select(KnowledgeModel).where(KnowledgeModel.id.in_(knowledge_ids))
+    # Создаем запись списка
+    db_tab_list = Tab_list(
+        name=tab_list_data.name,
+        description=tab_list_data.description,
+        user_id=user_id
+    )
+    db.add(db_tab_list)
+    await db.flush()
+    
+    # Добавляем вкладки с позициями
+    for position, tab in enumerate(tab_list_data.active_tabs):
+        db_saved_tab = Saved_tab(
+            tab_list_id=db_tab_list.id,
+            knowledge_id=tab,
+            position=position
         )
-        knowledges_dict = {k.id: k for k in knowledges.scalars().all()}
+        db.add(db_saved_tab)
+    
+    await db.commit()
+    await db.refresh(db_tab_list)
+    return db_tab_list
+
+
+async def open_tab_list_service(db: AsyncSession, user_id: int, tab_list_id: int):    
+    # # моя реализация!!!!!!!!!!!!!!!!!
+    # # Получаем список с вкладками
+    # query_saved_tab = select(Tab_list).where(Tab_list.user_id == user_id, Tab_list.id == tab_list_id)
+
+    # result = await db.execute(query_saved_tab)
+    # saved_tab = result.scalar_one_or_none()
+
+    # if not saved_tab:
+    #     raise HTTPException(404, "tabs not found")
+
+    # # получаем все знания для всех вкладок списка одним запросом
+    # knowledge_ids = [tab.knowledge_id for tab in saved_tab.saved_tab_connect]
+    
+    # if not knowledge_ids:
+    #     return []
         
-        # Формируем результат с сохранением позиций
-        result = []
-        for saved_tab in sorted(tab_list.saved_tabs, key=lambda x: x.position):
-            knowledge = knowledges_dict.get(saved_tab.knowledge_id)
-            if knowledge:
-                result.append({
-                    'id': knowledge.id,
-                    'title': knowledge.title,
-                    'description': knowledge.description,
-                    # Только базовые данные - полные загрузим при открытии вкладки
-                })
-        
-        return result
+    # # Загружаем все знания одним запросом
+    # query_knowledges = select(Knowledge).where(Knowledge.id.in_(knowledge_ids)).order_by(Knowledge.id)
+    # knowledges = await db.execute(query_knowledges)
+    
+    # return knowledges.scalars().all()
+
+
+
+    # реализация дипсика без lazy="selectin" в моделях. Решается проблема N+1 запроса.!!!!!!!!!!!!!!!!!!
+    query_saved_tab = (
+                        select(Tab_list)
+                        .where(and_(Tab_list.user_id == user_id, Tab_list.id == tab_list_id))
+                        .options(
+                        # Загружаем сохраненные вкладки с их порядком
+                        selectinload(Tab_list.saved_tab_connect),
+                        # Через сохраненные вкладки загружаем знания с их связями
+                        selectinload(Tab_list.saved_tab_connect)
+                        .selectinload(Saved_tab.knowledge_connect).options(selectinload(Knowledge.group), selectinload(Knowledge.images))
+                        )
+                    )
+
+    result = await db.execute(query_saved_tab)
+    saved_tab = result.scalar_one_or_none()
+
+    if not saved_tab:
+        raise HTTPException(status_code=404, detail="Список вкладок не найден")
+
+    if not saved_tab.saved_tab_connect:
+        return []
+
+    # 🔥 СОРТИРУЕМ знания по позициям из saved_tab_connect
+    # sorted_saved_tabs = sorted(saved_tab.saved_tab_connect, key=lambda x: x.position)
+    
+    # # Извлекаем отсортированные знания
+    # sorted_knowledges = []
+    # for saved_tab in sorted_saved_tabs:
+    #     if saved_tab.knowledge_connect:  # Проверяем, что знание не было удалено
+    #         sorted_knowledges.append(saved_tab.knowledge_connect)
+    
+    # return sorted_knowledges
+    return saved_tab.saved_tab_connect# ошибка код 500, исправить, не проходит валидация пайдентика
+
+
+
+
+
 
 
 

@@ -27,8 +27,8 @@ class User(Base):
     chapter_user: Mapped["Chapter"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
     stage_user: Mapped["Stage"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
 
-    # сохранение поиска пока решил не делать. Пока не нужно
-    # saved_search_user: Mapped["SavedSearch"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+    # сохранение поиска пока решил не делать. Пока не нужно. Но модель оставил
+    saved_search_user: Mapped["SavedSearch"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
 
     # сохранение списка вкладок
     tab_list_user: Mapped["Tab_list"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")

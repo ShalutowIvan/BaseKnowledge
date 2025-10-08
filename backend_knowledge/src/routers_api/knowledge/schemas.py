@@ -119,20 +119,68 @@ class PaginatedResponse(BaseModel):
 
 
 # схемы для сохранения поискового запроса
-class SavedSearchBase(BaseModel):
+class SavedSearchBaseSchema(BaseModel):
     name_search: str
     search_query: str
     search_type: str = "plain"
     group_slug: str
 
 
-class SavedSearchCreate(SavedSearchBase):
+class SavedSearchCreateSchema(SavedSearchBaseSchema):
     pass
     
 
-class SavedSearchResponse(SavedSearchBase):
+class SavedSearchResponseSchema(SavedSearchBaseSchema):
     id: int
     created_at: datetime
     
     class Config:
         from_attributes = True
+
+
+
+# схемы сохраненных вкладок табов
+
+
+# schemas.py
+
+class SavedTabBaseSchema(BaseModel):
+    knowledge_id: int
+    position: int  # Позиция во вкладках
+
+
+class SavedTabCreateSchema(SavedTabBaseSchema):
+    pass
+
+
+class SavedTabSchema(SavedTabBaseSchema):
+    id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class TabListBaseSchema(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+
+class TabListCreateSchema(TabListBaseSchema):
+    active_tabs: List[int]# это список из id знаний которые открыты во вкладках
+
+
+
+class TabListSchema(TabListBaseSchema):
+    id: int
+    user_id: int
+    saved_tabs: List[SavedTabSchema] = []
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+
+

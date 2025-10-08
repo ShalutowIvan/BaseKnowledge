@@ -24,21 +24,20 @@ class Knowledge(Base):
     # связи
     # группы
     group_id: Mapped[int] = mapped_column(ForeignKey("group.id", ondelete="RESTRICT"))#ссылаемся на таблицу group на ее элемент id
-    group: Mapped["Group"] = relationship(back_populates="knowledge")
+    group: Mapped["Group"] = relationship(back_populates="knowledge")#убрал , lazy="selectin"
     # юзеры
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
     user: Mapped["User"] = relationship(back_populates="knowledge_user")
 
     # сохраненные вкладки
-    saved_tab_connect: Mapped["Saved_tab"] = relationship(back_populates="knowledge_connect", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+    saved_tab_connect: Mapped["Saved_tab"] = relationship(back_populates="knowledge_connect", cascade="all, delete-orphan", passive_deletes=True)# убрал , lazy="selectin"
 
     
     # изображения. тут определил список изображений, а не одно изображение - [List["Images"]]
     images: Mapped[List["Image"]] = relationship(
         back_populates="knowledge", # Ссылка на обратное отношение в Images
-        cascade="all, delete-orphan", # Автоматическое удаление связанных изображений
-        lazy="selectin" # Жадная загрузка при использовании selectinload
-        )
+        cascade="all, delete-orphan", # Автоматическое удаление связанных изображений        
+        )#убрал lazy="selectin" # Жадная загрузка при использовании selectinload
 
     #вектор для улучшенного поиска
     search_vector: Mapped[TSVECTOR] = mapped_column(
@@ -82,18 +81,18 @@ class Image(Base):
 
 
 
-# class SavedSearch(Base):
-#     __tablename__ = "saved_searches"
+class SavedSearch(Base):
+    __tablename__ = "saved_searches"
     
-#     id: Mapped[int] = mapped_column(Integer, primary_key=True)    
-#     name_search: Mapped[str] = mapped_column(nullable=False)    
-#     search_query: Mapped[str] = mapped_column(nullable=False) # Поисковый запрос
-#     search_type: Mapped[str] = mapped_column(default="plain") # Тип поиска
-#     group_slug: Mapped[str] = mapped_column(unique=True, nullable=False) # Группа, в которой выполнялся поиск
-#     created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))    
-#     # Связь с пользователем
-#     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
-#     user: Mapped["User"] = relationship(back_populates="saved_search_user")
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)    
+    name_search: Mapped[str] = mapped_column(nullable=False)    
+    search_query: Mapped[str] = mapped_column(nullable=False) # Поисковый запрос
+    search_type: Mapped[str] = mapped_column(default="plain") # Тип поиска
+    group_slug: Mapped[str] = mapped_column(unique=True, nullable=False) # Группа, в которой выполнялся поиск
+    created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))    
+    # Связь с пользователем
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
+    user: Mapped["User"] = relationship(back_populates="saved_search_user")
     
 
 # вроде сделал модель для сохранения поиска. Перепроверить... 
@@ -133,7 +132,10 @@ class Tab_list(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
     user: Mapped["User"] = relationship(back_populates="tab_list_user")
 
-    saved_tab_connect: Mapped["Saved_tab"] = relationship(back_populates="tab_list_connect", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+    saved_tab_connect: Mapped[List["Saved_tab"]] = relationship(
+        back_populates="tab_list_connect", 
+        cascade="all, delete-orphan", 
+        passive_deletes=True)#убрал , lazy="selectin"
 
 
     
