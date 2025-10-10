@@ -417,6 +417,13 @@ container-roadmap-view
   cursor: pointer;  
 }
 
+.cancel-button:hover {
+  background-color: #B22222;
+}
+
+
+
+
 .edit-button {
   background: #FFC107;
   color: black;

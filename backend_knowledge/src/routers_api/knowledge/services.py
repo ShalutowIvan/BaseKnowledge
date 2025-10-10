@@ -77,13 +77,14 @@ async def group_name_update_service(user_id: int, group_id: int, group_name_upda
 
 
 # получение одного знания по ИД. Используется в других функциях
-async def get_knowledge(db: AsyncSession, knowledge_id: int) -> KnowledgesSchemaFull | None:
+async def get_knowledge(db: AsyncSession, user_id: int, knowledge_id: int) -> KnowledgesSchemaFull | None:
     # Получаем пост с подгрузкой связанных изображений
     result = await db.execute(
         select(Knowledge)
         .options(selectinload(Knowledge.images))
-        .where(Knowledge.id == knowledge_id)        
-    )
+        .where(Knowledge.id == knowledge_id)
+        .where(Knowledge.user_id == user_id)
+        )
     return result.scalar()
 
 
@@ -567,8 +568,7 @@ async def knowledges_in_group_service(
 # tab_list_service.py
 
     
-async def create_tab_list_service(db: AsyncSession, user_id: int, tab_list_data: TabListCreateSchema) -> TabListSchema:
-    """Создает список вкладок из текущих активных вкладок"""
+async def create_tab_list_service(db: AsyncSession, user_id: int, tab_list_data: TabListCreateSchema) -> TabListSchema:    
     
     # Создаем запись списка
     db_tab_list = Tab_list(
@@ -616,8 +616,6 @@ async def open_tab_list_service(db: AsyncSession, user_id: int, tab_list_id: int
     
     # return knowledges.scalars().all()
 
-
-
     # реализация дипсика без lazy="selectin" в моделях. Решается проблема N+1 запроса.!!!!!!!!!!!!!!!!!!
     query_saved_tab = (
                         select(Tab_list)
@@ -630,30 +628,67 @@ async def open_tab_list_service(db: AsyncSession, user_id: int, tab_list_id: int
                         .selectinload(Saved_tab.knowledge_connect).options(selectinload(Knowledge.group), selectinload(Knowledge.images))
                         )
                     )
-
     result = await db.execute(query_saved_tab)
     saved_tab = result.scalar_one_or_none()
-
     if not saved_tab:
         raise HTTPException(status_code=404, detail="Список вкладок не найден")
 
     if not saved_tab.saved_tab_connect:
         return []
 
-    # 🔥 СОРТИРУЕМ знания по позициям из saved_tab_connect
-    # sorted_saved_tabs = sorted(saved_tab.saved_tab_connect, key=lambda x: x.position)
+    # с сортировкой
+    # list_knowledge = [i.knowledge_connect for i in sorted(saved_tab.saved_tab_connect, key=lambda x: x.position)]
+    # без сортировки
+    list_knowledge = [i.knowledge_connect for i in saved_tab.saved_tab_connect]
     
-    # # Извлекаем отсортированные знания
-    # sorted_knowledges = []
-    # for saved_tab in sorted_saved_tabs:
-    #     if saved_tab.knowledge_connect:  # Проверяем, что знание не было удалено
-    #         sorted_knowledges.append(saved_tab.knowledge_connect)
+    return list_knowledge
+
+
+
+async def delete_tab_list_service(user_id: int, tab_list_id: int, db: AsyncSession):
+    query = select(Tab_list).where(Tab_list.id == tab_list_id).where(Tab_list.user_id == user_id)    
+    result = await db.execute(query)
+    tab = result.scalar_one_or_none()
+    if not tab:
+        raise HTTPException(status_code=404, detail="Tab not found")
+        
+    # Удаляем группу
+    await db.delete(tab)
+    await db.commit()
     
-    # return sorted_knowledges
-    return saved_tab.saved_tab_connect# ошибка код 500, исправить, не проходит валидация пайдентика
+    return {"status": "success"}
+
+
+async def get_tab_lists_service(user_id: int, db: AsyncSession):
+    query = (
+        select(Tab_list).where(Tab_list.user_id == user_id).order_by(Tab_list.created_at.desc())
+            )
+
+    result = await db.execute(query)
+    tab_lists = result.scalars().all()
+    
+    return tab_lists
+
+
+async def change_tab_list_service(db: AsyncSession, user_id: int, tab_list_data: TabListBaseSchema) -> TabListBaseSchema:
+    
+    query = (
+        select(Tab_list).where(Tab_list.user_id == user_id).where(Tab_list.id == tab_list_data.id)
+            )    
+    result = await db.execute(query)
+
+    tab_list = result.scalar_one_or_none()
+
+    tab_list.name = tab_list_data.name
+    tab_list.description = tab_list_data.description
+
+    await db.commit()
+    await db.refresh(tab_list)
+    return tab_list
 
 
 
+# протестить.... ост тут
 
 
 
@@ -700,7 +735,6 @@ async def add_record_image_in_base(db: AsyncSession, filename: str, filepath: st
     return db_image
 
 
-
 #функции для загрузки файла фото. Берем папку с сервера, потом делаем расширение файла и название файла, и склеиваем папку и имя файла с расширением. Далее загружаем файл асинхронно. Другими словами грузим файл тут!
 async def save_uploaded_file(file, upload_dir: str) -> tuple[str, str]:
     if not os.path.exists(upload_dir):
@@ -722,13 +756,9 @@ async def save_uploaded_file(file, upload_dir: str) -> tuple[str, str]:
     return filename, filepath
 
 
-
-# файл фото грузится, но  фронт выдает ошибку. Пока не понял почему, разбирать функцию надо... может и на фронте проблема. Ошибка не выдается, но файл не грузится на сервер, а ссылка в посте сохраняется....
-
 # вторая функция тоже относится к загрузке файла фото. Тут вроде бы все готово
 async def upload_image_service(request: Request, knowledge_id: int, db: AsyncSession, file: UploadFile = File(...)):
     try:
-
         # 1. Сохраняем файл на сервере
         filename, filepath = await save_uploaded_file(file=file, upload_dir=UPLOAD_FOLDER)
         
@@ -791,9 +821,9 @@ async def delete_image_by_url(db: AsyncSession, image_url: str) -> bool:
 
 
 # сравнить с функцией выше. knowledge_update тут фул знание скорее всего. Но если что сделать отдельную схему в питоне для обновления знания
-async def update_knowledge_service(request: Request, knowledge_id: int, knowledge_update: KnowledgesUpdateSchema, db: AsyncSession):
+async def update_knowledge_service(request: Request, user_id: int, knowledge_id: int, knowledge_update: KnowledgesUpdateSchema, db: AsyncSession):
     # 1. Получаем текущий знание с изображениями
-    db_knowledge = await get_knowledge(db=db, knowledge_id=knowledge_id)
+    db_knowledge = await get_knowledge(db=db, knowledge_id=knowledge_id, user_id=user_id)
     if not db_knowledge:
         raise HTTPException(status_code=404, detail="knowledge not found")
 
@@ -809,9 +839,8 @@ async def update_knowledge_service(request: Request, knowledge_id: int, knowledg
             if url.startswith(base_url + '/uploads/'):  # Удаляем локальные файлы по ссылкам которые начинаются с текста base_url + '/uploads/'
                 await delete_image_by_url(db=db, image_url=url)
 
-    # 5. Обновляем пост
-    db_knowledge.updated_at = datetime.utcnow()
-    # db_knowledge.title = knowledge_update.title
+    # 5. Обновляем знание
+    db_knowledge.updated_at = datetime.utcnow()    
     db_knowledge.content = knowledge_update.content
     await db.commit()
     await db.refresh(db_knowledge)
@@ -819,11 +848,11 @@ async def update_knowledge_service(request: Request, knowledge_id: int, knowledg
     return db_knowledge
 
 
-# удаление знания и изображений в нем. 
-async def delete_knowledge_service(db: AsyncSession, knowledge_id: int) -> bool:    
+# удаление знания и изображений в нем. ОСТ ТУТ!!!!!!!!!!!!!!
+async def delete_knowledge_service(db: AsyncSession, knowledge_id: int, user_id: int) -> bool:    
     try:
         # 1. Получаем знание с изображениями
-        knowledge = await get_knowledge(db, knowledge_id)
+        knowledge = await get_knowledge(db=db, knowledge_id=knowledge_id, user_id=user_id)
         if not knowledge:
             return False
 
@@ -847,9 +876,9 @@ async def delete_knowledge_service(db: AsyncSession, knowledge_id: int) -> bool:
         )
 
 
-async def update_knowledge_header_service(knowledge_id: int, knowledge_update: KnowledgesUpdateHeaderSchema, db: AsyncSession):
+async def update_knowledge_header_service(user_id: int, knowledge_id: int, knowledge_update: KnowledgesUpdateHeaderSchema, db: AsyncSession):
     # 1. Получаем текущее знание 5-ю полями. А с фронта принимаем 3 поля. Включая связанное поле. И возвращаем ответ со связанным полем
-    query = select(Knowledge).where(Knowledge.id == knowledge_id).options(
+    query = select(Knowledge).where(Knowledge.id == knowledge_id, Knowledge.user_id == user_id).options(
                 selectinload(Knowledge.group),
                 load_only(
                 Knowledge.title,

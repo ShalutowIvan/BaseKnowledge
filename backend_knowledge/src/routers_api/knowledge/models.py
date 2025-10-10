@@ -142,7 +142,7 @@ class Tab_list(Base):
 class Saved_tab(Base):
     __tablename__ = "saved_tab"
     id: Mapped[int] = mapped_column(primary_key=True)
-    position: Mapped[int] = mapped_column(unique=True, nullable=False)
+    position: Mapped[int] = mapped_column(nullable=False)
     created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
     
     # связь с таблистом

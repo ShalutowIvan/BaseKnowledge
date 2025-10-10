@@ -120,15 +120,19 @@ async def knowledges_open_free(
     return await knowledges_open_free_service(db=session, slug=slug)
 
 
-
-# Эндпоинт для загрузки изображения. Этот эндпоинт будет срабатывать при вставке изображения в текст контента сразу же, и записывать файл на сервер и строку в БД в таблицу Images. Возвращает ссылку на изображение для его отрисовки на фронте, эта ссылка обрабатывается другим эндпоинтом - serve_file, который описан ниже. В реакт коде ссылка возвращаемая не пишется, она пишется в самом тексте поста который хранится в базе, и потом автоматом рисуется
+# Эндпоинт для загрузки изображения. Этот эндпоинт будет срабатывать при вставке изображения в текст контента сразу же, и записывать файл на сервер и строку в БД в таблицу Images. Возвращает ссылку на изображение для его отрисовки на фронте, эта ссылка обрабатывается другим эндпоинтом - serve_file, который описан ниже. В реакт коде ссылка возвращаемая не пишется, она пишется в самом тексте знания который хранится в базе, и потом автоматом рисуется. 
 # response_model=ImageSchema
 @router_knowledge_api.post("/upload-image/{knowledge_id}")#тут что то не так с response_model
-async def upload_image(request: Request, knowledge_id: int, file: UploadFile = File(...), session: AsyncSession = Depends(get_async_session)):
+async def upload_image(
+    request: Request, 
+    knowledge_id: int, 
+    user_id: int = Depends(verify_user_service), 
+    file: UploadFile = File(...), 
+    session: AsyncSession = Depends(get_async_session)):
     return await upload_image_service(request=request, knowledge_id=knowledge_id, file=file, db=session)
 
 
-# Эндпоинт для отображения на фронте загруженных файлов изображений, то есть чтобы можно было по ссылке обратиться и отобразить файл на фронте. Логику перенести в сервисные функции. В дипсике функция называется serve_file
+# Эндпоинт для отображения на фронте загруженных файлов изображений, то есть чтобы можно было по ссылке обратиться и отобразить файл на фронте. Тут пользак не проверяется решил так оставить. Так как это просто просмотр файла
 @router_knowledge_api.get("/uploads/{file_name}")
 async def view_file_image(file_name: str):
     return await view_file_image_service(file_name=file_name)
@@ -136,9 +140,15 @@ async def view_file_image(file_name: str):
 
 #изменение знания. Меняется и изображение и текст
 @router_knowledge_api.put("/knowledges_update/{kn_id}", response_model=KnowledgesSchemaFull)
-async def knowledge_update(request: Request, knowledge: KnowledgesUpdateSchema, kn_id: int, session: AsyncSession = Depends(get_async_session)):    
+async def knowledge_update(
+    request: Request, 
+    knowledge: KnowledgesUpdateSchema, 
+    kn_id: int, 
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)):    
     return await update_knowledge_service(
         request=request,
+        user_id=user_id,
         knowledge_id=kn_id,
         knowledge_update=knowledge,
         db=session        
@@ -147,14 +157,22 @@ async def knowledge_update(request: Request, knowledge: KnowledgesUpdateSchema, 
 
 #удаление знания
 @router_knowledge_api.delete("/delete_knowledge/{knowledge_id}")
-async def delete_knowledge(knowledge_id: int, session: AsyncSession = Depends(get_async_session)):
-    return await delete_knowledge_service(knowledge_id=knowledge_id, db=session)
+async def delete_knowledge(
+    knowledge_id: int, 
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)):
+    return await delete_knowledge_service(user_id=user_id, knowledge_id=knowledge_id, db=session)
 
 
 # обновление шапки знания
 @router_knowledge_api.patch("/knowledge_update_header/{kn_id}", response_model=KnowledgesUpdateHeaderResponseSchema)
-async def knowledge_update_header(kn_id: int, knowledge_update: KnowledgesUpdateHeaderSchema, session: AsyncSession = Depends(get_async_session)):    
-    return await update_knowledge_header_service(knowledge_id=kn_id, knowledge_update=knowledge_update, db=session)
+async def knowledge_update_header(
+    kn_id: int, 
+    knowledge_update: KnowledgesUpdateHeaderSchema, 
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)
+    ):    
+    return await update_knowledge_header_service(user_id=user_id, knowledge_id=kn_id, knowledge_update=knowledge_update, db=session)
 
 
 
@@ -205,15 +223,17 @@ async def knowledge_update_header(kn_id: int, knowledge_update: KnowledgesUpdate
 
 # Ниже сохранение списка вкладок или табов
 
-# @router_knowledge_api.get("/get_tab_lists/", response_model=List[TabList])
-# async def get_tab_lists(
-#     session: AsyncSession = Depends(get_async_session),
-#     user_id: int = Depends(verify_user_service)
-# ):
-#     """Получить все мои списки вкладок"""
-#     return await get_tab_lists_service(db=session, user_id=user_id)
+# роут для отображения списка сохраненных табов. 
+@router_knowledge_api.get("/get_tab_lists/", response_model=List[TabListSchema])
+async def get_tab_lists(
+    session: AsyncSession = Depends(get_async_session),
+    user_id: int = Depends(verify_user_service)
+):
+    """Получить все мои списки вкладок"""
+    return await get_tab_lists_service(db=session, user_id=user_id)
 
 
+#создание табов
 @router_knowledge_api.post("/create_tab_list/", response_model=TabListSchema)
 async def create_tab_list(
     tab_list_data: TabListCreateSchema,
@@ -224,6 +244,7 @@ async def create_tab_list(
     return await create_tab_list_service(db=session, user_id=user_id, tab_list_data=tab_list_data)
 
 
+#функция открытия списка вкладок, открытие знаний по списку вкладок
 @router_knowledge_api.post("/open_tab_list/{tab_list_id}/open", response_model=list[KnowledgesSchemaOpen])
 async def open_tab_list(
     tab_list_id: int,
@@ -234,18 +255,27 @@ async def open_tab_list(
     return await open_tab_list_service(db=session, user_id=user_id, tab_list_id=tab_list_id)
 
 
-# @router_knowledge_api.delete("/delete_tab_list/{tab_list_id}")
-# async def delete_tab_list(
-#     tab_list_id: int,
-#     session: AsyncSession = Depends(get_async_session),
-#     user_id: int = Depends(verify_user_service)
-# ):
-#     """Удалить список вкладок"""
-#     await delete_tab_list_service(db=session, user_id=user_id, tab_list_id=tab_list_id)
-#     return {"message": "Tab list deleted"}
+# Удалить список вкладок
+@router_knowledge_api.delete("/delete_tab_list/{tab_list_id}")
+async def delete_tab_list(
+    tab_list_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    user_id: int = Depends(verify_user_service)
+    ):    
+    return await delete_tab_list_service(db=session, user_id=user_id, tab_list_id=tab_list_id)
 
 
-# нет метода для сохранения измененного списка вкладок
+# редактирование название и описания списка. 
+@router_knowledge_api.patch("/change_tab_list/", response_model=TabListBaseSchema)
+async def change_tab_list(    
+    tab_list_data: TabListBaseSchema,
+    session: AsyncSession = Depends(get_async_session),
+    user_id: int = Depends(verify_user_service)
+    ):    
+    return await change_tab_list_service(db=session, user_id=user_id, tab_list_data=tab_list_data)
+
+
+
 
 # конец списка вкладок
 

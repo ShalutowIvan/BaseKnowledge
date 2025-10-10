@@ -8,7 +8,11 @@ import KnowledgeOpenContent from './KnowledgeOpenContent';
 import Pagination from './Pagination/Pagination';
 import './Pagination/PaginationList.css';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { EditTabListModal } from './EditTabListModal'
+import { SaveTabListModal } from './SaveTabListModal'
 import './CSS/Search.css';
+import './CSS/SaveTabs.css';
+
 
 
 function KnowledgeInGroup() {
@@ -17,7 +21,7 @@ function KnowledgeInGroup() {
 		
 	const [modalCreateKnowledge, setModalCreateKnowledge] = useState(false);
 
-  //состояние открыт ли список вкладок
+  //состояние открыт ли список знаний
   const [openListKnowledges, setOpenListKnowledges] = useState(true);
 
   const [knowledges, setKnowledges] = useState([]);
@@ -42,6 +46,180 @@ function KnowledgeInGroup() {
   const [isSearchActive, setIsSearchActive] = useState(false); // Флаг активного поиска
 
   // понять зачем второе состояние activeSearchTerm для поиска
+
+  // 🔥 НОВЫЕ СОСТОЯНИЯ ДЛЯ РАБОТЫ СО СПИСКАМИ ВКЛАДОК
+  const [savedTabLists, setSavedTabLists] = useState([]);
+  const [showSaveTabListModal, setShowSaveTabListModal] = useState(false);
+  const [showEditTabListModal, setShowEditTabListModal] = useState(false);
+  const [editingTabList, setEditingTabList] = useState(null);
+  const [loadingTabLists, setLoadingTabLists] = useState(false);
+  const [activeTabList, setActiveTabList] = useState(null); // Текущий открытый список
+
+  // 🔥 ЗАГРУЗКА СОХРАНЕННЫХ СПИСКОВ ВКЛАДОК
+  const loadSavedTabLists = async () => {
+    setLoadingTabLists(true);
+    try {
+      const response = await API.get('/get_tab_lists/');
+      setSavedTabLists(response.data);
+    } catch (error) {
+      console.error('Ошибка загрузки списков вкладок:', error);
+    } finally {
+      setLoadingTabLists(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSavedTabLists();
+  }, []);
+
+
+  // 🔥 СОХРАНЕНИЕ ТЕКУЩИХ ВКЛАДОК КАК СПИСКА
+  const saveCurrentTabsAsList = async (name, description) => {
+    try {
+      // Формируем список ID активных знаний
+      const knowledgeIds = activeTabs.map(tab => tab.id);
+      
+      const tabListData = {
+        name,
+        description,
+        active_tabs: knowledgeIds
+      };
+
+      const response = await API.post('/create_tab_list/', tabListData);
+      
+      // Обновляем локальное состояние
+      setSavedTabLists(prev => [response.data, ...prev]);
+      setShowSaveTabListModal(false);
+      
+      // Показываем уведомление об успехе
+      console.log('Список вкладок успешно сохранен!');
+      
+    } catch (error) {
+      console.error('Ошибка сохранения списка вкладок:', error);
+    }
+  };
+
+
+  // 🔥 ОТКРЫТИЕ СОХРАНЕННОГО СПИСКА ВКЛАДОК
+  const openSavedTabList = async (tabListId) => {
+    try {
+      setLoading(true);
+      
+      // Получаем данные знаний из списка
+      const response = await API.post(`/open_tab_list/${tabListId}/open`);
+      const knowledgeList = response.data;
+      
+      if (knowledgeList.length === 0) {
+        console.log('Список вкладок пуст');
+        return;
+      }
+
+      // Закрываем все текущие вкладки
+      setActiveTabs([]);
+      
+      // Последовательно открываем каждое знание из списка
+      
+      const newTabs = [];
+      for (const knowledge of knowledgeList) {
+        try {
+          
+          // const fullKnowledge = knowledge;
+          
+          newTabs.push({
+            id: knowledge.id,
+            title: knowledge.title,
+            knowledge: knowledge,
+            active: false // Пока неактивны, активируем последнюю позже
+          });
+        } catch (err) {
+          console.error(`Не удалось загрузить знание ${knowledge.id}:`, err);
+        }
+      }
+      
+      // Активируем последнюю вкладку
+      if (newTabs.length > 0) {
+        newTabs[newTabs.length - 1].active = true;
+      }
+      
+      setActiveTabs(newTabs);
+      setActiveTabList(tabListId); // Запоминаем какой список открыт
+      
+    } catch (error) {
+      console.error('Ошибка открытия списка вкладок:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  // 🔥 УДАЛЕНИЕ СПИСКА ВКЛАДОК
+  const deleteSavedTabList = async (tabListId, event) => {
+    event.stopPropagation(); // Предотвращаем открытие списка при удалении
+    
+    if (!window.confirm('Вы уверены, что хотите удалить этот список вкладок?')) {
+      return;
+    }
+    
+    try {
+      await API.delete(`/delete_tab_list/${tabListId}`);
+      
+      // Обновляем локальное состояние
+      setSavedTabLists(prev => prev.filter(list => list.id !== tabListId));
+      
+      // Если удаляемый список был активным - сбрасываем активный список
+      if (activeTabList === tabListId) {
+        setActiveTabList(null);
+      }
+      
+    } catch (error) {
+      console.error('Ошибка удаления списка вкладок:', error);
+    }
+  };
+
+
+  // 🔥 РЕДАКТИРОВАНИЕ СПИСКА ВКЛАДОК
+  const startEditingTabList = (tabList, event) => {
+    event.stopPropagation();
+    setEditingTabList(tabList);
+    setShowEditTabListModal(true);
+  };
+
+  const updateTabList = async (name, description) => {
+    try {
+      const updateData = {
+        id: editingTabList.id,
+        name,
+        description
+      };
+
+      const response = await API.patch('/change_tab_list/', updateData);
+      
+      // Обновляем локальное состояние
+      setSavedTabLists(prev => 
+        prev.map(list => 
+          list.id === editingTabList.id ? response.data : list
+        )
+      );
+      
+      setShowEditTabListModal(false);
+      setEditingTabList(null);
+      
+    } catch (error) {
+      console.error('Ошибка обновления списка вкладок:', error);
+    }
+  };
+
+  // 🔥 ОБНОВЛЕНИЕ АКТИВНОГО СПИСКА (при изменении вкладок)
+  useEffect(() => {
+    // Если активный список установлен, но вкладки изменились - сбрасываем активный список
+    if (activeTabList && activeTabs.length === 0) {
+      setActiveTabList(null);
+    }
+  }, [activeTabs, activeTabList]);
+
+
+  
+
   
   useEffect(() => {
     setCurrentPage(1);
@@ -77,7 +255,6 @@ function KnowledgeInGroup() {
           params.use_fts = true; // Используем полнотекстовый поиск
         }
 
-
         const response = await API.get(
           `/knowledges_in_group/${slug_gr}`,
            { 
@@ -86,11 +263,9 @@ function KnowledgeInGroup() {
            );
 
         // Проверяем, актуален ли еще этот запрос. Это для предотврашения повторных запросов. Надо проверить это... 
-        if (!isCurrent) return;
-      
+        if (!isCurrent) return;      
               
-        const data = response.data;
-        
+        const data = response.data;        
         setKnowledges(data.items);
         setTotal(data.total);
         setTotalPages(data.total_pages);
@@ -113,17 +288,13 @@ function KnowledgeInGroup() {
         // setLoading(false);
       }
     };
-
     fetchData();
-
     return () => { 
       isCurrent = false;//доп проверка чтобы убрать повторные запросы
       abortController.abort();
     }
   }, [currentPage, perPage, slug_gr, activeSearchTerm, searchType, isSearchActive]);
-  
-
-  
+    
   if (knowledges?.error) {
     return (<h1>Ошибка: {knowledges?.error}. Пройдите авторизацию.</h1>)
   }
@@ -186,10 +357,6 @@ function KnowledgeInGroup() {
   };
 
   // конец методов для поиска
-
-
-
-
   
   const openModalCreateKnowledge = () => {      
       setModalCreateKnowledge(true);
@@ -202,8 +369,6 @@ function KnowledgeInGroup() {
 	}    
     setModalCreateKnowledge(false);
   };
-
-
 
   /**
    * Мемоизированная функция для переключения между вкладками
@@ -218,7 +383,6 @@ function KnowledgeInGroup() {
       }))
     );
   }, []);
-
    
    // Загружает полные данные только при необходимости
   const openKnowledgeInTab = useCallback(async (knowledge) => {      
@@ -259,20 +423,15 @@ function KnowledgeInGroup() {
           }
         ];
       }
-
       );
-
     } catch (error) {
       console.error('Не удалось открыть знание:', error);
     }    
     finally {
         setLoading(false);        
-      }
-
-  // }, [knowledgeCache, loadFullKnowledge]);
+      }  
   }, []);
 
-  
   /**
    * Мемоизированная функция для закрытия вкладки
    * useCallback сохраняет ссылку на функцию между рендерами
@@ -295,14 +454,10 @@ function KnowledgeInGroup() {
           ...tab,
           active: index === lastTabIndex
         }));
-      }
-      
+      }      
       return filtered;
     });
   }, []); // Нет зависимостей - функция стабильна
-
-
-  
 
   // функция используется когда знание редактируется
   const updateTabKnowledge = useCallback((tabId, updatedKnowledge) => {    
@@ -354,8 +509,7 @@ function KnowledgeInGroup() {
     prevKnowledges.filter(knowledge => knowledge.id !== KnId)
     );
     
-  }, []);
-  
+  }, []);  
 
   // Получаем активное знание
   const activeTab = activeTabs.find(tab => tab.active);
@@ -369,11 +523,89 @@ function KnowledgeInGroup() {
               {openListKnowledges ? <FaChevronLeft /> : <FaChevronRight /> }
         </button>
         <br/><br/>
-      </div>
-      
+      </div>      
 
       {/* Левая панель со списком знаний */}
       <div className={`knowledges-list ${!openListKnowledges ? 'collapsed' : ''}`}>
+
+                  {/* 🔥 КНОПКА СОХРАНЕНИЯ ТЕКУЩИХ ВКЛАДОК */}
+                      {activeTabs.length > 0 && (
+                        <div className="save-tabs-section">
+                          <button 
+                            className="save-tabs-button"
+                            onClick={() => setShowSaveTabListModal(true)}
+                            disabled={loading}
+                          >
+                            💾 Сохранить текущие вкладки ({activeTabs.length})
+                          </button>
+                          {activeTabList && (
+                            <div className="active-tab-list-info">
+                              Открыт список: {savedTabLists.find(list => list.id === activeTabList)?.name}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 🔥 СПИСОК СОХРАНЕННЫХ ВКЛАДОК */}
+                      <div className="saved-tab-lists-section">
+                        <h3>📚 Мои списки вкладок</h3>
+                        
+                        {loadingTabLists ? (
+                          <div className="loading-tab-lists">Загрузка списков...</div>
+                        ) : (
+                          <>
+                            {savedTabLists.map(tabList => (
+                              <div 
+                                key={tabList.id} 
+                                className={`saved-tab-list-item ${activeTabList === tabList.id ? 'active' : ''}`}
+                                onClick={() => openSavedTabList(tabList.id)}
+                              >
+                                <div className="tab-list-header">
+                                  <div className="tab-list-title">
+                                    <strong>{tabList.name}</strong>
+                                    {activeTabList === tabList.id && (
+                                      <span className="active-badge">● Открыт</span>
+                                    )}
+                                  </div>
+                                  <div className="tab-list-actions">
+                                    <button 
+                                      className="edit-tab-list-btn"
+                                      onClick={(e) => startEditingTabList(tabList, e)}
+                                      title="Редактировать"
+                                    >
+                                      ✏️
+                                    </button>
+                                    <button 
+                                      className="delete-tab-list-btn"
+                                      onClick={(e) => deleteSavedTabList(tabList.id, e)}
+                                      title="Удалить список"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                </div>
+                                
+                                <div className="tab-list-info">
+                                  <span>🕒 {new Date(tabList.created_at).toLocaleDateString('ru-RU')}</span>
+                                </div>
+                                
+                                {tabList.description && (
+                                  <div className="tab-list-desc">{tabList.description}</div>
+                                )}
+                              </div>
+                            ))}
+                            
+                            {savedTabLists.length === 0 && (
+                              <div className="no-tab-lists">
+                                <p>Нет сохраненных списков вкладок</p>
+                                <small>Сохраните текущие вкладки, чтобы быстро возвращаться к ним</small>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+
                     
                     {/* Шапка */}
                     <div className="knowledges-list-header">
@@ -426,8 +658,6 @@ function KnowledgeInGroup() {
                             </div>
 
                             {/*конец поисковой системы*/}
-                          
-
                        
                         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                             <button className="save-button" onClick={openModalCreateKnowledge}>
@@ -445,7 +675,6 @@ function KnowledgeInGroup() {
                         </div>                    
                     </div>
 
-
                     {/* 🔥 ИНФОРМАЦИЯ О РЕЗУЛЬТАТАХ ПОИСКА */}
                     {isSearchActive && activeSearchTerm && (
                       <div className="search-info">
@@ -457,8 +686,6 @@ function KnowledgeInGroup() {
                         </p>
                       </div>
                     )}
-
-
 
                     {/* Прокручиваемая область списка */}                  
                     <div>
@@ -493,8 +720,7 @@ function KnowledgeInGroup() {
                       {knowledges.length === 0 && !loading && (
                         <div className="no-data">Нет данных для отображения</div>
                       )}
-                    </div>
-                  
+                    </div>                  
 
                     {/* Пагинация - фиксированная внизу */}
                     <div className="knowledges-list-footer">
@@ -505,12 +731,8 @@ function KnowledgeInGroup() {
                         hasNext={hasNext}
                         hasPrev={hasPrev}
                       />
-                    </div>
-                  
+                    </div>                  
     </div>
-
-  
-
 
       {/* Правая часть с вкладками и контентом */}
       <div className="knowledge-tabs-container">
@@ -546,6 +768,30 @@ function KnowledgeInGroup() {
           onSuccess={handleCreateKnowledge}
         />
       )}
+
+      {/* 🔥 МОДАЛКА СОХРАНЕНИЯ ВКЛАДОК */}
+        {showSaveTabListModal && (
+          <SaveTabListModal
+            onClose={() => setShowSaveTabListModal(false)}
+            onSave={saveCurrentTabsAsList}
+            tabCount={activeTabs.length}
+            loading={loading}
+          />
+        )}
+
+        {/* 🔥 МОДАЛКА РЕДАКТИРОВАНИЯ ВКЛАДОК */}
+        {showEditTabListModal && editingTabList && (
+          <EditTabListModal
+            tabList={editingTabList}
+            onClose={() => {
+              setShowEditTabListModal(false);
+              setEditingTabList(null);
+            }}
+            onSave={updateTabList}
+            loading={loading}
+          />
+        )}
+
     </div>
 		)
 }

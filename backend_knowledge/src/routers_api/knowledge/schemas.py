@@ -162,19 +162,19 @@ class SavedTabSchema(SavedTabBaseSchema):
 
 
 class TabListBaseSchema(BaseModel):
+    id: int
     name: str
     description: Optional[str] = None
 
 
-class TabListCreateSchema(TabListBaseSchema):
+class TabListCreateSchema(BaseModel):
+    name: str
+    description: Optional[str] = None
     active_tabs: List[int]# это список из id знаний которые открыты во вкладках
 
 
 
-class TabListSchema(TabListBaseSchema):
-    id: int
-    user_id: int
-    saved_tabs: List[SavedTabSchema] = []
+class TabListSchema(TabListBaseSchema):    
     created_at: datetime
     updated_at: datetime
     
