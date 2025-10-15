@@ -55,9 +55,8 @@ function KnowledgeInGroup() {
   const [loadingTabLists, setLoadingTabLists] = useState(false);
   const [activeTabList, setActiveTabList] = useState(null); // Текущий открытый список
   const [viewTabList, setViewTabList] = useState(false);//видимость списков вкладок
-  const [tabsName, setTabsName] = useState([]);// Убираем tabsName и храним названия в самих объектах savedTabLists
-  // дипсик доп sql запрос делает, мне не нравится, пересмотреть логику, надо ли в каждой вкладке содержание
-  // надо в любом случае зайдествовать бэк, например передавать название знаний в роуте /get_tab_lists/
+  const [tabsName, setTabsName] = useState([]);
+
 
 
   // 🔥 ЗАГРУЗКА СОХРАНЕННЫХ СПИСКОВ ВКЛАДОК
@@ -236,11 +235,7 @@ function KnowledgeInGroup() {
   }, [activeTabs, activeTabList]);
 
   
-  const showTabsName = (tabId, event) => {
-    if (event) {
-      event.stopPropagation(); // Предотвращаем открытие списка при клике на кнопку
-    }
-
+  const showTabsName = (tabId) => {
     setSavedTabLists(prevItems => 
       prevItems.map(item => 
         item.id === tabId
@@ -642,7 +637,7 @@ function KnowledgeInGroup() {
                       )}
 
                   <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>   
-                    <h3>📚 Cписки знаний</h3>
+                    <h3>📚 Cписки вкладок</h3>
 
                     {/* 🔥 КНОПКА СОХРАНЕНИЯ ТЕКУЩИХ ВКЛАДОК */}
                         {activeTabs.length > 0 && (
@@ -687,11 +682,10 @@ function KnowledgeInGroup() {
                                         <>
                                         <span className="active-badge">● Открыт</span>
                                         <br/>
-                                        
-                                        <button 
-                                          className="toggle-button" 
-                                          onClick={(event) => showTabsName(tabList.id, event)}>
-                                          Содержание<ArrowIcon isOpen={tabList.viewListTab} />
+                                        Содержание
+                                        <button className="toggle-button" onClick={() => showTabsName(tabList.id)}>
+                                          {/*{tabList.viewListTab ? 'Свернуть' : 'Развернуть'}*/}
+                                          <ArrowIcon isOpen={tabList.viewListTab} />
                                         </button>
                                         {tabList.viewListTab && 
                                         <>
@@ -739,8 +733,8 @@ function KnowledgeInGroup() {
                               
                               {savedTabLists.length === 0 && (
                                 <div className="no-tab-lists">
-                                  <p>Нет сохраненных списков знаний</p>
-                                  <small>Сохраните открытые знания, чтобы быстро возвращаться к ним</small>
+                                  <p>Нет сохраненных списков вкладок</p>
+                                  <small>Сохраните текущие вкладки, чтобы быстро возвращаться к ним</small>
                                 </div>
                               )}
                             </>

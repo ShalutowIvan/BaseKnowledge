@@ -44,10 +44,7 @@ function EditTabListModal({ tabList, onClose, onSave, loading }) {
             />
           </div>
           
-          <div className="modal-actions">
-            <button type="button" onClick={onClose} disabled={loading}>
-              Отмена
-            </button>
+          <div className="modal-actions">            
             <button 
               type="submit" 
               disabled={!name.trim() || loading}
@@ -55,6 +52,11 @@ function EditTabListModal({ tabList, onClose, onSave, loading }) {
             >
               {loading ? 'Сохранение...' : 'Обновить'}
             </button>
+
+            <button className="cancel-button" type="button" onClick={onClose} disabled={loading}>
+              Отмена
+            </button>
+
           </div>
         </form>
       </div>
