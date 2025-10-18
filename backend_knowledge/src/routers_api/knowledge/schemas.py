@@ -104,9 +104,20 @@ class KnowledgesSchemaOpen(KnowledgesSchemaFull):
 
 
 
+class KnowledgesSchemaPagination(KnowledgesSchema):
+    # id: int
+    # title: str
+    # description: str    
+    created_at: datetime
+    updated_at: datetime
+
+    # class Config:
+    #     from_attributes = True
+
+
 # схема пагинации
 class PaginatedResponse(BaseModel):
-    items: list[KnowledgesSchema]   # Список элементов текущей страницы
+    items: list[KnowledgesSchemaPagination]   # Список элементов текущей страницы
     total: int                      # ОБЩЕЕ количество элементов во всей таблице
     page: int                       # Текущая страница
     per_page: int                   # Количество элементов на странице

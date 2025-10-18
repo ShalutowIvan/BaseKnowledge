@@ -249,12 +249,12 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
           </div>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
             <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
-            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {currentKnowledge.created_at}</span>
+            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {new Date(knowledge.created_at).toLocaleString('ru-RU')}</span>
           </div>
 
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>            
             <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{currentKnowledge.title}</span>
-            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {currentKnowledge.updated_at}</span>
+            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {new Date(knowledge.updated_at).toLocaleString('ru-RU')}</span>
           </div>
           <br/>
           

@@ -428,6 +428,7 @@ async def knowledges_in_group_service(
                     "title": item[1],
                     "description": item[2],
                     "created_at": item[3],
+                    "updated_at": item[4]
                     # "relevance_score": float(item[4]) if item[4] is not None else 0.0
                 }
                 processed_items.append(knowledge_data)
@@ -439,7 +440,8 @@ async def knowledges_in_group_service(
                     "id": item[0],
                     "title": item[1], 
                     "description": item[2],
-                    "created_at": item[3]
+                    "created_at": item[3],
+                    "updated_at": item[4]
                 } 
                 for item in items_data
             ]
@@ -484,7 +486,7 @@ async def knowledges_in_group_service(
         # Логируем ошибку и возвращаем пользователю
         print(f"Ошибка в knowledges_in_group_service: {str(ex)}")
         raise HTTPException(
-            status_code=500, 
+            status_code=400, 
             detail="Ошибка при получении данных"
         )
 

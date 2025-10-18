@@ -34,7 +34,7 @@ function KnowledgeInGroup() {
   const [hasPrev, setHasPrev] = useState(false);//есть ли предыдущий
 
   // фильтры по дате изменения и по дате создания
-  const [filter_create_date, setFilter_create_date] = useState(false)
+  // const [filter_create_date, setFilter_create_date] = useState(false)
   const [filter_change_date, setFilter_change_date] = useState(false)
 
 
@@ -293,9 +293,9 @@ function KnowledgeInGroup() {
         }
 
         // если есть фильтры по дате, то добавляем из в параметры
-        if (filter_create_date) {
-          params.filter_create_date = filter_create_date;
-        }
+        // if (filter_create_date) {
+        //   params.filter_create_date = filter_create_date;
+        // }
 
         if (filter_change_date) {
           params.filter_change_date = filter_change_date;
@@ -339,7 +339,7 @@ function KnowledgeInGroup() {
       isCurrent = false;//доп проверка чтобы убрать повторные запросы
       abortController.abort();
     }
-  }, [currentPage, perPage, slug_gr, activeSearchTerm, searchType, isSearchActive]);
+  }, [currentPage, perPage, slug_gr, activeSearchTerm, searchType, isSearchActive, filter_change_date]);
     
   if (knowledges?.error) {
     return (<h1>Ошибка: {knowledges?.error}. Пройдите авторизацию.</h1>)
@@ -691,8 +691,7 @@ function KnowledgeInGroup() {
                               {savedTabLists.map(tabList => (
                                 <div 
                                   key={tabList.id} 
-                                  className={`saved-tab-list-item ${activeTabList === tabList.id ? 'active' : ''}`}
-                                  
+                                  className={`saved-tab-list-item ${activeTabList === tabList.id ? 'active' : ''}`}                                  
                                 >
                                   <div className="tab-list-header">
                                     <div className="tab-list-title">
@@ -766,15 +765,25 @@ function KnowledgeInGroup() {
                     <div>
                       <br/>
                       {/* Информация о пагинации */}          
-                      <div className="pagination-info">
-                        Показано {knowledges.length} из {total} записей
-                      </div>                        
+                      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                            <div className="pagination-info">                        
+                                Показано {knowledges.length} из {total} записей
+                            </div>
+
+                            <button className={filter_change_date ? 'cancel-button' : 'save-button'} onClick={() => {setFilter_change_date(!filter_change_date);}} disabled={loading}>Фильтр по дате изменения</button>
+                      </div>
                       <br/>
                       {/* Список знаний */}
                       {knowledges?.map((knowledge) => (
                         <div key={knowledge.id}>
                           <div className="section-frame">
-                            <h3 className="name-knowledge">{knowledge.title}</h3>
+                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                              <h3 className="name-knowledge">{knowledge.title}</h3>
+                              <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {new Date(knowledge.updated_at).toLocaleString('ru-RU')}</span>
+                              
+                              
+                              
+                            </div>
                             <p>Описание: {knowledge.description}</p>
 
                             {/* 🔥 ОТОБРАЖЕНИЕ РЕЛЕВАНТНОСТИ ЕСЛИ ЕСТЬ */}
