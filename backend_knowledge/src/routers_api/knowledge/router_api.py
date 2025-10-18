@@ -87,14 +87,16 @@ async def knowledges_in_group(
     per_page: int = Query(10, ge=1, le=50, description="Количество элементов на странице"),
     search: str = Query(None),
     search_type: str = "plain",
+    # filter_create_date: bool = Query(False, description="Фильтровать по дате создания"),
+    filter_change_date: bool = Query(False, description="Фильтровать по дате изменения"),
     user_id: int = Depends(verify_user_service),
     session: AsyncSession = Depends(get_async_session)) -> PaginatedResponse:
 
-    return await knowledges_in_group_service(search=search, search_type=search_type, slug=slug, page=page, per_page=per_page, user_id=user_id, db=session)
+    return await knowledges_in_group_service(search=search, search_type=search_type, slug=slug, page=page, per_page=per_page, filter_change_date=filter_change_date, user_id=user_id, db=session)
 
 
 # создание знания
-@router_knowledge_api.post("/knowledges_create/", response_model=KnowledgesSchemaFull)
+@router_knowledge_api.post("/knowledges_create/", response_model=KnowledgesSchema)
 async def knowledges_create(
     knowledge: KnowledgesCreateSchema, 
     user_id: int = Depends(verify_user_service),    

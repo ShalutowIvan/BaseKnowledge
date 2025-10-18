@@ -111,7 +111,9 @@ async def knowledges_create_service(user_id: int, db: AsyncSession, knowledge: K
 
 # получение всех знаний, пока без пагинации
 async def knowledges_all_service(user_id: int, db: AsyncSession) -> list[KnowledgesSchema]:
-    query = select(Knowledge).where(Knowledge.user_id == user_id).order_by(Knowledge.created_at.desc())
+    query = select(Knowledge).where(Knowledge.user_id == user_id)
+    # query = query.order_by(Knowledge.created_at.desc())
+    query = query.order_by(Knowledge.created_at)
     knowledges = await db.execute(query)
     return knowledges.scalars().all()
     
@@ -281,11 +283,14 @@ async def knowledges_in_group_service(
     user_id: int, 
     db: AsyncSession, 
     slug: str, 
+    # filter_create_date: bool = False,#если по дате создания то будет включаться сортировка от самого раннего, а без него от самого позднего
+    filter_change_date: bool = False,
     search: str = None,
     search_type: str = "plain",  # plain, phrase, advanced
     use_fts: bool = True,
     page: int = 1, 
     per_page: int = 20) -> PaginatedResponse:
+
     try:
 
         if page < 1 or per_page < 1:
@@ -311,7 +316,8 @@ async def knowledges_in_group_service(
             Knowledge.id, 
             Knowledge.title, 
             Knowledge.description,
-            Knowledge.created_at
+            Knowledge.created_at,
+            Knowledge.updated_at
         ).where(Knowledge.user_id == user_id)
 
         count_query = select(func.count(Knowledge.id)).where(Knowledge.user_id == user_id)
@@ -353,8 +359,9 @@ async def knowledges_in_group_service(
                     data_query
                     .where(search_condition)
                     .add_columns(rank_expression)  # Добавляем score в SELECT
-                    .order_by(text("search_score DESC"), Knowledge.created_at.desc())
-                    .order_by(Knowledge.created_at.desc())
+                    # .order_by(text("search_score DESC"), Knowledge.created_at.desc())
+                    .order_by(text("search_score DESC"))
+                    # .order_by(Knowledge.created_at.desc())
                     .params(search=search_cleaned)
                 )
 
@@ -370,10 +377,24 @@ async def knowledges_in_group_service(
                 )
                 data_query = data_query.where(search_condition)
                 count_query = count_query.where(search_condition)
-                data_query = data_query.order_by(Knowledge.created_at.desc())
+                # data_query = data_query.order_by(Knowledge.created_at.desc())
         else:
             # Без поиска - обычная сортировка
-            data_query = data_query.order_by(Knowledge.created_at.desc())
+            data_query = data_query
+            # .order_by(Knowledge.created_at.desc())
+
+
+        #тут делаем сортировку по дате создания либо изменения в обратном или обычном порядке
+
+        if filter_change_date == True:
+            data_query = data_query.order_by(Knowledge.updated_at)        
+        else:
+            data_query = data_query.order_by(Knowledge.updated_at.desc())
+
+        
+
+
+
 
         # Применяем пагинацию к основному запросу
         data_query = data_query.limit(per_page).offset(offset)

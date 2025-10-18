@@ -33,6 +33,11 @@ function KnowledgeInGroup() {
   const [hasNext, setHasNext] = useState(false);//есть ли следующий
   const [hasPrev, setHasPrev] = useState(false);//есть ли предыдущий
 
+  // фильтры по дате изменения и по дате создания
+  const [filter_create_date, setFilter_create_date] = useState(false)
+  const [filter_change_date, setFilter_change_date] = useState(false)
+
+
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 
@@ -285,6 +290,15 @@ function KnowledgeInGroup() {
           params.search = activeSearchTerm;
           params.search_type = searchType;
           params.use_fts = true; // Используем полнотекстовый поиск
+        }
+
+        // если есть фильтры по дате, то добавляем из в параметры
+        if (filter_create_date) {
+          params.filter_create_date = filter_create_date;
+        }
+
+        if (filter_change_date) {
+          params.filter_change_date = filter_change_date;
         }
 
         const response = await API.get(
@@ -678,7 +692,7 @@ function KnowledgeInGroup() {
                                 <div 
                                   key={tabList.id} 
                                   className={`saved-tab-list-item ${activeTabList === tabList.id ? 'active' : ''}`}
-                                  onClick={() => openSavedTabList(tabList.id)}
+                                  
                                 >
                                   <div className="tab-list-header">
                                     <div className="tab-list-title">
@@ -730,7 +744,7 @@ function KnowledgeInGroup() {
                                     <span>🕒 {new Date(tabList.created_at).toLocaleDateString('ru-RU')}</span>
                                   </div>
 
-                                  <p>{tabList.viewListTab}</p>
+                                  <button onClick={() => openSavedTabList(tabList.id)}>Открыть</button>
                                   
                                   
                                   
