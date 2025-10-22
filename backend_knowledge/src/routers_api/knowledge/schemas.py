@@ -116,7 +116,7 @@ class KnowledgesSchemaPagination(KnowledgesSchema):
 
 
 # схема пагинации
-class PaginatedResponse(BaseModel):
+class PaginatedResponseKnowledge(BaseModel):
     items: list[KnowledgesSchemaPagination]   # Список элементов текущей страницы
     total: int                      # ОБЩЕЕ количество элементов во всей таблице
     page: int                       # Текущая страница
@@ -194,4 +194,13 @@ class TabListSchema(TabListBaseSchema):
 
 
 
-
+class PaginatedResponseSavedTabs(BaseModel):
+    items: list[TabListSchema]      # Список элементов текущей страницы
+    total: int                      # ОБЩЕЕ количество элементов во всей таблице
+    page: int                       # Текущая страница
+    per_page: int                   # Количество элементов на странице
+    total_pages: int                # ОБЩЕЕ количество страниц
+    has_next: bool                  # Есть ли следующая страница
+    has_prev: bool                  # Есть ли предыдущая страница
+    first_item: int | None          # ID первого элемента на странице
+    last_item: int | None           # ID последнего элемента на странице

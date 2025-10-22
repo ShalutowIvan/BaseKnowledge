@@ -289,7 +289,7 @@ async def knowledges_in_group_service(
     search_type: str = "plain",  # plain, phrase, advanced
     use_fts: bool = True,
     page: int = 1, 
-    per_page: int = 20) -> PaginatedResponse:
+    per_page: int = 20) -> PaginatedResponseKnowledge:
 
     try:
 
@@ -391,26 +391,13 @@ async def knowledges_in_group_service(
         else:
             data_query = data_query.order_by(Knowledge.updated_at.desc())
 
-        
-
-
-
-
         # Применяем пагинацию к основному запросу
         data_query = data_query.limit(per_page).offset(offset)
-
-
         
         # выполняем запросы
         data_result = await db.execute(data_query)
         
         count_result = await db.execute(count_query)
-
-        # или так параллельно: 
-        # data_result, count_result = await asyncio.gather(
-        #     db.execute(data_query),
-        #     db.execute(count_query)
-        # )
 
         items_data = data_result.all()
                 
@@ -467,7 +454,7 @@ async def knowledges_in_group_service(
         has_prev = page > 1
 
         
-        return PaginatedResponse(
+        return PaginatedResponseKnowledge(
                 items=items,
                 total=total_count,
                 page=page,
@@ -682,15 +669,7 @@ async def delete_tab_list_service(user_id: int, tab_list_id: int, db: AsyncSessi
     return {"status": "success"}
 
 
-async def get_tab_lists_service(user_id: int, db: AsyncSession):
-    query = (
-        select(Tab_list).where(Tab_list.user_id == user_id).order_by(Tab_list.created_at.desc())
-            )
 
-    result = await db.execute(query)
-    tab_lists = result.scalars().all()
-    
-    return tab_lists
 
 
 async def change_tab_list_service(db: AsyncSession, user_id: int, tab_list_data: TabListBaseSchema) -> TabListBaseSchema:
@@ -708,11 +687,6 @@ async def change_tab_list_service(db: AsyncSession, user_id: int, tab_list_data:
     await db.commit()
     await db.refresh(tab_list)
     return tab_list
-
-
-
-# протестить.... ост тут
-
 
 
 
@@ -962,10 +936,67 @@ async def delete_group_service(user_id: int, group_id: int, db: AsyncSession, mo
     return {"status": "success"}
 
 
+#добавил пагинацию здесь
+async def get_tab_lists_service(
+    user_id: int, 
+    db: AsyncSession, 
+    page: int = 1, 
+    per_page: int = 20) -> PaginatedResponseSavedTabs:    
+    try:
+        if page < 1 or per_page < 1:
+            raise HTTPException(
+                status_code=403,
+                detail="Номер страницы и размер страницы должны быть положительными числами"
+            )
 
+        if per_page > 100:
+            raise HTTPException(
+                status_code=400, 
+                detail="Размер страницы не может превышать 100"
+            )
 
+        offset = (page - 1) * per_page
 
+        query = (
+            select(Tab_list).where(Tab_list.user_id == user_id).order_by(Tab_list.created_at.desc()).limit(per_page).offset(offset)
+                )
+        count_query = (
+            select(func.count(Tab_list.id)).where(Tab_list.user_id == user_id)
+            )
 
+        result = await db.execute(query)
+        count_result = await db.execute(count_query)
+        
+        total_count = count_result.scalar()
+        tab_lists = result.scalars().all()
 
+        total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
 
+        first_item = tab_lists[0].id if tab_lists else None
+        last_item = tab_lists[-1].id if tab_lists else None
 
+        has_next = page < total_pages
+        has_prev = page > 1
+        
+        return PaginatedResponseSavedTabs(
+                items=tab_lists,
+                total=total_count,
+                page=page,
+                per_page=per_page,
+                total_pages=total_pages,
+                has_next=has_next,
+                has_prev=has_prev,
+                first_item=first_item,
+                last_item=last_item
+            )
+
+    
+    except HTTPException:        
+        raise
+
+    except Exception as ex:
+        # Логируем ошибку и возвращаем пользователю
+        print(f"Ошибка в get_tab_lists_service: {str(ex)}")
+        raise HTTPException(
+            status_code=400, 
+            detail="Ошибка при получении данных")

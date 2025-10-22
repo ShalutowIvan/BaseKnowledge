@@ -80,18 +80,16 @@ async def knowledges_all(
 
 
 #получение всех знаний по фильтру слага группы
-@router_knowledge_api.get("/knowledges_in_group/{slug}", response_model=PaginatedResponse)
+@router_knowledge_api.get("/knowledges_in_group/{slug}", response_model=PaginatedResponseKnowledge)
 async def knowledges_in_group(
     slug: str, 
     page: int = Query(1, ge=1, description="Номер страницы (начинается с 1)"),
     per_page: int = Query(10, ge=1, le=50, description="Количество элементов на странице"),
     search: str = Query(None),
-    search_type: str = "plain",
-    # filter_create_date: bool = Query(False, description="Фильтровать по дате создания"),
+    search_type: str = "plain",    
     filter_change_date: bool = Query(False, description="Фильтровать по дате изменения"),
     user_id: int = Depends(verify_user_service),
-    session: AsyncSession = Depends(get_async_session)) -> PaginatedResponse:
-
+    session: AsyncSession = Depends(get_async_session)) -> PaginatedResponseKnowledge:
     return await knowledges_in_group_service(search=search, search_type=search_type, slug=slug, page=page, per_page=per_page, filter_change_date=filter_change_date, user_id=user_id, db=session)
 
 
@@ -226,13 +224,15 @@ async def knowledge_update_header(
 # Ниже сохранение списка вкладок или табов
 
 # роут для отображения списка сохраненных табов. 
-@router_knowledge_api.get("/get_tab_lists/", response_model=List[TabListSchema])
+@router_knowledge_api.get("/get_tab_lists/", response_model=PaginatedResponseSavedTabs)
 async def get_tab_lists(
+    page: int = Query(1, ge=1, description="Номер страницы (начинается с 1)"),
+    per_page: int = Query(10, ge=1, le=50, description="Количество элементов на странице"),
     session: AsyncSession = Depends(get_async_session),
     user_id: int = Depends(verify_user_service)
 ):
     """Получить все мои списки вкладок"""
-    return await get_tab_lists_service(db=session, user_id=user_id)
+    return await get_tab_lists_service(db=session, user_id=user_id, page=page, per_page=per_page)
 
 
 #создание табов

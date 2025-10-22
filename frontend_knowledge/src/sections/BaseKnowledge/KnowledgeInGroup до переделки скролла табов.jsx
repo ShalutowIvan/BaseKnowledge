@@ -13,7 +13,6 @@ import { SaveTabListModal } from './SaveTabListModal'
 import './CSS/Search.css';
 import './CSS/SaveTabs.css';
 import { ArrowIcon } from './SvgArrow'
-import { LoadMoreTabListsButton } from './LoadMoreTabListsButton'
 
 
 function KnowledgeInGroup() {
@@ -71,70 +70,33 @@ function KnowledgeInGroup() {
   const [isLoadingMoreTabLists, setIsLoadingMoreTabLists] = useState(false);
   const [allTabLists, setAllTabLists] = useState([]); // Все загруженные списки вкладок
   const [tabListsTotal, setTabListsTotal] = useState(0);
-  const TAB_LISTS_PER_PAGE = 2; // Количество списков на страницу
+  const TAB_LISTS_PER_PAGE = 10; // Количество списков на страницу
 
 
-  // 🔥 ЗАГРУЗКА СПИСКОВ ВКЛАДОК С ПАГИНАЦИЕЙ
-  const loadSavedTabLists = async (page = 1, isLoadMore = false) => {
-    if (isLoadMore) {
-      setIsLoadingMoreTabLists(true);
-    } else {
-      setLoadingTabLists(true);
-    }
-    
+  // 🔥 ЗАГРУЗКА СОХРАНЕННЫХ СПИСКОВ ВКЛАДОК
+  const loadSavedTabLists = async () => {
+    setLoadingTabLists(true);
     try {
-      const response = await API.get('/get_tab_lists/', {
-        params: {
-          page: page,
-          per_page: TAB_LISTS_PER_PAGE
-        }
-      });      
+      const response = await API.get('/get_tab_lists/');      
 
-      const data = response.data;
-      const savedTabArray = Array.isArray(data.items) ? data.items : [];
-      
-      // 🔥 ДОБАВЛЯЕМ ПОЛЕ viewListTab ДЛЯ КАЖДОГО СПИСКА
-      const tabListsWithViewState = savedTabArray.map(item => ({
-        ...item,
-        viewListTab: false // По умолчанию свернуто
-      }));
-      
-      if (isLoadMore) {
-        // Добавляем к существующим данным
-        setSavedTabLists(prev => [...prev, ...tabListsWithViewState]);
-        setTabListsPage(page);
-        setHasMoreTabLists(savedTabArray.length === TAB_LISTS_PER_PAGE);
-      } else {
-        // Первая загрузка
-        setSavedTabLists(tabListsWithViewState);
-        setTabListsPage(1);
-        setHasMoreTabLists(savedTabArray.length === TAB_LISTS_PER_PAGE);
-        setTabListsTotal(response.data.total || savedTabArray.length);
-      }
-      
+      const savedTabArray = Array.isArray(response.data) ? response.data : [];
+      setSavedTabLists(prevItems => 
+                        savedTabArray.map(item => ({
+                          ...item,
+                          viewListTab: false
+                        })));
+                         
+
     } catch (error) {
       console.error('Ошибка загрузки списков вкладок:', error);
     } finally {
-      if (isLoadMore) {
-        setIsLoadingMoreTabLists(false);
-      } else {
-        setLoadingTabLists(false);
-      }
+      setLoadingTabLists(false);
     }
   };
 
   useEffect(() => {
-    loadSavedTabLists(1, false);
+    loadSavedTabLists();
   }, []);
-
-  // 🔥 ЗАГРУЗКА СЛЕДУЮЩЕЙ СТРАНИЦЫ СПИСКОВ ВКЛАДОК
-  const loadMoreTabLists = async () => {
-    if (isLoadingMoreTabLists || !hasMoreTabLists) return;
-    
-    const nextPage = tabListsPage + 1;
-    await loadSavedTabLists(nextPage, true);
-  };
-
 
 
   // 🔥 СОХРАНЕНИЕ ТЕКУЩИХ ВКЛАДОК КАК СПИСКА
@@ -301,7 +263,7 @@ function KnowledgeInGroup() {
     );
   };
 
-  
+
 
   //эффект для пагинации 
   useEffect(() => {
@@ -737,7 +699,7 @@ function KnowledgeInGroup() {
                               {savedTabLists.map(tabList => (
                                 <div 
                                   key={tabList.id} 
-                                  className={`saved-tab-list-item ${activeTabList === tabList.id ? 'active' : ''}`}
+                                  className={`saved-tab-list-item ${activeTabList === tabList.id ? 'active' : ''}`}                                  
                                 >
                                   <div className="tab-list-header">
                                     <div className="tab-list-title">
@@ -795,15 +757,6 @@ function KnowledgeInGroup() {
                                   
                                 </div>
                               ))}
-
-                              {/* 🔥 КНОПКА "ЗАГРУЗИТЬ ДАЛЬШЕ" ДЛЯ СПИСКОВ ВКЛАДОК */}
-                                <LoadMoreTabListsButton
-                                  onClick={loadMoreTabLists}
-                                  hasMore={hasMoreTabLists}
-                                  isLoading={isLoadingMoreTabLists}
-                                  loadedCount={savedTabLists.length}
-                                  total={tabListsTotal}
-                                />
                               
                               {savedTabLists.length === 0 && (
                                 <div className="no-tab-lists">
