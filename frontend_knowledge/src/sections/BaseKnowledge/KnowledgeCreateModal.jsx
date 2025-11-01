@@ -59,9 +59,8 @@ function KnowledgeCreateModal({ onClose, onSuccess }) {
                 } );            
             
             setLoading(false);            
-            onSuccess(response.data, group_slug);//это функция которая срабатывает в компоненте где открывается модальное окно
-            onClose();
-            
+            onSuccess(group_slug);//это функция которая срабатывает в компоненте где открывается модальное окно
+            onClose();            
         } catch (error) {
             setLoading(false);
             console.log(error)

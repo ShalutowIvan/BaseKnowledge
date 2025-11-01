@@ -88,13 +88,13 @@ async def get_knowledge(db: AsyncSession, user_id: int, knowledge_id: int) -> Kn
     return result.scalar()
 
 
-async def knowledges_create_service(user_id: int, db: AsyncSession, knowledge: KnowledgesCreateSchema) -> KnowledgesSchemaFull:
+async def knowledges_create_service(user_id: int, db: AsyncSession, knowledge: KnowledgesCreateSchema):
     slug = translit(knowledge.title, language_code='ru', reversed=True)    
     new_knowledge = Knowledge(title=knowledge.title, description=knowledge.description, group_id=knowledge.group_id, slug=slug, user_id=user_id)
     db.add(new_knowledge)
     await db.commit()
     await db.refresh(new_knowledge)
-    return new_knowledge
+    return {"succes": True}
 
 
 
@@ -693,11 +693,20 @@ async def change_tab_list_service(db: AsyncSession, user_id: int, tab_list_data:
 
 # открыть знание
 async def knowledges_open_service(user_id: int, kn_id: int, db: AsyncSession):    
-    query = select(Knowledge).options(selectinload(Knowledge.images), selectinload(Knowledge.group)).where(Knowledge.id == kn_id).where(Knowledge.user_id == user_id)
+    try:
+        query = select(Knowledge).options(selectinload(Knowledge.images), selectinload(Knowledge.group)).where(Knowledge.id == kn_id).where(Knowledge.user_id == user_id)
+        
+        result = await db.execute(query)
+        knowledge = result.scalar_one_or_none()
+
+        if knowledge == None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Knowledge not found!")
+        
+        return knowledge
     
-    knowledge = await db.execute(query)
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail="error opening knowledge")            
     
-    return knowledge.scalar()
 
 
 

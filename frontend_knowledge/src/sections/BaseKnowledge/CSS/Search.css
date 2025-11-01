@@ -1,31 +1,48 @@
 /* Стили для поиска с кнопкой */
+
+/* .knowledges-list-header {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  width: 100%;
+} */
+
 .search-container {
+  
   margin: 15px 0;
   padding: 15px;
   background: #696969;
   border-radius: 8px;
   border: 1px solid #e9ecef;
+  min-width: 500px;
+  /* width: 100%; */
+  
 }
 
 .search-input-with-button {
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  max-width: 600px;
+  /* max-width: 600px; */  
 }
+
+
+
 
 .search-input-wrapper {
   position: relative;
   flex: 1;
+  min-width: 400px;
 }
 
 .search-input {
   width: 85%;
+  min-width: 85%;
   padding: 12px 45px 12px 15px;
   border: 2px solid #e9ecef;
   border-radius: 6px;
   font-size: 14px;
-  transition: border-color 0.2s;  
+  transition: none;  
 }
 
 .search-input:focus {
@@ -64,7 +81,7 @@
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color 0.2s;
+  /* transition: background-color 0.2s; */
 }
 
 .search-submit-btn:hover:not(:disabled) {

@@ -1,12 +1,10 @@
-import { NavLink, useLoaderData, useNavigate, useLocation, Link, Outlet } from 'react-router-dom'
-import { useState, useEffect, Fragment, useCallback } from 'react'
+import { NavLink, useLoaderData, Outlet } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
 import { API } from '../../apiAxios/apiAxios'
 import { DeleteGroupModal } from './DeleteGroupModal'
 import { GroupCreateModal } from './GroupCreateModal'
-
-import { FaTrash } from "react-icons/fa";
 import { DropdownMenu } from './DropdownMenu'; 
-
+import { ErrorDisplay } from './ErrorDisplay'
 
 function KnowledgeLayout() {
 
@@ -24,16 +22,12 @@ function KnowledgeLayout() {
   
   
   const [selectedGroup, setSelectedGroup] = useState(null);
-
-  const navigate = useNavigate();
-  const location = useLocation();
-
-
-  if (groupsLoad?.error) {
-    return (
-      <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {groupsLoad.error}. Пройдите авторизацию.</h1>
-      )
-  }
+  
+  // if (groupsLoad?.error) {
+  //   return (
+  //     <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {groupsLoad?.error}. Пройдите авторизацию.</h1>
+  //     )
+  // }
 
   //передаем объект группы в компонент модального окна. 
   const handleDeleteClick = (group) => {
@@ -52,7 +46,10 @@ function KnowledgeLayout() {
     const fetchData = async () => {
     try {
 
-      if (groupsLoad && !groupsLoad.error) {
+      setLoading(true);
+      setError(null); // Сбрасываем ошибку перед загрузкой
+
+      if (!groupsLoad.error) {          
           // Убедимся, что groupsLoad - массив
           const groupsArray = Array.isArray(groupsLoad) ? groupsLoad : [];
           setGroups(prevItems => 
@@ -60,30 +57,25 @@ function KnowledgeLayout() {
                 ...item,                        
                 isEditing: false
               })));
-          }
+          } else if (groupsLoad?.error) {
+          // Если в groupsLoad уже есть ошибка
+          
+          setError(groupsLoad.error);
+        }
+            
 
       setLoading(false);
     } catch (err) {
-      setError(err.response?.data?.detail);
-      console.log("Ошибка из лейаут", err.response?.data?.detail)
+      setError(err);
+      console.log("Ошибка из лейаут", err)
       setLoading(false);
     }
     };
     fetchData()
     
-  }, [])
+  }, [groupsLoad])
 
-
-  const create_group = () => {
-      return navigate("/knowledges/group/create/");
-    }
-
-
-  const create_knowledge = () => {
-      return navigate("/knowledges/create/");
-    }  
   
-
   const setGroupName = useCallback((group_id) => (e) => {
       const { name, value } = e.target;
       setGroups(prev => prev.map(item => 
@@ -116,6 +108,8 @@ function KnowledgeLayout() {
           if (!validateFormArray(groupId)) return;
           try {           
               setLoading(true);
+              setError(null);
+
               const response = await API.patch(
                   `/group_name_update/${groupId}`,
                   { name_group: name_group }
@@ -170,17 +164,19 @@ function KnowledgeLayout() {
       };
 
 
-  
-
-  
-
-
   return (
 
     <>
+      {/* Компонент для отображения ошибок */}
+      <ErrorDisplay 
+          error={error} 
+          onClose={() => setError(null)} 
+        />  
+      
       {/* Боковая панель с группами (постоянная) */}      
       <aside>
         
+            
             <button className="save-button" onClick={openModalCreateGroup}>Добавить группу</button>
 
             <NavLink to="/knowledges/all" >              
@@ -231,7 +227,7 @@ function KnowledgeLayout() {
                               </div>
                             
                             </div>
-                          {error && <p style={{ color: 'red'}}>{error}</p>}
+                          
                           </form>
                         </div>
                       
@@ -261,17 +257,21 @@ function KnowledgeLayout() {
                     )
                     ))              
               )
-            }            
+            }
+            
 
-            {modalDeleteGroup && (
+              
+
+
+      </aside>
+
+      {modalDeleteGroup && (
               <DeleteGroupModal
                 groupToDelete={selectedGroup}
                 onClose={() => setModalDeleteGroup(false)}
                 onSuccess={handleDeleteSuccess}
               />
-            )}        
-
-      </aside>
+            )}    
 
       {/*центральная часть с кнопками*/}
       <div className="central-part-knowledges">
@@ -300,29 +300,25 @@ function KnowledgeLayout() {
 
 
 async function getGroups() { 
-  
   try {        
-        const responseGroups = await API.get('/groups_all/');
-        return responseGroups.data
-      } catch (error) {
-        console.log("Ошибка из лоадера", error.response?.data?.detail)
-
-        return {"error": error.response?.data?.detail}
-      }  
+    const responseGroups = await API.get('/groups_all/');
+    return responseGroups.data;
+  } catch (error) {
+    console.log("Ошибка из лоадера", error);
+    
+    // ВОЗВРАЩАЕМ ОБЪЕКТ С ОШИБКОЙ
+    return { 
+      error: error.response?.data?.detail || error.message || "Ошибка соединения с сервером" 
+    };
+  }  
 }
-
-
-
 
 const KnowledgeGroupsLoader = async () => {
-
-  const requestGroups = await getGroups()  
-
+  const requestGroups = await getGroups();  
   return {
     groupsLoad: requestGroups    
-  }
-}
-
+  };
+};
 
 
 

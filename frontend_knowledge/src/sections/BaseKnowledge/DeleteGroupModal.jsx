@@ -15,7 +15,6 @@ function DeleteGroupModal({ groupToDelete, onClose, onSuccess }) {
 
   const navigate = useNavigate();
 
-
   // Проверяем есть ли знания в группе и загружаем другие группы
   useEffect(() => {
     const checkGroup = async () => {
@@ -24,8 +23,8 @@ function DeleteGroupModal({ groupToDelete, onClose, onSuccess }) {
         const knowledgeRes = await API.get(`/knowledges_in_group/${groupToDelete.slug}`);
         // groupToDelete это объект, groupToDelete берется из select формы в другом компоненте формы
         
-        setHasKnowledge(knowledgeRes.data.length > 0);
-        
+        setHasKnowledge(knowledgeRes.data.items.length > 0);
+
         // Загружаем список всех групп (кроме текущей) в состояние
         const groupsRes = await API.get('/groups_all/');
         setGroups(groupsRes.data.filter(g => g.id !== groupToDelete.id));
@@ -102,7 +101,7 @@ function DeleteGroupModal({ groupToDelete, onClose, onSuccess }) {
 
         {error && <div className="error-message">{error}</div>}
 
-        <div className="modal-actions">
+        <div className="modal-actions-group">
           <button 
             onClick={handleDelete}
             disabled={isDeleting || (hasKnowledge && !targetGroupId)}

@@ -94,7 +94,7 @@ async def knowledges_in_group(
 
 
 # создание знания
-@router_knowledge_api.post("/knowledges_create/", response_model=KnowledgesSchema)
+@router_knowledge_api.post("/knowledges_create/")
 async def knowledges_create(
     knowledge: KnowledgesCreateSchema, 
     user_id: int = Depends(verify_user_service),    

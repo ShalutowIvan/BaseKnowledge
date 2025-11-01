@@ -11,7 +11,7 @@ import { updateAccessTokenFromRefreshToken } from "../../regusers/AuthService"
 function RoadMapList() {
 	const setActive = ({isActive}) => isActive ? 'active-link' : '';
 	const {roadmapLoad} = useLoaderData()
-	const [roadmaps, setRoadmaps] = useState(roadmapLoad);
+	const [roadmaps, setRoadmaps] = useState([]);
   
 
   const navigate = useNavigate();  
@@ -25,6 +25,13 @@ function RoadMapList() {
 	if (roadmapLoad?.error) {  
     return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {roadmapLoad["error"]}. Пройдите авторизацию.</h1>
   	}
+
+
+
+  useEffect(() => {    
+    const roadMapList = Array.isArray(roadmapLoad) ? roadmapLoad : [];
+    setRoadmaps(roadMapList);
+  }, []);
 
 
   const openModalClick = () => {      

@@ -1,9 +1,16 @@
+import React from 'react';
 
+const LoadMoreTabListsButton = ({ 
+  onClick, 
+  hasMore, 
+  isLoading, 
+  loadedCount, 
+  total 
+}) => {
+  
+  // if (!hasMore) return null;
 
-
-// 🔥 КОМПОНЕНТ КНОПКИ "ЗАГРУЗИТЬ ДАЛЬШЕ" ДЛЯ СПИСКОВ ВКЛАДОК
-const LoadMoreTabListsButton = ({ onClick, hasMore, isLoading, loadedCount, total }) => {
-  if (!hasMore && loadedCount > 0) {
+  if (!hasMore && loadedCount > 0) {  
     return (
       <div className="load-more-section">
         <div className="end-of-list">
@@ -24,33 +31,16 @@ const LoadMoreTabListsButton = ({ onClick, hasMore, isLoading, loadedCount, tota
   }
 
   return (
-    <div className="load-more-section">
+    <div className="load-more-tab-lists">
       <button 
-        className={`load-more-button ${isLoading ? 'loading' : ''}`}
-        onClick={onClick}
+        onClick={onClick} 
         disabled={isLoading}
+        className="load-more-button"
       >
-        {isLoading ? (
-          <>
-            <span className="spinner"></span>
-            Загрузка списков...
-          </>
-        ) : (
-          <>
-            📥 Загрузить еще списки
-          </>
-        )}
+        {isLoading ? 'Загрузка...' : `Загрузить еще (${loadedCount} из ${total})`}
       </button>
-      
-      {!isLoading && hasMore && (
-        <div className="load-more-hint">
-          Еще доступно списков для загрузки {total - loadedCount}
-        </div>
-      )}
     </div>
   );
 };
 
-
-
-export { LoadMoreTabListsButton }
+export {LoadMoreTabListsButton};

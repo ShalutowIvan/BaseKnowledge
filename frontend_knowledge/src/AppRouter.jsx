@@ -63,59 +63,34 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
           <Route path="regusers/forgot_password/" element={<Forgot_password />} />
           <Route path="regusers/forgot_password_verify/:token" element={<Forgot_password_verify />} />
 
-
-
-          {/* база знаний */}                    
-
+          {/* база знаний */}
           <Route path="knowledges" element={<KnowledgeLayout />} loader={KnowledgeGroupsLoader}>            
             {/* Основные маршруты знаний */}
-            <Route index element={<KnowledgeIndex />} />
-            {/*loader={KnowledgesInGroupLoader}*/}
-            <Route path=":slug_gr" element={<KnowledgeInGroup />}  />
-              {/*<Route index element={<KnowledgeInGroupIndex />} />
-              <Route path="knowledge_open/:kn_id" element={<KnowledgeOpen />} loader={KnowledgeOpenLoader} />*/}
-            {/*</Route>*/}
-            
+            <Route index element={<KnowledgeIndex />} />            
+            <Route path=":slug_gr" element={<KnowledgeInGroup />} />            
           </Route>
 
+          <Route path="knowledge_open_free/:slug_kn" element={<KnowledgeOpenFree />} loader={KnowledgeOpenFreeLoader} />
 
-          
-
-
-          {/* проекты */}
-          
-          <Route path="projects/" element={<ProjectPageView />} loader={ProjectListLoader} />
-                    
+          {/* проекты */}          
+          <Route path="projects/" element={<ProjectPageView />} loader={ProjectListLoader} />                    
           {/* тут открывающий роут, далее вложенные */}
           <Route path="projects/open/:project_id" element={<ProjectOpenLayout />} loader={ProjectOpenLoader}>
-
-            <Route index element={<ProjectOpenIndex />} />
-                        
+            <Route index element={<ProjectOpenIndex />} />                        
             <Route path="section_open/:section_id" element={<SectionOpen />} loader={SectionOpenLoader} />
             <Route path="section_open/:section_id/task_open/:task_id" element={<TaskOpen />} loader={TaskOpenLoader} />
             <Route path="users_invite" element={<ProjectOpenUsers />} />
           </Route>
 
-
-
-          {/* <Route path="group/create/" element={<GroupCreate />}  />  */}          
-          {/* <Route path=":slug" element={<KnowledgeInGroup />} /> */}
-          
-          
-          
           
           {/* дорожные карты */}
           <Route path="roadmaps/" element={<RoadMapList />} loader={RoadMapListLoader} />
-
           <Route path="roadmaps/open/:roadmap_id" element={<RoadMapOpenLayout />} loader={RoadMapOpenLoader}>
-
-            <Route index element={<RoadMapOpenIndex />} />
-                        
+            <Route index element={<RoadMapOpenIndex />} />                        
             <Route path="chapter_open/:chapter_id" element={<ChapterOpen />} loader={ChapterOpenLoader}>
               <Route index element={<ChapterOpenIndex />} />            
               <Route path="stage_open/:stage_id" element={<StageOpen />} loader={StageOpenLoader} />
             </Route>
-
             <Route path="settings" element={<RoadMapOpenSettings />} />
             
           </Route>
@@ -124,7 +99,7 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
     
   </Route>
 
-  <Route path="knowledge_open_free/:slug_kn" element={<KnowledgeOpenFree />} loader={KnowledgeOpenFreeLoader} />
+  
   
   </>
 

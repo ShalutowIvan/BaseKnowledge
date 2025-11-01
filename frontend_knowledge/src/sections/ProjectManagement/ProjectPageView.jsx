@@ -12,7 +12,7 @@ import { updateAccessTokenFromRefreshToken } from "../../regusers/AuthService"
 function ProjectPageView() {
 	const setActive = ({isActive}) => isActive ? 'active-link' : '';
 	const {projectLoad} = useLoaderData()
-	const [projects, setProjects] = useState(projectLoad);
+	const [projects, setProjects] = useState([]);
 
   const navigate = useNavigate();  
 
@@ -25,6 +25,11 @@ function ProjectPageView() {
     return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {projectLoad["error"]}. Пройдите авторизацию.</h1>
   	}
 
+
+  useEffect(() => {    
+    const projectList = Array.isArray(projectLoad) ? projectLoad : [];
+    setProjects(projectList);
+  }, []);
 
   const openModalClick = () => {      
       setModalOpen(true);
@@ -63,6 +68,9 @@ function ProjectPageView() {
                         </>
                       ))
               }
+        {projects.length === 0 && !loading && (
+                        <div className="no-data">Нет данных для отображения</div>
+                      )}
       </div>
 
 

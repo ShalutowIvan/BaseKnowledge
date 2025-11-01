@@ -17,20 +17,14 @@ import { CopyLinkButton } from './CopyLinkButton';
 
 
 function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseTab }) {
-    // const revalidator = useRevalidator();    
-
-    // const { knowledgeLoad } = useLoaderData();//лоадер знания
-
-
-
-
+    
     const [editMode, setEditMode] = useState(false);//это для редактирования контента знания
     const [preview, setPreview] = useState(false);//предварительный просмотр при редактировании контента
     
     const [editModeHeader, setEditModeHeader] = useState(false);//это для редактирования шапки знания
 
     const {slug_gr} = useParams();
-    // const [knowledge, setCurrentKnowledge] = useState(knowledgeLoad);
+    
     const [currentKnowledge, setCurrentKnowledge] = useState(knowledge);
     
     const [error, setError] = useState("");
@@ -61,9 +55,7 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
     // Обработчик изменений для MDEditor. Это пока убрали, так как у МД есть свой проп onChange
     const handleTextChange = (value) => {
       setCurrentKnowledge({ ...currentKnowledge, content: value || '' });
-    };
-
-  
+    };  
 
   /**
   * Мемоизированный обработчик загрузки изображений
@@ -129,31 +121,17 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
       }
     }, [currentKnowledge, onUpdate]); // Зависимости от текущего знания и функции обновления
 
-
-    
       
-  const deleteKnowledge = useCallback( () => {
+  const deleteKnowledge = useCallback( async () => {
     if (window.confirm('Вы уверены, что хотите удалить?')) {
       // Действие при подтверждении
-      API.delete(`/delete_knowledge/${knowledge.id}`)
+      await API.delete(`/delete_knowledge/${knowledge.id}`)
       onCloseTab(knowledge.id)
-      onDeleteKnowledge(knowledge.id)
-      // не меняется состояние списка знаний! Возможно сделать ревалидатор лоадера ОСТ ТУТУ!!!!!!!!!!!!!
-      // navigate(`/knowledges/${group_slug}`);
-      // revalidator.revalidate();//принудительная перезагрузка лоадера после редиректа в списке знаний
-    }  
+      onDeleteKnowledge()
+      }  
   }, []);
 
-
-  // Обработчики изменений для полей шапки. Тут в зависимости от имени поля в input поле в jsx вставится значение из этого поля в нужное поле
-  // const handleHeaderChange = (e) => {
-  //   const { name, value, type, checked } = e.target;
-  //   setCurrentKnowledge(prev => ({
-  //     ...prev,
-  //     [name]: type === 'checkbox' ? checked : value
-  //   }));
-  // };
-
+ 
   /**
      * Мемоизированный обработчик изменений в шапке
      * useCallback оптимизирует производительность формы
@@ -232,8 +210,8 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
   const urlToCopy = `localhost:5173/knowledge_open_free/${currentKnowledge.slug}`
       
   return (
-    <>
-            
+    <>            
+      
       <div className="knowledges-container section-frame">
         
         {/*это шапка знания*/}        
@@ -521,5 +499,5 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
 
 
 
-// export { KnowledgeOpenContent };
-export default React.memo(KnowledgeOpenContent);
+export { KnowledgeOpenContent };
+// export default React.memo(KnowledgeOpenContent);
