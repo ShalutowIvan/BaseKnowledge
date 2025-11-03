@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 
 // 🔥 КОМПОНЕНТ МОДАЛКИ СОХРАНЕНИЯ
-function SaveTabListModal({ onClose, onSave, tabCount, loading }) {
+function SaveTabListModal({ onClose, onSave, tabCount, loading, error }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
@@ -48,6 +48,8 @@ function SaveTabListModal({ onClose, onSave, tabCount, loading }) {
           <div className="modal-info">
             Будет сохранено {tabCount} вкладок
           </div>
+          
+          {error && <div className="error-message">{error}</div>}
           
           <div className="modal-actions">
             

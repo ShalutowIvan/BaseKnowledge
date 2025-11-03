@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './CSS/DropdownMenu.css';
 
-const DropdownMenu = ({ group, onDelete, onRename }) => {
+const ActionsWithGroups = ({ group, onDelete, onRename }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -63,4 +63,4 @@ const DropdownMenu = ({ group, onDelete, onRename }) => {
   );
 };
 
-export { DropdownMenu };
+export { ActionsWithGroups };

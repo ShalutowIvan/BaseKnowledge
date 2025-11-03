@@ -1,13 +1,14 @@
 import React from 'react';
+import { ErrorDisplay } from './ErrorDisplay'
 
-const KnowledgeList = React.memo(({ knowledges, onOpenKnowledge, loading }) => {  
+const KnowledgeList = React.memo(({ knowledges, onOpenKnowledge, loading, error }) => {  
 
   if (knowledges.length === 0 && !loading) {
     return <div className="no-data">Нет данных для отображения</div>;
-  }
+  } 
 
   return (
-    <>
+    <>      
         {/* Список знаний */}
       {knowledges.map((knowledge) => (
         <div key={knowledge.id}>
@@ -29,6 +30,7 @@ const KnowledgeList = React.memo(({ knowledges, onOpenKnowledge, loading }) => {
             <button 
               onClick={() => onOpenKnowledge(knowledge)} 
               className="toolbar-button"
+              // disabled={loading}
             >
               Открыть
             </button>
@@ -39,5 +41,8 @@ const KnowledgeList = React.memo(({ knowledges, onOpenKnowledge, loading }) => {
     </>
   );
 });
+
+// при нажатии открыть падает реакт, хотя функция ошибку сетит и все норм должно быть. Не понимаю как обработать это. Ост тут
+
 
 export { KnowledgeList };

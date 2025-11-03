@@ -1,8 +1,10 @@
 import React from 'react';
 import {KnowledgeTabs} from './KnowledgeTabs';
 import {KnowledgeOpenContent} from './KnowledgeOpenContent';
+import { ErrorDisplay } from './ErrorDisplay'
 
 const KnowledgeTabsPanel = React.memo(({
+  error,
   tabs,
   activeTab,
   onCloseTab,
@@ -11,8 +13,21 @@ const KnowledgeTabsPanel = React.memo(({
   onDelete,  
 }) => {
   console.log('KnowledgeTabsPanel render');
+
+  // if ( error ) {
+  //   return (
+  //   <div>    
+  //     <p>Кузя</p>
+  //   </div>
+  //   )
+  // }
+
   return (
     <div className="knowledge-tabs-container">
+      {/*<ErrorDisplay 
+          error={error} 
+          onClose={() => setError(null)} 
+        />  */}
       
       <KnowledgeTabs
         tabs={tabs}

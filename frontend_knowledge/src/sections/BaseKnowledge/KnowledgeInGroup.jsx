@@ -17,11 +17,10 @@ import './CSS/SaveTabs.css';
 // import { SearchBar } from './SearchBar'
 import { KnowledgeListPanel } from './KnowledgeListPanel';
 import { KnowledgeTabsPanel } from './KnowledgeTabsPanel';
+import { ErrorDisplay } from './ErrorDisplay'
 
 
-
-function KnowledgeInGroup() {
-	// const setActive = ({isActive}) => isActive ? 'active-link' : '';
+function KnowledgeInGroup() {	
 
 	const {slug_gr} = useParams();			
  
@@ -85,7 +84,7 @@ function KnowledgeInGroup() {
   paginationRef.current = paginationState; // всегда актуальное значение
 
 
-  // отдельная колбек функция для загрузки знаний в эффекте
+  // отдельная функция для основной загрузки знаний в эффекте
   const loadKnowledges = async (abortController = null) => {
            
     const controller = abortController || new AbortController();    
@@ -118,7 +117,8 @@ function KnowledgeInGroup() {
         }
       );
                   
-      const data = response.data;        
+      const data = response.data;
+      
       setKnowledges(data.items);
       setPaginationState(prev => ({
         ...prev,
@@ -133,35 +133,26 @@ function KnowledgeInGroup() {
         console.log('Запрос прерван');
         return;
       }
-      setError('Не удалось загрузить данные');
-      console.error('Ошибка загрузки:', err);
+      console.error('Error loading knowledge list:', err);
+      setError(`Ошибка при загрузке знаний: ${err.message}`);      
     } finally {
       setLoading(false);
     }
   }
-  // , [    
-  //   paginationState.currentPage, 
-  //   paginationState.perPage, 
-  //   slug_gr, 
-  //   searchState.activeSearchTerm, 
-  //   searchState.searchType, 
-  //   searchState.isSearchActive, 
-  //   filter_change_date
-  // ]);
-
+  
   // ОБРАБОТЧИКИ ПОИСКА
   const handleSearchChange = useCallback((e) => {
     setSearchState(prev => ({ ...prev, searchTerm: e.target.value }));
   }, []);
 
-  // ПОИСК ПО КНОПКЕ "НАЙТИ"
+  // ПОИСК ПО КНОПКЕ "НАЙТИ". Добавляем в состояние поиска значения и делаем поиск активным и срабатывает useEffect с основной загрузкой. 
   const handleSearchSubmit = useCallback(() => {
     const { searchTerm } = searchState;
     if (searchTerm.trim()) {
       setSearchState(prev => ({ 
         ...prev, 
         activeSearchTerm: searchTerm.trim(),
-        isSearchActive: true 
+        isSearchActive: true
       }));
       setPaginationState(prev => ({ ...prev, currentPage: 1 }));
     }
@@ -249,8 +240,9 @@ function KnowledgeInGroup() {
           }
         ];
       });
-    } catch (error) {
-      console.error('Не удалось открыть знание:', error);
+    } catch (err) {
+      console.error('Error whith open knowledge:', err);
+      setError(`Не удалось открыть знание: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -341,13 +333,7 @@ function KnowledgeInGroup() {
   
   const lenKN = useRef(knowledges);
   lenKN.current = knowledges.length; // длинна массива знаний по факту
-
-  // const test = () => {
-  //   console.log(console.log("страница", paginationState.currentPage))
-  //   console.log("длинна массива знаний", lenKN.current)
-  // }
   
-
   const deleteKnowledge = useCallback(async () => {
     if (lenKN.current === 1 && paginationRef.current.currentPage !== 1) {      
       setPaginationState(prev => ({ ...prev, currentPage: paginationRef.current.currentPage - 1 }));
@@ -355,15 +341,14 @@ function KnowledgeInGroup() {
     }    
     setReloadKey(prev => prev + 1);// это для срабатывания useEffect для загрузки знаний  
   }, []);
-
-  // ост тут. Теперь не отнимается страница пагинации когда удаляем последнее знание на последней странице
+  
 
   const handleCreateKnowledge = useCallback((group_slug) => {    
     if (slug_gr === "all" || slug_gr === group_slug) {      
       setReloadKey(prev => prev + 1);      
     }    
-      setModalCreateKnowledge(false);      
-    }, []);
+    setModalCreateKnowledge(false);      
+    }, [slug_gr]);
 
     
   
@@ -413,8 +398,9 @@ function KnowledgeInGroup() {
         }));
       }
 
-    } catch (error) {
-      console.error('Ошибка загрузки списков вкладок:', error);
+    } catch (err) {
+      console.error('Error whith load saved tab list:', err);
+      setError(`Ошибка загрузки списков вкладок: ${err.message}`)
     } finally {
       if (isLoadMore) {
         setTabListsState(prev => ({ ...prev, isLoadingMoreTabLists: false }));
@@ -425,15 +411,19 @@ function KnowledgeInGroup() {
   }, []);
 
 
+  
   // ЗАГРУЗКА СЛЕДУЮЩЕЙ СТРАНИЦЫ СПИСКОВ ВКЛАДОК
   const loadMoreTabLists = useCallback(async () => {
-    const { isLoadingMoreTabLists, hasMoreTabLists, tabListsPage } = tabListsState;
-    if (isLoadingMoreTabLists || !hasMoreTabLists) return;
-    
-    const nextPage = tabListsPage + 1;
-    await loadSavedTabLists(nextPage, true);
-  }, [tabListsState.isLoadingMoreTabLists, tabListsState.hasMoreTabLists, tabListsState.tabListsPage,, loadSavedTabLists]);
-
+      const { isLoadingMoreTabLists, hasMoreTabLists, tabListsPage } = tabListsState;
+      if (isLoadingMoreTabLists || !hasMoreTabLists) return;      
+      const nextPage = tabListsPage + 1;
+      await loadSavedTabLists(nextPage, true);
+  }, [
+    tabListsState.isLoadingMoreTabLists, 
+    tabListsState.hasMoreTabLists, 
+    tabListsState.tabListsPage,    
+    loadSavedTabLists
+  ]);
 
   // СОХРАНЕНИЕ ТЕКУЩИХ ВКЛАДОК КАК СПИСКА
   const saveCurrentTabsAsList = useCallback(async (name, description) => {
@@ -459,8 +449,9 @@ function KnowledgeInGroup() {
       // Показываем уведомление об успехе
       // console.log('Список вкладок успешно сохранен!');
       
-    } catch (error) {
-      console.error('Ошибка сохранения списка вкладок:', error);
+    } catch (err) {
+      console.error('Error save tab list:', err);
+      setError(`Ошибка сохранения списка вкладок: ${err.message}`)
     }
   }, [activeTabs]);
 
@@ -501,8 +492,9 @@ function KnowledgeInGroup() {
       }      
       setActiveTabs(newTabs);      
       setTabListsState(prev => ({ ...prev, activeTabList: tabListId }));// Запоминаем какой список открыт      
-    } catch (error) {
-      console.error('Ошибка открытия списка вкладок:', error);
+    } catch (err) {
+      console.error('Error whith open tab list:', err);
+      setError(`Ошибка открытия списка вкладок: ${err.message}`)
     } finally {
       setLoading(false);
     }
@@ -531,8 +523,9 @@ function KnowledgeInGroup() {
         setTabListsState(prev => ({ ...prev, activeTabList: null }));
       }
       
-    } catch (error) {
-      console.error('Ошибка удаления списка вкладок:', error);
+    } catch (err) {
+      console.error('Error deleting tab list:', err);
+      setError(`Ошибка при удалении набора знаний: ${err.message}`)
     }
   }, [tabListsState.activeTabList]);
 
@@ -562,8 +555,9 @@ function KnowledgeInGroup() {
       }));
       setShowEditTabListModal(false);
       setEditingTabList(null);      
-    } catch (error) {
-      console.error('Ошибка обновления списка вкладок:', error);
+    } catch (err) {
+      console.error('Error updating tab list:', err);
+      setError(`Ошибка при редактировании набора вкладок: ${err.message}`)
     }
   }, [editingTabList]);
 
@@ -660,6 +654,13 @@ function KnowledgeInGroup() {
   
 	return (
 		<div className='container-knowledges-view'>
+
+      {/* Компонент для отображения ошибок */}
+      <ErrorDisplay 
+          error={error} 
+          onClose={() => setError(null)} 
+        />  
+
       <br/><br/>            
       <div className="collapse-toggle">
         <button className="hidden-button" onClick={() => {setOpenListKnowledges(!openListKnowledges);}}>
@@ -669,14 +670,17 @@ function KnowledgeInGroup() {
       </div>      
 
       <KnowledgeListPanel
-        // Состояния
+        // Состояния        
+        knowledges={knowledges}        
+        loading={loading}
+        error={error}
+
         openListKnowledges={openListKnowledges}
         searchState={searchState}
-        knowledgeState={{ knowledges, total: paginationState.total, loading, error }}
         paginationState={paginationState}
         tabListsState={tabListsState}
         filter_change_date={filter_change_date}
-        activeTabsCount={activeTabs.length}
+        activeTabsCount={activeTabs.length}        
         
         // Обработчики
         onSearchChange={handleSearchChange}
@@ -699,6 +703,7 @@ function KnowledgeInGroup() {
       />
       
       <KnowledgeTabsPanel
+        error={error}
         tabs={activeTabs}
         activeTab={activeTabs.find(tab => tab.active)}
         onCloseTab={closeTab}
@@ -722,6 +727,7 @@ function KnowledgeInGroup() {
             onSave={saveCurrentTabsAsList}
             tabCount={activeTabs.length}
             loading={loading}
+            error={error}
           />
         )}
 
@@ -735,8 +741,10 @@ function KnowledgeInGroup() {
             }}
             onSave={updateTabList}
             loading={loading}
+            error={error}
           />
         )}
+
 
     </div>
 		)

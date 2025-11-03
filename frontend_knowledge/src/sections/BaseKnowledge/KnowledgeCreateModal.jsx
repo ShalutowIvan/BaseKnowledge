@@ -20,15 +20,18 @@ function KnowledgeCreateModal({ onClose, onSuccess }) {
 
     useEffect(() => {
         const fetchData = async () => {
-        try {
-          const response = await API.get('/groups_all/');
-          setGroupsCr(response.data);
-          setLoading(false);
-        } catch (err) {
-          setError(err);
-          setLoading(false);
-        }
-        };        
+            try {
+                setLoading(true);
+                const response = await API.get('/groups_all/');
+                setGroupsCr(response.data);          
+            } catch (err) {
+                console.log("Ошибка загрузки:", err)
+                setError(`Ошибка: ${err.message}`);          
+            }
+            finally {
+                setLoading(false);  
+            }
+            };        
         fetchData();
     }, [])
 
@@ -40,32 +43,28 @@ function KnowledgeCreateModal({ onClose, onSuccess }) {
         }
         setError('');
         return true;
-    }
-
-    
+    }    
       
     const handleSubmit = async (event) => {
         event.preventDefault();
-        if (!validateForm()) return;
-        setLoading(true);
-        const group_slug = groupsCr.find(g => g.id === parseInt(selectedGroupId))?.slug;        
-
+        if (!validateForm()) return;        
+        const group_slug = groupsCr.find(g => g.id === parseInt(selectedGroupId))?.slug;
         try {
+            setLoading(true);
             const response = await API.post("/knowledges_create/", 
                 {
                     title: title, 
                     description: description, 
                     group_id: selectedGroupId,                    
                 } );            
-            
-            setLoading(false);            
             onSuccess(group_slug);//это функция которая срабатывает в компоненте где открывается модальное окно
             onClose();            
-        } catch (error) {
-            setLoading(false);
-            console.log(error)
-            setError(error.response?.data?.detail || 'что-то пошло не так');            
-        }    
+        } catch (err) {            
+            console.log("Error whith create knowledge:", err)
+            setError(`Ошибка: ${err.message}`);          
+        } finally {
+            setLoading(false);  
+        }
     };
   
 
@@ -133,8 +132,7 @@ function KnowledgeCreateModal({ onClose, onSuccess }) {
           </button>
 
           <button 
-            onClick={onClose} 
-            disabled={loading}
+            onClick={onClose}             
             className="cancel-button"
           >
             Отмена

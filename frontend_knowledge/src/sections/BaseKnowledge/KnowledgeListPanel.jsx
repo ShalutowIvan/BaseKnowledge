@@ -3,15 +3,21 @@ import { SearchSection } from './SearchSection';
 import { TabListsSection } from './TabListsSection';
 import { KnowledgeList } from './KnowledgeList';
 import { PaginationSection } from './PaginationSection';
+import { ErrorDisplay } from './ErrorDisplay'
 
 const KnowledgeListPanel = React.memo(({
+  //состояния для знаний
+  knowledges,
+  // total,
+  loading,
+  error,
+
   openListKnowledges,
-  searchState,
-  knowledgeState,
+  searchState,  
   paginationState,
   tabListsState,
   filter_change_date,
-  activeTabsCount,
+  activeTabsCount,  
   
   // Обработчики
   onSearchChange,
@@ -31,10 +37,9 @@ const KnowledgeListPanel = React.memo(({
   onOpenSavedTabList,
   onLoadMoreTabLists,
   onOpenModalCreateKnowledge
-}) => {
-  const { knowledges, total, loading, error } = knowledgeState;
-  const { currentPage, perPage, totalPages, hasNext, hasPrev } = paginationState;
-  const { savedTabLists, activeTabList, viewTabList, tabsName, loadingTabLists, hasMoreTabLists, isLoadingMoreTabLists, tabListsTotal } = tabListsState;
+}) => {  
+  // const { currentPage, perPage, totalPages, hasNext, hasPrev } = paginationState;
+  // const { savedTabLists, activeTabList, viewTabList, tabsName, loadingTabLists, hasMoreTabLists, isLoadingMoreTabLists, tabListsTotal } = tabListsState;
 
   console.log('KnowledgeListPanel render');
 
@@ -63,7 +68,7 @@ const KnowledgeListPanel = React.memo(({
           {/* Селектор количества элементов */}
           <div className="per-page-selector">
             <label>Элементов на странице:</label>
-            <select value={perPage} onChange={onPerPageChange}>
+            <select value={paginationState.perPage} onChange={onPerPageChange}>
               <option value="2">2</option>
               <option value="10">10</option>
               <option value="20">20</option>
@@ -76,7 +81,7 @@ const KnowledgeListPanel = React.memo(({
       {searchState.isSearchActive && searchState.activeSearchTerm && (
         <div className="search-info">
           <p>
-            Результаты поиска: "{searchState.activeSearchTerm}" · Найдено: {total} записей
+            Результаты поиска: "{searchState.activeSearchTerm}" · Найдено: {paginationState.total} записей
             <button onClick={onClearSearch} className="search-clear-link">
               Очистить поиск
             </button>
@@ -86,14 +91,14 @@ const KnowledgeListPanel = React.memo(({
 
         {/* Списки знаний */}
       <TabListsSection
-        savedTabLists={savedTabLists}
-        viewTabList={viewTabList}
-        activeTabList={activeTabList}
-        tabsName={tabsName}
-        loadingTabLists={loadingTabLists}
-        hasMoreTabLists={hasMoreTabLists}
-        isLoadingMoreTabLists={isLoadingMoreTabLists}
-        tabListsTotal={tabListsTotal}
+        savedTabLists={tabListsState.savedTabLists}
+        viewTabList={tabListsState.viewTabList}
+        activeTabList={tabListsState.activeTabList}
+        tabsName={tabListsState.tabsName}
+        loadingTabLists={tabListsState.loadingTabLists}
+        hasMoreTabLists={tabListsState.hasMoreTabLists}
+        isLoadingMoreTabLists={tabListsState.isLoadingMoreTabLists}
+        tabListsTotal={tabListsState.tabListsTotal}
         activeTabsCount={activeTabsCount}
         onToggleViewTabList={onToggleViewTabList}
         onSaveTabs={onSaveTabs}
@@ -110,7 +115,7 @@ const KnowledgeListPanel = React.memo(({
         {/* Информация о пагинации */}  
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
           <div className="pagination-info">
-            Показано {knowledges.length} из {total} записей
+            Показано {knowledges.length} из {paginationState.total} записей
           </div>
 
           <button 
@@ -127,17 +132,19 @@ const KnowledgeListPanel = React.memo(({
         <KnowledgeList
           knowledges={knowledges}
           loading={loading}
+          error={error}
           onOpenKnowledge={onOpenKnowledge}
+
         />
       </div>
       
       {/* Пагинация - фиксированная внизу */}
       <div className="knowledges-list-footer">
         <PaginationSection
-          currentPage={currentPage}
-          totalPages={totalPages}
-          hasNext={hasNext}
-          hasPrev={hasPrev}
+          currentPage={paginationState.currentPage}
+          totalPages={paginationState.totalPages}
+          hasNext={paginationState.hasNext}
+          hasPrev={paginationState.hasPrev}
           onPageChange={onPageChange}
         />
       </div>

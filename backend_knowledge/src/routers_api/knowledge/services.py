@@ -26,13 +26,19 @@ UPLOAD_FOLDER = "uploads"
 
 #создание группы
 async def group_create_service(user_id: int, db: AsyncSession, group: GroupShema) -> GroupShemaFull:
-    # Создаем новую группу    
-    slug = translit(group.name_group, language_code='ru', reversed=True)    
-    new_group = Group(name_group=group.name_group, slug=slug, user_id=user_id)
-    db.add(new_group)
-    await db.commit()
-    await db.refresh(new_group)
-    return new_group
+    try:
+        # Создаем новую группу        
+        slug = translit(group.name_group, language_code='ru', reversed=True)    
+        new_group = Group(name_group=group.name_group, slug=slug, user_id=user_id)
+        db.add(new_group)
+        await db.commit()
+        await db.refresh(new_group)
+        return new_group
+    except Exception as ex:
+        raise HTTPException(
+            status_code=422, 
+            detail=f"Error whith create group"
+        )
 
 
 #получение списка групп
@@ -74,6 +80,7 @@ async def group_name_update_service(user_id: int, group_id: int, group_name_upda
 
     except Exception as ex:        
         raise ex
+
 
 
 # получение одного знания по ИД. Используется в других функциях

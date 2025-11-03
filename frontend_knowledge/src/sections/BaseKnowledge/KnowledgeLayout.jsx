@@ -1,9 +1,9 @@
-import { NavLink, useLoaderData, Outlet } from 'react-router-dom'
+import { NavLink, useLoaderData, Outlet, useNavigate, useParams } from 'react-router-dom'
 import { useState, useEffect, useCallback } from 'react'
 import { API } from '../../apiAxios/apiAxios'
 import { DeleteGroupModal } from './DeleteGroupModal'
 import { GroupCreateModal } from './GroupCreateModal'
-import { DropdownMenu } from './DropdownMenu'; 
+import { ActionsWithGroups } from './DropdownMenu'; 
 import { ErrorDisplay } from './ErrorDisplay'
 
 function KnowledgeLayout() {
@@ -19,17 +19,14 @@ function KnowledgeLayout() {
 
   const [modalDeleteGroup, setModalDeleteGroup] = useState(false);
   const [modalCreateGroup, setModalCreateGroup] = useState(false);  
-  
-  
+    
   const [selectedGroup, setSelectedGroup] = useState(null);
   
-  // if (groupsLoad?.error) {
-  //   return (
-  //     <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {groupsLoad?.error}. Пройдите авторизацию.</h1>
-  //     )
-  // }
+  const { slug_gr } = useParams(); 
+  const navigate = useNavigate();
+  
 
-  //передаем объект группы в компонент модального окна. 
+  //передаем объект группы в компонент модального окна и открываем его
   const handleDeleteClick = (group) => {
       setSelectedGroup(group);      
       setModalDeleteGroup(true);
@@ -44,36 +41,32 @@ function KnowledgeLayout() {
   
   useEffect(() => {
     const fetchData = async () => {
-    try {
+      try {
+        setLoading(true);
+        setError(null);
 
-      setLoading(true);
-      setError(null); // Сбрасываем ошибку перед загрузкой
-
-      if (!groupsLoad.error) {          
-          // Убедимся, что groupsLoad - массив
-          const groupsArray = Array.isArray(groupsLoad) ? groupsLoad : [];
-          setGroups(prevItems => 
-              groupsArray.map(item => ({
-                ...item,                        
-                isEditing: false
-              })));
-          } else if (groupsLoad?.error) {
-          // Если в groupsLoad уже есть ошибка
-          
+        if (groupsLoad && typeof groupsLoad === 'object' && groupsLoad.error) {
           setError(groupsLoad.error);
-        }
-            
+          return;
+        } 
 
-      setLoading(false);
-    } catch (err) {
-      setError(err);
-      console.log("Ошибка из лейаут", err)
-      setLoading(false);
-    }
+        if (Array.isArray(groupsLoad)) {
+          setGroups(groupsLoad.map(item => ({
+            ...item,
+            isEditing: false
+          })));
+        } else {
+          setError("Неверный формат данных групп");
+        }
+      } catch (err) {
+        setError(err?.message || "Ошибка загрузки групп");
+        console.log("Error with load group in layout:", err);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchData()
-    
-  }, [groupsLoad])
+    fetchData();
+  }, [groupsLoad]);
 
   
   const setGroupName = useCallback((group_id) => (e) => {
@@ -82,6 +75,7 @@ function KnowledgeLayout() {
         item.id === group_id ? { ...item, [name]: value } : item
       ));
     }, []);
+
 
   const validateFormArray = (groupId) => {
         const foundItemForm = groups.find(item => item.id === groupId);
@@ -110,39 +104,48 @@ function KnowledgeLayout() {
               setLoading(true);
               setError(null);
 
-              const response = await API.patch(
-                  `/group_name_update/${groupId}`,
-                  { name_group: name_group }
-                  
+              const groupToUpdate = groups.find(item => item.id === groupId);
+              const oldSlug = groupToUpdate?.slug;
+
+              const response = await API.patch(`/group_name_update/${groupId}`,
+                  { name_group: name_group }                  
                   );
               
-              setError("")
-              if (response.statusText==='OK') {                  
+              if (response.status >= 200 && response.status < 300) {                  
+                  const newSlug = response.data.slug
+                  setError(null)
                   setGroups(prev => prev.map(item => 
-                      item.id === groupId ? { ...item, isEditing: false } : item
+                      item.id === groupId ? { ...item, slug: newSlug, isEditing: false } : item
                     ));
-                  console.log("Update complete!")                
-              } else {
-                  const errorData = await response.data
-                  console.log(errorData, 'тут ошибка')
+                  
+                  if (slug_gr === oldSlug) {
+                    navigate(`/knowledges/${newSlug}`, { replace: true })  
+                  }                  
+                  console.log("Rename group complete!")              
               }
-          } catch (error) {            
-              console.log("Ошибка из бэка", error)
-              setError('что-то пошло не так');            
+          } catch (err) {            
+              console.log("Error whith rename group:", err)
+              setError(err.message);
           } finally {
             setLoading(false);
           }    
       };
 
+  
   const cancelEditGroup = (groupId) => {
-      const foundGroupLoad = groupsLoad.find(item => item.id === groupId);
+      const originalGroups = (Array.isArray(groupsLoad) && !groupsLoad.error) ? groupsLoad : [];
+      const foundGroupLoad = originalGroups.find(item => item.id === groupId);
+          
       setGroups(prevGroups => 
-        prevGroups.map(item => (
-          item.id === groupId ?
-          { ...item, isEditing: false, name_group: foundGroupLoad.name_group} 
-          : item
-          )));      
-    }
+          prevGroups.map(item => 
+            item.id === groupId 
+              ? { ...item, isEditing: false, name_group: foundGroupLoad.name_group } 
+              : item
+          ));
+
+    };
+
+
 
   const handleRenameClick = (group) => {
       setGroups(prevGroups => 
@@ -150,14 +153,13 @@ function KnowledgeLayout() {
           item.id === group.id ? { ...item, isEditing: true} : item
           )));      
     }
-
   
 
   const handleCreateGroup = (newGroup) => {    
-    console.log("Новая группа", newGroup)
     setGroups(prevGroups => [...prevGroups, newGroup]);
     setModalCreateGroup(false);
     };
+
 
   const openModalCreateGroup = () => {      
       setModalCreateGroup(true);
@@ -175,7 +177,8 @@ function KnowledgeLayout() {
       
       {/* Боковая панель с группами (постоянная) */}      
       <aside>
-        
+            
+            <h1>Группы</h1>
             
             <button className="save-button" onClick={openModalCreateGroup}>Добавить группу</button>
 
@@ -185,7 +188,7 @@ function KnowledgeLayout() {
             </NavLink>
 
             <br/>
-      
+            
             {
               groups.length === 0 ? (
                     <div className="name-knowledge">Список групп пуст</div>
@@ -220,9 +223,8 @@ function KnowledgeLayout() {
                                     e.preventDefault();
                                     cancelEditGroup(group.id); 
                                   }}
-                                  className="close-button"
-                                  disabled={loading}
-                                >                
+                                  className="close-button"                                  
+                                >                                               
                                 </button>
                               </div>
                             
@@ -238,9 +240,9 @@ function KnowledgeLayout() {
                         <NavLink to={`/knowledges/${group.slug}`} className={setActive}>                              
                               {({ isActive }) => (
                                 <div className={`list-group section-frame ${isActive ? "active" : ""}`}>
-                                  <h2 className="name-knowledge">{group.name_group}</h2>                                  
-                                    
-                                  <DropdownMenu
+                                  <h2 className="name-knowledge">{group.name_group}</h2>
+           
+                                  <ActionsWithGroups
                                     group={group}
                                     onDelete={handleDeleteClick}
                                     onRename={handleRenameClick}

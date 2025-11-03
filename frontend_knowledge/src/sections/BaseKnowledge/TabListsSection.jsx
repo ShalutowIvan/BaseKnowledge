@@ -24,7 +24,7 @@ const TabListsSection = React.memo(({
   return (
     <>
       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>   
-        <h3>📚 Cписки знаний</h3>
+        <h3>📚 Cписки вкладок</h3>
         
         {/* КНОПКА СОХРАНЕНИЯ ТЕКУЩИХ ВКЛАДОК */}        
         {activeTabsCount > 0 && (
@@ -90,7 +90,7 @@ const TabListsSection = React.memo(({
                       <button 
                         className="delete-tab-list-btn"
                         onClick={(e) => onDeleteSavedTabList(tabList.id, e)}
-                        title="Удалить список"
+                        title="Удалить список"                       
                       >
                         ×
                       </button>

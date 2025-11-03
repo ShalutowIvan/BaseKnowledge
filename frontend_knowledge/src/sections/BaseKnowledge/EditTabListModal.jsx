@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 
 // 🔥 КОМПОНЕНТ МОДАЛКИ РЕДАКТИРОВАНИЯ
-function EditTabListModal({ tabList, onClose, onSave, loading }) {
+function EditTabListModal({ tabList, onClose, onSave, loading, error }) {
   const [name, setName] = useState(tabList.name);
   const [description, setDescription] = useState(tabList.description || '');
 
@@ -43,6 +43,9 @@ function EditTabListModal({ tabList, onClose, onSave, loading }) {
               rows="3"
             />
           </div>
+
+          {error && <div className="error-message">{error}</div>}
+
           
           <div className="modal-actions">            
             <button 

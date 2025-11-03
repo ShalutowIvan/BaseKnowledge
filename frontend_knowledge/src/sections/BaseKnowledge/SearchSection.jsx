@@ -9,8 +9,7 @@ const SearchSection = React.memo(({
   onKeyPress,
   onSearchTypeChange
 }) => {
-  const { searchTerm, searchType, isSearchActive } = searchState;
-
+  
   return (
     <div className="search-container">
       <div className="search-input-with-button">
@@ -18,12 +17,12 @@ const SearchSection = React.memo(({
           <input
             type="text"
             placeholder="Поиск по названию, описанию или содержанию..."
-            value={searchTerm}
+            value={searchState.searchTerm}
             onChange={onSearchChange}
             onKeyPress={onKeyPress}
             className="search-input"
           />
-          {searchTerm && (
+          {searchState.searchTerm && (
             <button onClick={onClearSearch} className="search-clear-btn">
               ×
             </button>
@@ -31,22 +30,22 @@ const SearchSection = React.memo(({
         </div>
         <button 
           onClick={onSearchSubmit}
-          disabled={!searchTerm.trim() || loading}
+          disabled={!searchState.searchTerm.trim() || loading}
           className="search-submit-btn"
         >          
           Найти
         </button>
       </div>
       
-      {isSearchActive && (
+      {searchState.isSearchActive && (
         <div className="search-type-selector">
           <label>Тип поиска:</label>
-          <select value={searchType} onChange={onSearchTypeChange}>
+          <select value={searchState.searchType} onChange={onSearchTypeChange}>
             <option value="plain">Обычный поиск</option>
             <option value="phrase">Точная фраза</option>
             <option value="advanced">Продвинутый поиск</option>
           </select>
-          {searchType === 'advanced' && (
+          {searchState.searchType === 'advanced' && (
             <div className="search-hint">
               Используйте: & (И), | (ИЛИ), ! (НЕ)
             </div>

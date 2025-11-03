@@ -55,14 +55,6 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
          } >
          <Route index element={<StartIndex />} />
 
-          {/* пользователи */}
-          <Route path="regusers/authorization/" element={<Authorization />} />          
-          <Route path="regusers/registration/" element={<Registration />} />
-          <Route path="regusers/registration/check_mail/" element={<Registration_after />} />
-          <Route path="regusers/registration_verify/:token" element={<Registration_verify />} />
-          <Route path="regusers/forgot_password/" element={<Forgot_password />} />
-          <Route path="regusers/forgot_password_verify/:token" element={<Forgot_password_verify />} />
-
           {/* база знаний */}
           <Route path="knowledges" element={<KnowledgeLayout />} loader={KnowledgeGroupsLoader}>            
             {/* Основные маршруты знаний */}
@@ -94,6 +86,14 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
             <Route path="settings" element={<RoadMapOpenSettings />} />
             
           </Route>
+
+          {/* пользователи */}
+          <Route path="regusers/authorization/" element={<Authorization />} />          
+          <Route path="regusers/registration/" element={<Registration />} />
+          <Route path="regusers/registration/check_mail/" element={<Registration_after />} />
+          <Route path="regusers/registration_verify/:token" element={<Registration_verify />} />
+          <Route path="regusers/forgot_password/" element={<Forgot_password />} />
+          <Route path="regusers/forgot_password_verify/:token" element={<Forgot_password_verify />} />
         
 
     

@@ -4,9 +4,9 @@ import './CSS/DeleteGroup.css'
 import { API } from "../../apiAxios/apiAxios"
 
 
-function DeleteGroupModal({ groupToDelete, onClose, onSuccess }) {
+function DeleteGroupModal({ groupToDelete, onClose, onSuccess }) {  
   
-  const [groups, setGroups] = useState([]);
+  const [availableGroups, setAvailableGroups] = useState([]);
   const [targetGroupId, setTargetGroupId] = useState('');
   const [hasKnowledge, setHasKnowledge] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -19,24 +19,32 @@ function DeleteGroupModal({ groupToDelete, onClose, onSuccess }) {
   useEffect(() => {
     const checkGroup = async () => {
       try {
-        // Проверяем есть ли знания в группе
-        const knowledgeRes = await API.get(`/knowledges_in_group/${groupToDelete.slug}`);
-        // groupToDelete это объект, groupToDelete берется из select формы в другом компоненте формы
-        
-        setHasKnowledge(knowledgeRes.data.items.length > 0);
+          setIsDeleting(true)
+            
+          // const knowledgeRes = await API.get(`/knowledges_in_group/${groupToDelete.slug}`);          
+          // const groupsRes = await API.get('/groups_all/');
+          
+          const [knowledgeRes, groupsRes] = await Promise.all([
+            API.get(`/knowledges_in_group/${groupToDelete.slug}`),
+            API.get('/groups_all/')
+          ]);
 
-        // Загружаем список всех групп (кроме текущей) в состояние
-        const groupsRes = await API.get('/groups_all/');
-        setGroups(groupsRes.data.filter(g => g.id !== groupToDelete.id));
-        
-        // Устанавливаем первую группу как выбранную по умолчанию в select поле
-        if (groupsRes.data.length > 1) {
-          setTargetGroupId(groupsRes.data.find(g => g.id !== groupToDelete.id)?.id || '');
-        }
+          setHasKnowledge(knowledgeRes.data.items.length > 0);          
+          
+          const otherGroups = groupsRes.data.filter(g => g.id !== groupToDelete.id);
+          setAvailableGroups(otherGroups);          
+          
+          if (otherGroups.length > 0) {
+            setTargetGroupId(otherGroups[0].id);
+          } else if (hasKnowledge) {
+            setError('Нет других групп для переноса знаний');
+          }
       } catch (err) {
-        setError('Ошибка загрузки данных');
-        console.error(err);
-      }
+          setError(err.message);
+          console.error('Check group error:', err);
+      } finally {
+          setIsDeleting(false);  
+      }  
     };
 
     if (groupToDelete) {
@@ -51,10 +59,9 @@ function DeleteGroupModal({ groupToDelete, onClose, onSuccess }) {
       return;
     }
 
-    setIsDeleting(true);
-    setError('');
-
     try {
+      setIsDeleting(true);
+      setError('');
       await API.delete(`/group_delete/${groupToDelete.id}`, {
         data: {
           move_to_group: hasKnowledge ? targetGroupId : null
@@ -64,8 +71,8 @@ function DeleteGroupModal({ groupToDelete, onClose, onSuccess }) {
       onClose();
       navigate(`/knowledges/`);
     } catch (err) {
-      setError('Ошибка при удалении группы');
-      console.error(err);
+      setError(`Ошибка при удалении группы ${err.message}`);
+      console.error('Delete group error:', err);
     } finally {
       setIsDeleting(false);
     }
@@ -88,12 +95,15 @@ function DeleteGroupModal({ groupToDelete, onClose, onSuccess }) {
               className="group-select"
             >
               <option value="">Выберите группу</option>
-              {groups.map(group => (
+              {availableGroups.map(group => (
                 <option key={group.id} value={group.id}>
                   {group.name_group}
                 </option>
               ))}
             </select>
+            {availableGroups.length === 0 && (
+              <p className="error-message">Нет доступных групп для переноса</p>
+            )}
           </>
         ) : (
           <p>Вы уверены, что хотите удалить эту группу?</p>
@@ -111,9 +121,9 @@ function DeleteGroupModal({ groupToDelete, onClose, onSuccess }) {
           </button>
 
           <button 
-            onClick={onClose} 
-            disabled={isDeleting}
+            onClick={onClose}             
             className="cancel-button"
+            disabled={isDeleting}
           >
             Отмена
           </button>
