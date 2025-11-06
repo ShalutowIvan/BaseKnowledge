@@ -22,90 +22,81 @@ function ProjectPageView() {
   const [modalOpen, setModalOpen] = useState(false);
 
 	if (projectLoad?.error) {  
-    return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {projectLoad["error"]}. Пройдите авторизацию.</h1>
+    return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {projectLoad?.error}. Пройдите авторизацию.</h1>
   	}
 
-
   useEffect(() => {    
+    if (projectLoad && !projectLoad.error) {
     const projectList = Array.isArray(projectLoad) ? projectLoad : [];
     setProjects(projectList);
-  }, []);
+    }
+  }, [projectLoad]);
 
   const openModalClick = () => {      
       setModalOpen(true);
       };
-
   
-  const handleCreateSuccess = (newProject) => {
-    // Используем функциональную форму setProjects
-    console.log("Новый проект", newProject)
-    setProjects(prevProjects => [newProject, ...prevProjects]);
-    setModalOpen(false);
-    };
+  const handleCreateSuccess = (newProject) => {  
+    if (newProject && newProject.id) {  
+      console.log("Новый проект", newProject)
+      setProjects(prevProjects => [newProject, ...prevProjects]);
+      setModalOpen(false);
+      } else {
+        setError("Ошибка при создании проекта");
+      }
+    }
 
+  if (loading) {
+    return <div className="loading">Загрузка...</div>;
+  }
 
 	return (
 		<>     
 			
 			<div className='central-part'>
         <h1>Проекты</h1>
-        <button className="toolbar-button" onClick={openModalClick}>Создать проект</button>
-            
-        
+        <button className="toolbar-button" onClick={openModalClick}>Создать проект</button>        
         <br/><br/>
-
-        {
-                  projects?.map(project => (
-                        <>
-                          <div className='project-section'>
-                          <h1 className="name-knowledge">{project.title}</h1>
-                          <h2>Описание: {project.description}</h2>
-                          <NavLink key={project.id} to={`/projects/open/${project.id}`} className={setActive}>
-                              <button className="toolbar-button">Открыть</button>
-                          </NavLink>                              
-                          </div>
-                          <br/>
-                        </>
-                      ))
-              }
+              <div className="projects-grid">
+                {
+                    projects?.map(project => (                        
+                            <div key={project.id} className='project-card'>
+                              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                <h1 className="name-knowledge">{project.title}</h1>
+                                <NavLink to={`/projects/open/${project.id}`} className={setActive}>
+                                    <button className="toolbar-button">Открыть</button>
+                                </NavLink>
+                              </div>
+                              <h2>Описание: {project.description}</h2>
+                              
+                            </div>                        
+                        ))
+                }
+              </div>
+        
         {projects.length === 0 && !loading && (
                         <div className="no-data">Нет данных для отображения</div>
                       )}
       </div>
-
 
       {modalOpen && (
 		        <ProjectCreateModal		          
 		          onClose={() => setModalOpen(false)}
 		          onSuccess={handleCreateSuccess}
 		        />
-		      )}
-      
-            		      
-      								
+		      )}      								
 		</>
 		)
 }
 
 
 async function getProjectList() { 
-  // const res = await fetch("http://127.0.0.1:8000/project_all/")//тут берутся все элементы с одним и тем же номером документа
-
   try {
-        const res = await API.get(`/project_all/`)
-        console.log(res)
+        const res = await API.get(`/project_all/`)        
         return res.data
       } catch (error) {
-       
-        console.log("Ошибка из detail:", error.response?.data?.detail)
-        // console.log("Статус ответа:", error.response?.status)       
-
-        
-        // return {"error": error.response?.data?.detail.error_code}
         return {"error": error.response?.data?.detail}
-      }
-
-  // return res.json()
+      }  
 }
 
 

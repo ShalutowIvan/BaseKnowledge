@@ -7,8 +7,8 @@ import { API } from "../../apiAxios/apiAxios"
 
 function KnowledgeCreateModal({ onClose, onSuccess }) {
   
-    const [title, setTitle] = useState("_");    
-    const [description, setDescription] = useState("_");    
+    const [title, setTitle] = useState("");    
+    const [description, setDescription] = useState("");    
     const [selectedGroupId, setSelectedGroupId] = useState(null);
   
     const [groupsCr, setGroupsCr] = useState([]);
@@ -37,7 +37,7 @@ function KnowledgeCreateModal({ onClose, onSuccess }) {
 
 
     const validateForm = () => {
-        if (!title || !description || !selectedGroupId) {
+        if (!title.trim() || !description.trim() || !selectedGroupId) {
             setError("Есть пустые поля, заполните, пожалуйста!");
             return false;
         }
@@ -53,8 +53,8 @@ function KnowledgeCreateModal({ onClose, onSuccess }) {
             setLoading(true);
             const response = await API.post("/knowledges_create/", 
                 {
-                    title: title, 
-                    description: description, 
+                    title: title.trim(), 
+                    description: description.trim(), 
                     group_id: selectedGroupId,                    
                 } );            
             onSuccess(group_slug);//это функция которая срабатывает в компоненте где открывается модальное окно
@@ -134,6 +134,7 @@ function KnowledgeCreateModal({ onClose, onSuccess }) {
           <button 
             onClick={onClose}             
             className="cancel-button"
+            disabled={loading}
           >
             Отмена
           </button>

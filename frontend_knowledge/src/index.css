@@ -348,10 +348,11 @@ container-roadmap-view
 }
 
 .post-container-free {
+  margin-top: 150px;
   max-width: 70%;
   margin-left: 20%;
-  margin-right: 20%;
-  margin-top: 50px;
+  margin-right: 20%;  
+  
   /*margin: 0 auto;*/
   /*auto;*/
   /*padding: 20px;*/
@@ -575,19 +576,67 @@ container-roadmap-view
 
 /*конец стилей стейджей*/
 
+/*.central-part {
+  margin-top: 140px;
+  width: 80%;
+  max-width: 1200px;
+  margin-left: 10%; 
+  border-radius: 8px;    
+  overflow-wrap: break-word;
+  hyphens: auto;
+}*/
+
 .central-part {
   margin-top: 140px;
-  max-width: 60%;
-  margin-left: 20%;
-  /* border: 2px solid #ddd; */
-  border-radius: 8px;  
+  width: 80%;
+  /*margin-left: 10%;*/
+  border-radius: 8px;    
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 колонки */
+  gap: 20px; /* Расстояние между карточками */
+  margin-top: 20px;
+}
+
+
+/*.project-card {
+  background: #34495e;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  min-height: 150px; 
+}*/
+
+.project-card {
+  background: #34495e;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  width: 100%; /* Занимает всю ширину ячейки grid */
+  min-height: 150px;
+  height: auto; /* Высота автоматическая */
+  box-sizing: border-box; /* Важно: padding включен в ширину */
+  
+  /* Запрещаем изменение ширины */
+  min-width: 0; /* Важно для правильной работы flex/grid */
+  max-width: 100%;
+  
+  /* Обеспечиваем перенос длинного текста */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
 
 
 .project-section {  
   border: 2px solid #ddd;
   border-radius: 8px;
   padding: 15px;  
+  margin-bottom: 20px;
 }
 
 .list-project {

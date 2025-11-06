@@ -3,7 +3,6 @@ import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
 import { API } from "../../apiAxios/apiAxios"
 import { useParams, Link, useNavigate, useLoaderData, Await, redirect, useRevalidator } from 'react-router-dom'
-// import { GroupsAll } from "./GroupsAll"
 // import MDEditor from '@uiw/react-markdown-editor';//это посоветовал дипсик
 import MDEditor from '@uiw/react-md-editor';//это посоветовал чатгпт
 // import MDEditor from 'mdeditor';//это по совету гугла
@@ -39,18 +38,29 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
       setCurrentKnowledge(knowledge);
     }, [knowledge]);
 
-    // Загрузка групп для контекстного меню при редактировании шапки знания
-    useEffect(() => {
-      const fetchGroups = async () => {
+
+    const fetchGroups = useCallback(async () => {
         try {
+          setLoading(true);
           const response = await API.get('/groups_all/');
           setGroups(response.data);
         } catch (error) {
-          console.error('Ошибка загрузки групп:', error);
-        }
-      };
-      fetchGroups();
-    }, []);
+          console.error('Error whith load group list from header:', error);
+          setError(`Не удалось загрузить список групп для шапки знания: ${error.message}`);
+        } finally {
+          setLoading(false);
+    }
+      }, []);
+
+    // Загрузка групп для контекстного меню при редактировании шапки знания
+    useEffect(() => {
+        
+      // сделаить условие для если editModeHeader равен то запускаем функцию fetchGroups
+      if (editModeHeader) {
+        fetchGroups();  
+      }
+
+    }, [editModeHeader]);
 
     // Обработчик изменений для MDEditor. Это пока убрали, так как у МД есть свой проп onChange
     const handleTextChange = (value) => {
@@ -70,7 +80,7 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
         const formData = new FormData();
         formData.append('file', file);
         
-        const response = await API.post(`/upload-image/${currentKnowledge.id}`,
+        const response = await API.post(`/upload-image/${currentKnowledge?.id}`,
           formData,
           { headers: { 'Content-Type': 'multipart/form-data' } }
         );
@@ -87,32 +97,34 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
       } finally {
         setLoading(false);
       }
-    }, [currentKnowledge.id]); // Зависимость от ID знания
+    }, [currentKnowledge?.id]); // Зависимость от ID знания
 
   
 
-    /**
-     * Мемоизированный обработчик сохранения контента. Он сохраняет контент знания на сервере
-     * useCallback обеспечивает стабильность для обработчиков событий
-     */
+    
+    // Обработчик сохранения контента. Он сохраняет контент знания на сервере    
     const handleSave = useCallback(async () => {
       try {
-        setLoading(true);
-        const updatedKnowledgeServer = await API.put(`/knowledges_update/${currentKnowledge.id}`,
-          { content: currentKnowledge.content }
+        if (!currentKnowledge?.id) {
+          setError('ID знания не найден');
+          return;
+        }
+        setLoading(true);        
+        const updatedKnowledgeServer = await API.put(`/knowledges_update/${currentKnowledge?.id}`,
+          { content: currentKnowledge?.content }
         );
 
-        // ФИКС: Создаем обновленный объект знания
+        //  Создаем обновленный объект знания
         const updatedKnowledge = {
           ...currentKnowledge,
-          content: currentKnowledge.content,
+          content: currentKnowledge?.content,
           // updated_at: new Date().toISOString(), // или с сервера
           updated_at: updatedKnowledgeServer.updated_at
         };// тут муть, скоре всего норм, но проверить
 
         setEditMode(false);
         // Сообщаем родителю об обновлении, обновление в массиве вкладок делаем setActiveTabs
-        onUpdate(currentKnowledge.id, updatedKnowledge);
+        onUpdate(currentKnowledge?.id, updatedKnowledge);
       } catch (error) {
         console.error('Error saving knowledge: ', error);
         setError('Ошибка сохранения');
@@ -132,10 +144,8 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
   }, []);
 
  
-  /**
-     * Мемоизированный обработчик изменений в шапке
-     * useCallback оптимизирует производительность формы
-     */
+  
+   // обработчик изменений в шапке     
   const handleHeaderChange = useCallback((e) => {
       const { name, value, type, checked } = e.target;
       setCurrentKnowledge(prev => ({
@@ -144,10 +154,9 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
       }));
     }, []);
 
-
-  // валидацию не оборачивал в колбек...
+  
   const validateForm = () => {
-        if (!currentKnowledge.title || !currentKnowledge.description ) {
+        if (!currentKnowledge?.title || !currentKnowledge?.description ) {
             setError("Есть пустые поля, заполните, пожалуйста!");
             return false;
         }
@@ -163,36 +172,29 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
             setLoading(true);
             const response = await API.patch(`/knowledge_update_header/${knowledge.id}`,
                 {                 
-                  title: currentKnowledge.title,
-                  description: currentKnowledge.description,
-                  free_access: currentKnowledge.free_access,
-                  group_id: currentKnowledge.group_id
+                  title: currentKnowledge?.title,
+                  description: currentKnowledge?.description,
+                  free_access: currentKnowledge?.free_access,
+                  group_id: currentKnowledge?.group_id
                 }                
-                );
-            
+                );            
             if (response.statusText==='OK') {
-                // ФИКС: Создаем обновленный объект
+                //  Создаем обновленный объект
                 const updatedKnowledge = {
                   ...currentKnowledge,
                   updated_at: response.data.updated_at,
                   group: response.data.group,
                   title: response.data.title,
                   description: response.data.description
-                };
-
-                
+                };                
                 setCurrentKnowledge(updatedKnowledge);//в текущем знании главное обновить группу и время обновления
                 onUpdate(knowledge.id, updatedKnowledge);//это обновление таба в основном компоненте. Там функция называется updateTabKnowledge. Она меняет и названия в списке знаний                
                 console.log("Update complete!")                
             } else {
                 const errorData = await response.data
                 console.log(errorData, 'тут ошибка')     
-            }
-
-            
+            }            
             setEditModeHeader(false);
-            
-
         } catch (error) {            
             console.log(error)
             setError('что-то пошло не так');            
@@ -200,14 +202,18 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
           setLoading(false);
         }    
     }, [currentKnowledge, knowledge.id, onUpdate]);
+  
 
-  // ФИКС: Восстановление исходных данных при отмене
+  //  Восстановление исходных данных при отмене
   const cancelHeaderEdit = useCallback(() => {
     setCurrentKnowledge(knowledge);
     setEditModeHeader(false);
   }, [knowledge]);
   
-  const urlToCopy = `localhost:5173/knowledge_open_free/${currentKnowledge.slug}`
+  const urlToCopy = `${window.location.origin}/knowledge_open_free/${currentKnowledge.slug}`
+
+  const headerStyle = { fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' };
+  const valueStyle = { fontSize: '20px', color: '#ADD8E6' };
       
   return (
     <>            
@@ -221,35 +227,35 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
         {!editModeHeader ? (
           <>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>            
-            <span style={{ fontSize: '20px', color: '#E0FFFF' }}>Группа: {currentKnowledge?.group.name_group}</span>
+            <span style={valueStyle}>Группа: {currentKnowledge?.group.name_group}</span>
             <button onClick={() => setEditModeHeader(true)} className="change-button">              
               </button>
           </div>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-            <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
-            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {new Date(knowledge.created_at).toLocaleString('ru-RU')}</span>
+            <span style={headerStyle}>Название:</span>
+            <span style={valueStyle}>Дата создания: {new Date(knowledge.created_at).toLocaleString('ru-RU')}</span>
           </div>
 
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>            
-            <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{currentKnowledge.title}</span>
-            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {new Date(knowledge.updated_at).toLocaleString('ru-RU')}</span>
+            <span style={valueStyle}>{currentKnowledge?.title}</span>
+            <span style={valueStyle}>Дата изменения: {new Date(knowledge?.updated_at).toLocaleString('ru-RU')}</span>
           </div>
           <br/>
           
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-            <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>            
-              <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Свободный доступ: 
-              {!currentKnowledge.free_access && <> Не разрешен</>}
-              {currentKnowledge.free_access && 
+            <span style={headerStyle}>Описание:</span>            
+              <span style={valueStyle}>Свободный доступ: 
+              {!currentKnowledge?.free_access && <> Не разрешен</>}
+              {currentKnowledge?.free_access && 
               <> Разрешен              
               </>}
               </span>
           </div>
 
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>            
-            <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{currentKnowledge.description}</span>
+            <span style={valueStyle}>{currentKnowledge?.description}</span>
             {/*кнопка для копирования ссылки*/}
-            {currentKnowledge.free_access &&
+            {currentKnowledge?.free_access &&
             <CopyLinkButton textUrl={urlToCopy} />}
           
           </div>
@@ -265,7 +271,7 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
                 <select
                     // className="control"
                     name="group_id"                    
-                    value={currentKnowledge.group_id}
+                    value={currentKnowledge?.group_id}
                     onChange={handleHeaderChange}
                     // required
                 >                    
@@ -278,8 +284,8 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
 
                 {/*первая строка без формы*/}
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
-                  <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {currentKnowledge.created_at}</span>
+                  <span style={headerStyle}>Название:</span>
+                  <span style={valueStyle}>Дата создания: {currentKnowledge?.created_at}</span>
                 </div>
 
                 {/*вторая строка с формой названия знания*/}
@@ -289,23 +295,23 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
                         placeholder="введите назвнаие"
                         name="title"
                         type="text"                        
-                        value={currentKnowledge.title}                        
+                        value={currentKnowledge?.title}                        
                         onChange={handleHeaderChange}
                         disabled={loading}
                     />                
-                    <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {currentKnowledge.updated_at}</span>
+                    <span style={valueStyle}>Дата изменения: {currentKnowledge?.updated_at}</span>
                 </div>
                 <br/>
                 
                 {/*третья строка с чекбоксом*/}
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>          
+                  <span style={headerStyle}>Описание:</span>          
                   
                   <label>
                     <input
                       type="checkbox"
                       name="free_access"
-                      checked={currentKnowledge.free_access}
+                      checked={currentKnowledge?.free_access}
                       onChange={handleHeaderChange}
                       disabled={loading}
                     />
@@ -318,7 +324,7 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
                   <textarea
                     placeholder="введите описание"
                     name="description"
-                    value={currentKnowledge.description}
+                    value={currentKnowledge?.description}
                     onChange={handleHeaderChange}
                     disabled={loading}
                     rows={2}
@@ -332,9 +338,11 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
 
                   &nbsp;&nbsp;
                   <button 
-                    onClick={() => {cancelHeaderEdit}}
+                    type="button"
+                    onClick={cancelHeaderEdit}
                     className="cancel-button"
-                    disabled={loading}>Отмена</button>
+                    disabled={loading}
+                    >Отмена</button>
                   </div>                  
                 </div>
                 {/*конец четвертой строки*/}
@@ -388,7 +396,7 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
               rehypePlugins={markdownPlugins.rehype}
               components={markdownComponents}
               >
-                {currentKnowledge.content}
+                {currentKnowledge?.content}
               </ReactMarkdown>
             </div>
           ) : (
@@ -411,7 +419,7 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
             }} />
             
             <MDEditor              
-              value={currentKnowledge.content}
+              value={currentKnowledge?.content}
               onChange={handleTextChange}
               height={500}
               preview="edit"            
@@ -423,7 +431,7 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
 
           <div className="editor-actions">
             {/*кнопка сохранить*/}
-            <button 
+            <button                 
                 onClick={handleSave} 
                 className="save-button"
                 disabled={loading}
@@ -432,7 +440,9 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
               </button>
 
             {/*кнопка отменить*/}
-            <button onClick={() => {
+            <button 
+              type="button"
+              onClick={() => {
                 setCurrentKnowledge(knowledge);
                 setEditMode(false);
               }}
@@ -453,7 +463,7 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
                 rehypePlugins={markdownPlugins.rehype}
                 components={markdownComponents}
                 >
-                {currentKnowledge.content}
+                {currentKnowledge?.content}
               </ReactMarkdown>
             </div>
             <br/>

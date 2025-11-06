@@ -142,9 +142,7 @@ function KnowledgeLayout() {
               ? { ...item, isEditing: false, name_group: foundGroupLoad.name_group } 
               : item
           ));
-
     };
-
 
 
   const handleRenameClick = (group) => {
