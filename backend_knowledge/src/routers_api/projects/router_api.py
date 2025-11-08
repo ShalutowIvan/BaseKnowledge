@@ -36,7 +36,10 @@ async def projects_all(
 
 # создание проекта
 @router_project_api.post("/project_create/", response_model=ProjectsSchema)
-async def project_create(project: ProjectsCreateSchema, user_id: int = Depends(verify_user_service), session: AsyncSession = Depends(get_async_session)) -> ProjectsSchema:
+async def project_create(
+    project: ProjectsCreateSchema, 
+    user_id: int = Depends(verify_user_service), 
+    session: AsyncSession = Depends(get_async_session)) -> ProjectsSchema:
     return await project_create_service(user_id=user_id, db=session, project=project)
 
 

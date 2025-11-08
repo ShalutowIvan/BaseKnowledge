@@ -1,71 +1,81 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import './CSS/DeleteGroup.css'
 import { API } from "../../apiAxios/apiAxios"
 
 
 function ProjectCreateModal({ onClose, onSuccess }) {
   
-  const [title, setTitle] = useState("_");    
-  const [description, setDescription] = useState("_");    
+  const [title, setTitle] = useState("");    
+  const [description, setDescription] = useState("");    
   
   const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 
 
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.keyCode === 27 && !loading) {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [loading, onClose]);
+
+
   const validateForm = () => {
-        if (!title || !description) {
+        if (!title.trim() || !description.trim()) {
             setError("Есть пустые поля, заполните, пожалуйста!");
             return false;
         }
         setError('');
         return true;
-    }
-
-  const navigate = useNavigate();
+    }  
   
   const handleSubmit = async (event) => {
         event.preventDefault();
         if (!validateForm()) return;
-        setLoading(true);
+        
 
         try {
+            setLoading(true);
+            setError(null);
             const response = await API.post(
-                "http://127.0.0.1:8000/project_create/",
-                {                 
-                    title,                    
-                    description,
-                }
-                
-                );
-            setLoading(false);
-          
-              setTitle("");
-              setDescription("");
-                
-              // передаем объект нового проекта, чтобы записать его в массив состояний
+                  "http://127.0.0.1:8000/project_create/",
+                  {                 
+                      title: title.trim(),                    
+                      description: description.trim(),
+                  }                
+                );                     
+                            
               onSuccess(response.data);
-              onClose();
-      
+              onClose();      
               
-        } catch (error) {
-            setLoading(false);
-            console.log(error)
-            setError(error.response?.data?.detail || 'что-то пошло не так');            
-        }    
+        } catch (error) {            
+            console.log("Error whith create project:", error)
+            setError(`Ошибка при создании проекта: ${error.message}`);
+        } finally {
+          setLoading(false);
+        }  
     };
+
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget && !loading) {
+      onClose();
+    }
+  };
+
   
 
+
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" onClick={handleOverlayClick}>
 
       <div className="modal-content">        
-        <h3>Создание проекта</h3>
+        <h3>Создание проекта</h3>        
         
-        {/* начало формы */}
-        <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
-                
+        <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>                
 
                 <label htmlFor="id_title">Заголовок проекта: </label>
                 <input 
@@ -78,22 +88,22 @@ function ProjectCreateModal({ onClose, onSuccess }) {
                     onChange={(e) => setTitle(e.target.value)}   
                 />
 
-                <br/><br/>                
+                <br/><br/>
 
                 <label htmlFor="id_description">Описание: </label>
-                <input 
+                <textarea 
                     placeholder="введите описание"
                     name="description"
-                    type="text"
                     id="id_description"
                     className="control"
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}   
+                    onChange={(e) => setDescription(e.target.value)}
+                    disabled={loading}
+                    rows={2}
                 />
         
         <div className="modal-actions">
-          <button 
-            // onClick={handleDelete}
+          <button
             type="submit"
             disabled={loading}
             className="save-button"
@@ -102,17 +112,17 @@ function ProjectCreateModal({ onClose, onSuccess }) {
           </button>
 
           <button 
+            type="button"
             onClick={onClose} 
             disabled={loading}
             className="cancel-button"
           >
             Отмена
           </button>
-      
-      
+          
         </div>
         {error && <div className="error-message">{error}</div>}
-      {/* конец формы */}
+      
       </form>
 
       </div>
