@@ -50,10 +50,6 @@ function ProjectOpenUsers() {
                 }
                 );
             setLoading(false);
-
-            // if (!response.data?.id) {
-            //     throw new Error("Некорректный формат ответа сервера");
-            //   }
             
             // тут обработать ошибку валидации когда список пользаков пустой!!!!!!!!!!!!! Типа если статус ответа 400 то пустой список записываем в состояние списка пользаков, или ничего не меняем. 
             console.log(response.status, "статус")
@@ -135,44 +131,47 @@ function ProjectOpenUsers() {
 	}
 
 
-	const SearchCurrentUsers = async (event) => {
-        event.preventDefault();
-        if (!validateForm()) return;
-        setLoading(true);
+	// const SearchCurrentUsers = async (event) => {
+    //     event.preventDefault();
+    //     if (!validateForm()) return;
+    //     setLoading(true);
 
-        try {
-            const response = await axiosRole.get('/search_current_users', {
-                params: {                 
-                    email_user: emailCurrentUser,
-                    project_id: project_id
-                }
-                }
-                );
-            setLoading(false);
+    //     try {
+    //         const response = await axiosRole.get('/search_current_users', {
+    //             params: {                 
+    //                 email_user: emailCurrentUser,
+    //                 project_id: project_id
+    //             }
+    //             }
+    //             );
+    //         setLoading(false);
 
-            // if (!response.data?.id) {
-            //     throw new Error("Некорректный формат ответа сервера");
-            //   }
+    //         // if (!response.data?.id) {
+    //         //     throw new Error("Некорректный формат ответа сервера");
+    //         //   }
             
-            if (response.statusText==='OK') {
-				setEmailCurrentUser("");
-				setCurrentUsers(response.data)                
+    //         if (response.statusText==='OK') {
+	// 			setEmailCurrentUser("");
+	// 			setCurrentUsers(response.data)                
       
-            } else {
-                const errorData = await response.data
-                console.log(errorData, 'тут ошибка')     
-            }
-        } catch (error) {
-            setLoading(false);
-            console.log(error)
-            setError('что-то пошло не так');            
-        }    
-    };
+    //         } else {
+    //             const errorData = await response.data
+    //             console.log(errorData, 'тут ошибка')     
+    //         }
+    //     } catch (error) {
+    //         setLoading(false);
+    //         console.log(error)
+    //         setError('что-то пошло не так');            
+    //     }    
+    // };
 
 
     const [showCurrentUsers, setShowCurrentUsers] = useState(false);
     const [errorUser, setErrorUser] = useState("");
 
+
+
+    
 
     const AllUsersProject = async () => {
         setLoading(true);
@@ -189,8 +188,17 @@ function ProjectOpenUsers() {
             //     throw new Error("Некорректный формат ответа сервера");
             //   }
             
-            if (response.statusText==='OK') {		
-				setCurrentUsers(response.data)                
+            if (response.statusText==='OK') {				
+                const data = response.data
+             
+                if (Array.isArray(data)) {
+                setCurrentUsers(data.map(item => ({
+                    ...item,
+                    isEditing: false
+                })));
+                } else {
+                setError("Неверный формат данных списка пользаков");
+                }
       
             } else {
                 const errorData = await response.data
@@ -211,6 +219,19 @@ function ProjectOpenUsers() {
     const [modifyRole, setModifyRole ] = useState(false)
     // const [selectedRole, setSelectedRole] = useState("");
 
+    const handleModifyRoleUser = (userId) => {
+      setCurrentUsers(prev => 
+        prev.map(item => (
+          item.id === userId ? { ...item, modifyRole: true} : item
+          )));      
+    }
+
+    const cancelEditUser = (userId) => {               
+      setCurrentUsers(prev => 
+          prev.map(item => (
+            item.id === userId ? { ...item, modifyRole: false } : item
+          )));
+    };
     
 
     //это функция для изменения состояния роли в таблице
@@ -236,7 +257,10 @@ function ProjectOpenUsers() {
                     { user_id: user_id, role: role },
                     { params: {project_id: project_id} }//это для интерцептора роли, не передается в запрос
                     );
-                setModifyRole(false)
+                setCurrentUsers(prev => 
+                    prev.map(item => (
+                        item.id === user_id ? { ...item, modifyRole: false } : item
+                    )));
                 setErrorUser("")
                 if (response.statusText==='OK') {                    
                     console.log("Update complete!")                
@@ -325,9 +349,9 @@ function ProjectOpenUsers() {
 								</td>
                                 <td>
                                 <div>
-                                    {!modifyRole ? (
+                                    {!item.modifyRole ? (
                                         <>
-                                        <button onClick={() => {setModifyRole(true);}} className="change-button"></button>
+                                        <button onClick={(e) => handleModifyRoleUser(item.id)} className="change-button"></button>
                                         </>
                                     ) : (
                                     <>                                    
@@ -338,6 +362,9 @@ function ProjectOpenUsers() {
                                         <option value={ROLES_USERS.GUEST}>Гость</option>
                                     </select>
                                     <button onClick={(e) => saveRole(item.id, item.role)} className="accept-button"></button>
+                                        
+                                    <button onClick={(e) => {cancelEditUser(item.id); }} className="close-button">                                               
+                                </button>
                                     </>
                                     )
                                     }          

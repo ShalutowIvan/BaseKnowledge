@@ -11,19 +11,6 @@ function ProjectCreateModal({ onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 
-
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.keyCode === 27 && !loading) {
-        onClose();
-      }
-    };
-    
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [loading, onClose]);
-
-
   const validateForm = () => {
         if (!title.trim() || !description.trim()) {
             setError("Есть пустые поля, заполните, пожалуйста!");
@@ -35,8 +22,7 @@ function ProjectCreateModal({ onClose, onSuccess }) {
   
   const handleSubmit = async (event) => {
         event.preventDefault();
-        if (!validateForm()) return;
-        
+        if (!validateForm()) return;      
 
         try {
             setLoading(true);
@@ -60,14 +46,21 @@ function ProjectCreateModal({ onClose, onSuccess }) {
         }  
     };
 
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.keyCode === 27 && !loading) {
+        onClose();
+      }
+    };    
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [loading, onClose]);
+
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget && !loading) {
       onClose();
     }
   };
-
-  
-
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>

@@ -78,10 +78,27 @@ function DeleteGroupModal({ groupToDelete, onClose, onSuccess }) {
     }
   };
 
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.keyCode === 27 && !isDeleting) {
+        onClose();
+      }
+    };    
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isDeleting, onClose]);
+
+  
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget && !isDeleting) {
+      onClose();
+    }
+  };
+
   if (!groupToDelete) return null;
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" onClick={handleOverlayClick}>
 
       <div className="modal-content">        
         <h3>Удаление группы "{groupToDelete.name_group}"</h3>

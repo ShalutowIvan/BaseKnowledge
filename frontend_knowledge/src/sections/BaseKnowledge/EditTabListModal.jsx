@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 
 
@@ -14,8 +14,24 @@ function EditTabListModal({ tabList, onClose, onSave, loading, error }) {
     }
   };
 
+  useEffect(() => {
+      const handleEscape = (e) => {
+        if (e.keyCode === 27 && !loading) {
+          onClose();
+        }
+      };    
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }, [loading, onClose]);
+  
+    const handleOverlayClick = (e) => {
+      if (e.target === e.currentTarget && !loading) {
+        onClose();
+      }
+    };
+
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="modal-content">
         <div className="modal-header">
           <h2>✏️ Редактировать список</h2>

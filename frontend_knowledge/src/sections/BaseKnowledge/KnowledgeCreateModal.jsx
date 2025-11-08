@@ -66,10 +66,26 @@ function KnowledgeCreateModal({ onClose, onSuccess }) {
             setLoading(false);  
         }
     };
+
+    useEffect(() => {
+      const handleEscape = (e) => {
+        if (e.keyCode === 27 && !loading) {
+          onClose();
+        }
+      };    
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }, [loading, onClose]);
+  
+    const handleOverlayClick = (e) => {
+      if (e.target === e.currentTarget && !loading) {
+        onClose();
+      }
+    };
   
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" onClick={handleOverlayClick}>
 
       <div className="modal-content">        
         <h3>Создание знания</h3>

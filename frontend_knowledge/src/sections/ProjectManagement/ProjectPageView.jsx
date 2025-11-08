@@ -7,6 +7,7 @@ import { ProjectCreateModal } from './ProjectCreateModal'
 import './CSS/cssProjects.css'
 
 import { updateAccessTokenFromRefreshToken } from "../../regusers/AuthService"
+import { ErrorDisplay } from './ErrorDisplay'
 
 
 function ProjectPageView() {
@@ -21,14 +22,16 @@ function ProjectPageView() {
 
   const [modalOpen, setModalOpen] = useState(false);
 
-	if (projectLoad?.error) {  
-    return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {projectLoad?.error}. Пройдите авторизацию.</h1>
-  	}
+	// if (projectLoad?.error) {  
+  //   return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {projectLoad?.error}. Пройдите авторизацию.</h1>
+  // 	}
 
   useEffect(() => {    
     if (projectLoad && !projectLoad.error) {
     const projectList = Array.isArray(projectLoad) ? projectLoad : [];
     setProjects(projectList);
+    } else if (projectLoad.error) {
+      setError(projectLoad.error)
     }
   }, [projectLoad]);
 
@@ -51,7 +54,12 @@ function ProjectPageView() {
   }
 
 	return (
-		<>     
+		<> 
+      {/* Компонент для отображения ошибок */}
+      <ErrorDisplay 
+          error={error} 
+          onClose={() => setError(null)} 
+        />  
 			
 			<div className='central-part'>
         <h1>Проекты</h1>
