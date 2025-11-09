@@ -35,10 +35,7 @@ async def group_create_service(user_id: int, db: AsyncSession, group: GroupShema
         await db.refresh(new_group)
         return new_group
     except Exception as ex:
-        raise HTTPException(
-            status_code=422, 
-            detail=f"Error whith create group"
-        )
+        raise HTTPException(status_code=422, detail="Error whith create group")
 
 
 #получение списка групп

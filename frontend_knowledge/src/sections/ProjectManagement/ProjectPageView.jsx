@@ -21,10 +21,7 @@ function ProjectPageView() {
   const [error, setError] = useState(null);
 
   const [modalOpen, setModalOpen] = useState(false);
-
-	// if (projectLoad?.error) {  
-  //   return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>Ошибка: {projectLoad?.error}. Пройдите авторизацию.</h1>
-  // 	}
+	
 
   useEffect(() => {    
     if (projectLoad && !projectLoad.error) {
@@ -54,8 +51,7 @@ function ProjectPageView() {
   }
 
 	return (
-		<> 
-      {/* Компонент для отображения ошибок */}
+		<>       
       <ErrorDisplay 
           error={error} 
           onClose={() => setError(null)} 

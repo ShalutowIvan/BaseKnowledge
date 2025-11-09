@@ -5,6 +5,8 @@ import { API } from "../../apiAxios/apiAxios"
 import { ROLES_USERS } from "./axiosRole/RoleService"
 import { ProjectDeleteModal } from './ProjectDeleteModal'
 import { axiosRole } from "./axiosRole/axiosRole"
+import { FaCheck, FaTimes } from 'react-icons/fa';
+import "./CSS/Button.css"
 
 
 function ProjectOpenUsers() {
@@ -354,17 +356,22 @@ function ProjectOpenUsers() {
                                         <button onClick={(e) => handleModifyRoleUser(item.id)} className="change-button"></button>
                                         </>
                                     ) : (
-                                    <>                                    
-                                    <select value={item.role} onChange={(e) => updateRole(item.id, e.target.value)}>
-                                        <option value={ROLES_USERS.ADMIN}>Админ</option>
-                                        <option value={ROLES_USERS.EDITOR}>Редактор</option>
-                                        <option value={ROLES_USERS.VIEWER}>Просматривающий</option>
-                                        <option value={ROLES_USERS.GUEST}>Гость</option>
-                                    </select>
-                                    <button onClick={(e) => saveRole(item.id, item.role)} className="accept-button"></button>
-                                        
-                                    <button onClick={(e) => {cancelEditUser(item.id); }} className="close-button">                                               
-                                </button>
+                                    <>
+                                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                            <select value={item.role} onChange={(e) => updateRole(item.id, e.target.value)}>
+                                                <option value={ROLES_USERS.ADMIN}>Админ</option>
+                                                <option value={ROLES_USERS.EDITOR}>Редактор</option>
+                                                <option value={ROLES_USERS.VIEWER}>Для просмотра</option>
+                                                <option value={ROLES_USERS.GUEST}>Гость</option>
+                                            </select>
+                                            &nbsp;
+                                            <button onClick={(e) => saveRole(item.id, item.role)} className="accept-button"><FaCheck /></button>
+                                            {/*className="accept-button"*/}
+                                            &nbsp;   
+                                            <button onClick={(e) => {cancelEditUser(item.id); }} className="close-button"><FaTimes /></button>
+                                            {/*className="close-button"*/}
+
+                                        </div>
                                     </>
                                     )
                                     }          
@@ -446,7 +453,9 @@ function ProjectOpenUsers() {
 
 
             <h1>Информация об удалении проекта</h1>
-            <button className='toolbar-button' onClick={() => {setVisibleInfoDelete(!visibleInfoDelete);}}>Развернуть</button>
+            <button className='toolbar-button' onClick={() => {setVisibleInfoDelete(!visibleInfoDelete);}}>
+                {visibleInfoDelete ? "Свернуть" : "Развернуть"}
+            </button>
             {visibleInfoDelete && 
                 <div>
                     <h3>Вы можете полностью отредактировать текущий проект для других целей или удалить его по кнопке ниже. При удалении будут удалены все вложенные разделы и задачи в них без возможности восстановления.</h3>

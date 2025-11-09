@@ -742,35 +742,44 @@ container-roadmap-view
 
 
 .accept-button {
-  width: 24px;
-  height: 24px;
-  background-image: url('assets/icons/galka.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 5px;
   border: none;
-  background-color: transparent;
+  border-radius: 8px;  
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: all 0.3s ease;  
+  background: #10b981;
+  color: white;
 }
 
 .accept-button:hover {
-  transform: scale(1.5);
+  /*transform: scale(1.5);*/
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .close-button {
-  width: 28px;
-  height: 30px;
-  background-image: url('assets/icons/krest.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 5px;
   border: none;
-  background-color: transparent;
+  border-radius: 8px;  
   cursor: pointer;
-  transition: transform 0.2s;     
-      
-    }
+  transition: all 0.3s ease;    
+  background: #ef4444;
+  color: white;    
+}
+
+.close-button:hover {
+  /*transform: scale(1.5);*/
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
 
 .container-user {
   display: flex;
@@ -1026,4 +1035,14 @@ container-roadmap-view
 .sort-date:hover {
   background-color: #d5d5d5;
 }
+
+
+
+
+
+
+
+
+
+
 

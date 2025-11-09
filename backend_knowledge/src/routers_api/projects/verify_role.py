@@ -66,16 +66,6 @@ async def verify_role_token(
     return check
 
 
-# проверка принадлежности проекту и соответствие роли админа. есть 2 параметра. Роль равна или роль не равна. Передаем обычно один параметр, а второй None. И тогда второе условие не срабатывает
-# async def verify_project_service(role, project_id: int):
-
-#     if role[0] != project_id:
-#         print("Вы пользователь другого проекта!")
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error_code": "access_denied", "message": "User is not a member of this project"})    
-
-#     return True
-
-
 async def verify_project_service(
     client_id: str = Depends(verify_client_id),
     role_info: tuple[int, int, str] = Depends(verify_role_token)

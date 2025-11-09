@@ -19,7 +19,7 @@ const API = axios.create({
 
 // Интерцептор для добавления access токена в заголовки запросов
 API.interceptors.request.use(
-  (config) => {
+  async (config) => {
     const accessToken = getAccessToken();
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;

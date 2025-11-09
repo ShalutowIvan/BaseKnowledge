@@ -5,6 +5,8 @@ import { DeleteGroupModal } from './DeleteGroupModal'
 import { GroupCreateModal } from './GroupCreateModal'
 import { ActionsWithGroups } from './DropdownMenu'; 
 import { ErrorDisplay } from './ErrorDisplay'
+import { FaCheck, FaTimes } from 'react-icons/fa';
+
 
 function KnowledgeLayout() {
 
@@ -40,10 +42,9 @@ function KnowledgeLayout() {
 
   
   useEffect(() => {
-    const fetchData = async () => {
-      try {
+    const fetchData = async () => {      
         setLoading(true);
-        setError(null);
+        setError(null);        
 
         if (groupsLoad && typeof groupsLoad === 'object' && groupsLoad.error) {
           setError(groupsLoad.error);
@@ -57,13 +58,7 @@ function KnowledgeLayout() {
           })));
         } else {
           setError("Неверный формат данных групп");
-        }
-      } catch (err) {
-        setError(err?.message || "Ошибка загрузки групп");
-        console.log("Error with load group in layout:", err);
-      } finally {
-        setLoading(false);
-      }
+        }      
     };
     fetchData();
   }, [groupsLoad]);
@@ -196,35 +191,36 @@ function KnowledgeLayout() {
 
                         <div key={group.id} className="list-group-edit section-frame">
                           <form onSubmit={(e) => saveNameGroup(group.id, group.name_group, e)} style={{ marginBottom: '1rem' }}>
-                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                            <input 
-                                placeholder="введите название"
-                                name="name_group"
-                                type="text"                        
-                                value={group.name_group}
-                                onChange={setGroupName(group.id)}
-                                disabled={loading}
-                              />
-
-                              <div>
-                                <button 
-                                  className="accept-button" 
-                                  type="submit" 
+                            <div style={{display: 'flex', alignItems: 'center'}}>
+                              <input 
+                                  placeholder="введите название"
+                                  name="name_group"
+                                  type="text"                        
+                                  value={group.name_group}
+                                  onChange={setGroupName(group.id)}
                                   disabled={loading}
-                                >
-                                  {loading ? '...' : ' '}
-                                </button>
-                                &nbsp;&nbsp;                                  
-
-                                <button 
-                                  onClick={(e) => { 
-                                    e.preventDefault();
-                                    cancelEditGroup(group.id); 
-                                  }}
-                                  className="close-button"                                  
-                                >                                               
-                                </button>
-                              </div>
+                                />
+                                &nbsp;
+                                
+                                  <button 
+                                    className="accept-button" 
+                                    type="submit" 
+                                    disabled={loading}
+                                  >
+                                    <FaCheck />
+                                  </button>
+                                  {/*&nbsp;&nbsp;*/}
+                                  &nbsp;
+                                  <button 
+                                    onClick={(e) => { 
+                                      e.preventDefault();
+                                      cancelEditGroup(group.id); 
+                                    }}
+                                    className="close-button"                                  
+                                  >
+                                  <FaTimes />
+                                  </button>
+                                
                             
                             </div>
                           
@@ -304,12 +300,15 @@ async function getGroups() {
     const responseGroups = await API.get('/groups_all/');
     return responseGroups.data;
   } catch (error) {
-    console.log("Ошибка из лоадера", error);
+    console.error("Error whith loader group:", error);
     
-    // ВОЗВРАЩАЕМ ОБЪЕКТ С ОШИБКОЙ
-    return { 
-      error: error.response?.data?.detail || error.message || "Ошибка соединения с сервером" 
-    };
+    const res = error.response?.data?.detail;
+    
+    if (res) {
+      return {"error": res};
+    } else { 
+      return {"error": error.message}
+    }
   }  
 }
 
@@ -319,7 +318,5 @@ const KnowledgeGroupsLoader = async () => {
     groupsLoad: requestGroups    
   };
 };
-
-
 
 export { KnowledgeLayout, KnowledgeGroupsLoader }

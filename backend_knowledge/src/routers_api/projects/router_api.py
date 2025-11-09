@@ -45,19 +45,19 @@ async def project_create(
 
 # запрос проекта при открытии. Параметр project_id из url тянется в функцию verify_project_service из Depends
 @router_project_api.get("/project_get/{project_id}", response_model=ProjectsSchema)
-async def project_get_open(
+async def get_project_open(
     role_info: tuple[int, int, str] = Depends(verify_project_service), 
     session: AsyncSession = Depends(get_async_session)
     ) -> ProjectsSchema:
-    return await get_project_open(role_info=role_info, db=session)
+    return await get_project_open_service(role_info=role_info, db=session)
 
 
 # запрос секций в проекте
 @router_project_api.get("/section_project_all/{project_id}", response_model=list[SectionsSchema])
-async def section_project_all(
+async def get_sections_project(
     role_info: tuple[int, int, str] = Depends(verify_project_service), 
     session: AsyncSession = Depends(get_async_session)) -> SectionsSchema:
-    return await get_sections_project(role_info=role_info, db=session)
+    return await get_sections_project_service(role_info=role_info, db=session)
 
 
 # изменение шапки проекта

@@ -71,76 +71,90 @@ async def project_create_service(user_id: int, db: AsyncSession, project: Projec
     return new_project
 
 
-async def get_project_open(role_info: tuple, db: AsyncSession) -> ProjectsSchema:
-    # role = await parse_role_service(request=request)#проверка клиент токена и дешифровка роли
-    # verify = await verify_project_service(role=role, project_id=project_id)#проверка принадлежности проекту из токена. Там если что выдается exception. 
+async def get_project_open_service(role_info: tuple, db: AsyncSession) -> ProjectsSchema:
+    
+    try:
+        project_id = role_info[0]
+        user_id = role_info[1]    
 
-    user_id = role_info[1]
-    project_id = role_info[0]
-
-    # user_id = await verify_user_service(request=request)
-
-    # if not user_id:
-    #     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="401_UNAUTHORIZED")
-
-    stmt = (
-        select(Project)  # Выбираем проекты        
-        # Присоединяем ассоциативную таблицу (Project -> ProjectUserAssociation)
-        .join(Project.users)
-        # Фильтруем только записи, где user_id совпадает с ID текущего пользователя
-        .where(ProjectUserAssociation.project_id == project_id)
-        .where(ProjectUserAssociation.user_id == user_id)        
-    )
-
-    result = await db.execute(stmt)
-    project = result.scalar_one_or_none()
-    if project == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error_code": "access_denied", "message": "User is not a member of this project"})
-        
-    return project
-
-
-async def get_sections_project(role_info: tuple, db: AsyncSession) -> SectionsSchema:
-    # role = await parse_role_service(request=request)#проверка клиент токена и дешифровка роли
-    # verify = await verify_project_service(role=role, project_id=project_id)#проверка принадлежности проекту из токена
-    project_id = role_info[0]
-
-    if (role_info[2] != Role.GUEST.value):
-        sections = await db.execute(select(Section).where(Section.project_id == project_id))    
-        return sections.scalars().all()
-    else:
-        logger.error(
-            f"Error ROLE in get_sections_project, user_id: {role_info[1]}, project_id: {project_id}",
+        query = (
+            select(Project)  # Выбираем проекты        
+            # Присоединяем ассоциативную таблицу (Project -> ProjectUserAssociation)
+            .join(Project.users)
+            # Фильтруем только записи, где user_id совпадает с ID текущего пользователя
+            .where(ProjectUserAssociation.project_id == project_id)
+            .where(ProjectUserAssociation.user_id == user_id)        
         )
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role {role_info[2]} is not suitable for this action"})
+
+        result = await db.execute(query)
+        project = result.scalar_one_or_none()
+        if project == None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User is not a member of this project")
+            
+        return project
+
+    except HTTPException as ex:
+        raise ex
+
+    except Exception as ex:
+        logger.error(f"Error whith open header project: {ex}")
+        raise HTTPException(status_code=400, detail="Error whith open header project")
+
+
+async def get_sections_project_service(role_info: tuple, db: AsyncSession) -> SectionsSchema:    
+    
+    try:
+        project_id = role_info[0]
+
+        if (role_info[2] != Role.GUEST.value):
+            sections = await db.execute(select(Section).where(Section.project_id == project_id))    
+            return sections.scalars().all()
+        else:
+            logger.error(
+                f"Error ROLE in get_sections_project_service, user_id: {role_info[1]}, project_id: {project_id}",
+            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Your role {role_info[2]} is not suitable for this action")
+
+    except HTTPException as ex:
+        raise ex
+
+    except Exception as ex:
+        logger.error(f"Error in get_sections_project_service: {ex}")
+        raise HTTPException(status_code=400, detail="Error whith getting sections project")
+
 
     
 # измененние шапки. project_id тут не query параметр, а параметр из ссылки роута. В реакт интерцепторе тоже есть query параметр project_id используемый для обновления Project_token, но он потом удаляется и не передается
 async def update_project_header_service(role_info: tuple, project_update: ProjectsCreateSchema, db: AsyncSession):    
-    # 0. Проверка роли
-    # role = await parse_role_service(request=request)
-    # verify = await verify_project_service(role=role, project_id=project_id)
+    
+    # не проверяется роль в БД.... только из запроса из токена
 
-    if (role_info[2] == Role.ADMIN.value) or (role_info[2] == Role.EDITOR.value):    
-        # 1. Получаем текущий проект
-        query = select(Project).where(Project.id == role_info[0])
+    try:
+        if (role_info[2] == Role.ADMIN.value) or (role_info[2] == Role.EDITOR.value):    
+            # 1. Получаем текущий проект
+            query = select(Project).where(Project.id == role_info[0])
+                
+            result = await db.execute(query)
+            project_header = result.scalar()
+                
+            if not project_header:
+                raise HTTPException(status_code=404, detail="project not found")
             
-        result = await db.execute(query)
-        project_header = result.scalar()
+            # 2. Обновляем проект
+            project_header.title = project_update.title
+            project_header.description = project_update.description
             
-        if not project_header:
-            raise HTTPException(status_code=404, detail="project not found")
-        
-        # 2. Обновляем проект
-        project_header.title = project_update.title
-        project_header.description = project_update.description
-        
-        await db.commit()
-        await db.refresh(project_header)
-            
-        return project_header
-    else:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"error_code": "role_denied", "message": f"Your role - {role_info[2]} - is not suitable for this action"})
+            await db.commit()
+            await db.refresh(project_header)
+                
+            return project_header
+        else:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Your role - {role_info[2]} - is not suitable for this action")
+    except HTTPException as ex:
+        raise ex
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail="Error whith update header project")
+
 
 
 async def section_create_service(role_info: tuple, db: AsyncSession, section: SectionsCreateSchema) -> SectionsSchema:
@@ -584,32 +598,33 @@ async def delete_section_service(role_info: tuple, section_id: int, db: AsyncSes
 
 
 # создание токена с ролью для проекта
-async def create_project_token_service(user_id: int, project_id: User_project_role_schema, db: AsyncSession, expires_delta: timedelta | None = None):
+async def create_project_token_service(user_id: int, project_id: User_project_role_schema, db: AsyncSession, expires_delta: timedelta | None = None):    
+    try:
+        query_user_project = await db.execute(
+                    (select(ProjectUserAssociation)
+                    .where(ProjectUserAssociation.user_id == user_id)
+                    .where(ProjectUserAssociation.project_id == project_id.project_id)
+                    ))
+        user_project = query_user_project.scalar_one_or_none()
+        if not user_project:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User is not a member of this project")    
+        
+        data = {"project_id": user_project.project_id , "user_id": user_project.user_id, "role": user_project.role.value}
 
-    # current_user_id = await verify_user_service(request=request)
+        to_encode = data.copy()
+        if expires_delta:#если задано время истекания токена, то к текущему времени мы добавляем время истекания
+            expire = datetime.utcnow() + expires_delta
+        #expires_delta это если делать какую-то
+        else:#иначе задаем время истекания также 30 мин
+            expire = datetime.utcnow() + timedelta(minutes=int(EXPIRE_TIME_PROJECT_TOKEN))#протестить длительность токена с 0 минут
+        to_encode.update({"exp": expire})#тут мы добавили элемент в словарь который скопировали выше элемент с ключом "exp" и значением времени, которое сделали строкой выше. 
+        encoded_jwt = jwt.encode(to_encode, PROJECT_KEY, algorithm=ALG)#тут мы кодируем наш токен.
+        return {"Project_token": encoded_jwt}
+    except HTTPException as ex:
+        raise ex
 
-    # if not current_user_id:
-    #     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="401_UNAUTHORIZED")
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail="Error whith create project token")    
 
-    query_user_project = await db.execute(
-                (select(ProjectUserAssociation)
-                .where(ProjectUserAssociation.user_id == user_id)
-                .where(ProjectUserAssociation.project_id == project_id.project_id)
-                ))
-    user_project = query_user_project.scalar_one_or_none()
-    if not user_project:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error_code": "access_denied", "message": "User is not a member of this project"})    
-    
-    data = {"project_id": user_project.project_id , "user_id": user_project.user_id, "role": user_project.role.value}
-
-    to_encode = data.copy()
-    if expires_delta:#если задано время истекания токена, то к текущему времени мы добавляем время истекания
-        expire = datetime.utcnow() + expires_delta
-    #expires_delta это если делать какую-то
-    else:#иначе задаем время истекания также 30 мин
-        expire = datetime.utcnow() + timedelta(minutes=int(EXPIRE_TIME_PROJECT_TOKEN))#протестить длительность токена с 0 минут
-    to_encode.update({"exp": expire})#тут мы добавили элемент в словарь который скопировали выше элемент с ключом "exp" и значением времени, которое сделали строкой выше. 
-    encoded_jwt = jwt.encode(to_encode, PROJECT_KEY, algorithm=ALG)#тут мы кодируем наш токен.
-    return {"Project_token": encoded_jwt}
 
 
