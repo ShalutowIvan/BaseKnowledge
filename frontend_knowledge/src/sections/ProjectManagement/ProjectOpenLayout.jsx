@@ -27,6 +27,11 @@ function ProjectOpenLayout() {
   const navigate = useNavigate();
   
   const [sections, setSections] = useState([]);
+  // const [sections, setSections] = useState(() => {
+  //   return Array.isArray(sectionLoad) ? sectionLoad : [];
+  // });
+
+  
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -59,30 +64,49 @@ function ProjectOpenLayout() {
   
 
   // эффект загрузки секций из лоадера
-  useEffect(() => {    
+  useEffect(() => {
+    let isMounted = true;
+    
     const dataLoad = async () => {
-    if (sectionLoad && typeof sectionLoad === 'object' && sectionLoad.error) {
-          setError(sectionLoad.error);
-          return;
-        } 
+      if (!isMounted) return;
+      
+      if (sectionLoad?.error) {
+        if (isMounted) setError(sectionLoad.error);
+        return;
+      } 
 
-    
-    if (Array.isArray(sectionLoad)) {
-          setSections(sectionLoad);
-        } else {
-          setError("Неверный формат данных групп");
-        }      
-    
+      if (Array.isArray(sectionLoad) && isMounted) {
+        setSections(sectionLoad);
+      } else if (isMounted) {
+        setError("Неверный формат данных групп");
+      }    
     }
-    dataLoad()
+
+    dataLoad();
     
-    // Обрабатываем удаление, если есть ID в location.state
-    if (location.state?.deletedSectionId) {      
+    if (location.state?.deletedSectionId && isMounted) {      
       setSections(prev => prev.filter(s => s.id !== location.state.deletedSectionId));
-      navigate(location.pathname, { replace: true, state: undefined });//это очистка локального состояния контекста location
+      navigate(location.pathname, { replace: true, state: undefined });
     }
-  }, [sectionLoad, location.state]);
+    
+    return () => { isMounted = false }; // cleanup, для очистки памяти
+  }, [location.state, sectionLoad, location.state]);
 
+
+
+  useEffect(() => {
+    let isMounted = true;
+    
+    if (location.state?.deletedSectionId && isMounted) {      
+      setSections(prev => prev.filter(s => s.id !== location.state.deletedSectionId));
+      navigate(location.pathname, { replace: true, state: undefined });
+    }
+    
+    return () => { isMounted = false };
+  }, [location.state, navigate]);
+
+
+  
   
 const validateForm = () => {
       if (!project.title || !project.description ) {
@@ -124,14 +148,9 @@ const saveHeaderChanges = async (event) => {
               const errorData = await response.data
               console.log('тут ошибка', errorData)
           }
-      } catch (error) {
-          // if (error.status===403 || error.status===404) {            
+      } catch (error) {          
           console.error("Error whith save header in project:", error)
-          setError(`Ошибка при сохранении шапки в проекте: ${error.message}`)            
-          // } else {
-          //   setError(error.errorDetail);
-          // }
-        
+          setError(`Ошибка при сохранении шапки в проекте: ${error.message}`)        
       } finally {
         setLoading(false);
       }    
@@ -336,7 +355,8 @@ const usersInvite = () => {
 
 async function getProject(project_id) { 
   
-  try {        
+  try { 
+        console.log("Запрос проекта")
         const responseProject = await axiosRole.get(`http://127.0.0.1:8000/project_get/${project_id}`,
               {
                 params: {project_id: project_id}
@@ -357,7 +377,8 @@ async function getProject(project_id) {
 
 async function getSection(project_id) { 
   
-  try {         
+  try { 
+        console.log("Запрос секций")
         const responseSections = await axiosRole.get(`http://127.0.0.1:8000/section_project_all/${project_id}`,
               {
                 params: {project_id: project_id}
@@ -393,6 +414,7 @@ async function getRole(project_id) {
                   expires: 0.05, // тут указывается колво дней                   
                   path: "/", // Кука будет доступна на всех страницах        
                   sameSite: "lax", // Защита от CSRF-атак
+                  // secure: process.env.NODE_ENV === "production" // для production
                   });
 
         return {"newRoleToken": newRoleToken};        
