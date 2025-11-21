@@ -14,7 +14,7 @@ const Pagination = ({
    */
   const getVisiblePages = () => {
     const pages = [];
-    const maxVisible = 5; // Максимум видимых страниц
+    // const maxVisible = 5; // Максимум видимых страниц
     
     // Всегда показываем первую страницу
     pages.push(1);

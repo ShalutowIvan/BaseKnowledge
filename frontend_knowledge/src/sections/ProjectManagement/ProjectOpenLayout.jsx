@@ -1,4 +1,4 @@
-import { useState, useEffect} from 'react';
+import { useState, useEffect, useRef} from 'react';
 import { useParams, NavLink, useNavigate, useLoaderData, Outlet, useLocation } from 'react-router-dom'
 import { SectionCreateModal } from './SectionCreateModal'
 import { API } from "../../apiAxios/apiAxios"
@@ -7,103 +7,137 @@ import Cookies from "js-cookie";
 import { ROLES_USERS } from "./axiosRole/RoleService"
 import { useRoleStore } from './axiosRole/RoleStore';
 import { ErrorDisplay } from './ErrorDisplay'
+import { projectCache } from './cacheManager';
+
 
 
 function ProjectOpenLayout() {
   
-  const location = useLocation();
-  
+  const location = useLocation();  
   const { project_id } = useParams();
-
   const { projectLoad, sectionLoad, roleTokenLoad } = useLoaderData();  
-
   const setRole = useRoleStore(state => state.setRole);
   const userRole = useRoleStore(state => state.role);
 
-  const [editModeHeader, setEditModeHeader] = useState(false);//это для редактирования шапки раздела
-  
-  const [project, setProject] = useState(projectLoad)  
-  
-  const navigate = useNavigate();
-  
+  const [editModeHeader, setEditModeHeader] = useState(false);//это для редактирования шапки раздела  
+  const [project, setProject] = useState(null);  
+  const navigate = useNavigate();  
   const [sections, setSections] = useState([]);
-  // const [sections, setSections] = useState(() => {
-  //   return Array.isArray(sectionLoad) ? sectionLoad : [];
-  // });
-
   
-
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
 
+  // const test = () => {
+  //   const cachedData = projectCache.get(project_id);
+  //   console.log("это сейчас в кеше:", cachedData);
+  // }
+
+  // Флаг для предотвращения повторной загрузки при удалении
+  const isDeletingSection = useRef(false);
+
   const toProjects = () => {
     return navigate("/projects/");}
 
+  useEffect(() => {
+    if (projectLoad) {
+      if (projectLoad.error) {
+        setError(projectLoad.message);
+        setProject(null);
+      } else {
+        setProject(projectLoad);
+        setError(""); // очищаем ошибку если данные валидны
+      }
+    }
+  }, [])
   
   //эффект для загрузки jwt токена роли в состояние zustand из лоадера
   useEffect(() => {
+      let isMounted = true;      
+
       const fetchData = async () => {
       try {        
         if (roleTokenLoad && typeof roleTokenLoad === 'object' && roleTokenLoad.error) {
-          setError(roleTokenLoad.error);
+          if (isMounted) setError(roleTokenLoad.error);
           return;
         } 
 
-        setRole(roleTokenLoad?.newRoleToken)
-        setError("")
+        if (isMounted) {
+          setRole(roleTokenLoad?.newRoleToken);
+          setError("");
+        }
       } catch (error) {        
-        setRole("")        
+        if (isMounted) setRole("");        
       }      
       };
       fetchData();
     
+      return () => { isMounted = false };
     }, [roleTokenLoad?.newRoleToken])
 
   
 
   // эффект загрузки секций из лоадера
-  useEffect(() => {
+  useEffect(() => {    
     let isMounted = true;
     
     const dataLoad = async () => {
-      if (!isMounted) return;
       
-      if (sectionLoad?.error) {
-        if (isMounted) setError(sectionLoad.error);
-        return;
-      } 
+      // if (sectionLoad && typeof sectionLoad === 'object' && sectionLoad.error) {
+      //   if (isMounted) setError(sectionLoad.error);
+      //   return;
+      // } 
 
-      if (Array.isArray(sectionLoad) && isMounted) {
+      // if (Array.isArray(sectionLoad) && isMounted) {
+      //   setSections(sectionLoad);
+      // } else if (isMounted) {
+      //   setError("Неверный формат данных групп");
+      // }    
+
+      if (sectionLoad) {
+      if (sectionLoad.error) {
+        setError(prev => prev ? prev : sectionLoad.message);
+        setSections([]);
+      } else if (Array.isArray(sectionLoad)) {
         setSections(sectionLoad);
-      } else if (isMounted) {
-        setError("Неверный формат данных групп");
-      }    
+      } else {
+        setSections([]);
+        setError("Неверный формат данных секций");
+      }
+    }
+
     }
 
     dataLoad();
     
-    if (location.state?.deletedSectionId && isMounted) {      
+    // Обрабатываем удаление, если есть ID в location.state
+    if (location.state?.deletedSectionId) {            
+      // Устанавливаем флаг удаления перед обновлением состояния
+      isDeletingSection.current = true;
       setSections(prev => prev.filter(s => s.id !== location.state.deletedSectionId));
-      navigate(location.pathname, { replace: true, state: undefined });
+      
+      // Навигация с preventScrollReset чтобы избежать перезагрузки loader
+      navigate(location.pathname, { 
+        replace: true, 
+        state: undefined,
+        // preventScrollReset: true  // ← КЛЮЧЕВАЯ СТРОКА
+      });
     }
-    
-    return () => { isMounted = false }; // cleanup, для очистки памяти
-  }, [location.state, sectionLoad, location.state]);
-
-
-
-  useEffect(() => {
-    let isMounted = true;
-    
-    if (location.state?.deletedSectionId && isMounted) {      
-      setSections(prev => prev.filter(s => s.id !== location.state.deletedSectionId));
-      navigate(location.pathname, { replace: true, state: undefined });
-    }
-    
-    return () => { isMounted = false };
   }, [location.state, navigate]);
+
+
+
+  // useEffect(() => {
+  //   let isMounted = true;
+    
+  //   if (location.state?.deletedSectionId && isMounted) {      
+  //     setSections(prev => prev.filter(s => s.id !== location.state.deletedSectionId));
+  //     navigate(location.pathname, { replace: true, state: undefined });
+  //   }
+    
+  //   return () => { isMounted = false };
+  // }, [location.state, navigate]);
 
 
   
@@ -181,6 +215,7 @@ const usersInvite = () => {
 
       {/* Боковая панель с инфой о проекте со списком разделов (постоянная) */}
       <aside>
+          {/* <button onClick={test}>test</button> */}
           <p>Ваша роль: {userRole}</p>
           <br/><br/>
           <button onClick={toProjects} className="toolbar-button">К списку проектов</button>
@@ -316,6 +351,7 @@ const usersInvite = () => {
                       key={section.id}
                       to={`/projects/open/${project_id}/section_open/${section.id}`}
                       style={{ textDecoration: 'none' }}
+                      preventScrollReset={true}
                     >
                       {({ isActive }) => (
                         <div className={`list-section project-section ${isActive ? "active" : ""}`}>
@@ -402,7 +438,7 @@ async function getSection(project_id) {
 async function getRole(project_id) { 
 
   try {       
-        // console.log("Сработал запрос токена")
+        console.log("запрос токена")
         const responseRoleToken = await API.post(`/create_project_token/`,
             {
               project_id: project_id
@@ -432,23 +468,123 @@ async function getRole(project_id) {
 }
 
 
-const ProjectOpenLoader = async ({params}) => {
-  
-  const project_id = params.project_id
+// const requestCache = new Map();
+
+// const ProjectOpenLoader = async ({request, params}) => {
    
-  // запрос токена роли
-  const requestRoleToken = await getRole(project_id);
+//   const project_id = params.project_id;
 
-  // запрос проекта
-  const requestProject = await getProject(project_id);  
+//   // const currentUrl = new URL(request.url);
+//   // const cacheKey = currentUrl.pathname;
+//   // // console.log("cacheKey:", cacheKey)
 
-  // запрос разделов проекта
-  const requestSections = await getSection(project_id);  
+//   // if (requestCache.has(cacheKey)) {
+//   //   // return requestCache.get(cacheKey);
+//   //   console.log("Не грузим лоадер")
+//   //   return {
+//   //   projectLoad: null, 
+//   //   sectionLoad: null, 
+//   //   roleTokenLoad: await getRole(project_id)}
+//   //   } 
+    
+  
+   
+//   // запрос токена роли
+//   const requestRoleToken = await getRole(project_id);
 
-  return {
+//   // запрос проекта
+//   const requestProject = await getProject(project_id);  
+
+//   // запрос разделов проекта
+//   const requestSections = await getSection(project_id);  
+
+//   // requestCache.set(cacheKey, 1);
+
+//   return {
+//     projectLoad: requestProject, 
+//     sectionLoad: requestSections, 
+//     roleTokenLoad: requestRoleToken}
+// }
+
+// const requestCache = new Map();
+
+const ProjectOpenLoader = async ({request, params}) => {
+  const project_id = params.project_id;
+  // const currentUrl = new URL(request.url);
+  
+  // Создаем уникальный ключ для проекта
+  // const cacheKey = `project_${project_id}`;
+  
+  // Проверяем, есть ли данные в кеше и они не старше 5 минут
+  const cachedData = projectCache.get(project_id);
+  
+
+  // console.log('Текущий кеш:', cachedData);
+  
+  if (cachedData) {
+    console.log("Используем кешированные данные и пропускаем лоадер");
+    return cachedData;
+  }
+  
+  // Если это навигация после удаления - не делаем запросы
+  // if (currentUrl.searchParams.get('afterDelete') === 'true') {
+  //   console.log("Пропускаем загрузку после удаления");
+  //   return {
+  //     projectLoad: null, 
+  //     sectionLoad: null, 
+  //     roleTokenLoad: null
+  //   };
+  // }
+  
+  projectCache.clear();
+
+  // Запрашиваем данные
+  const [requestRoleToken, requestProject, requestSections] = await Promise.all([
+    getRole(project_id),
+    getProject(project_id),
+    getSection(project_id)
+  ]);
+  
+  const result = {
     projectLoad: requestProject, 
     sectionLoad: requestSections, 
-    roleTokenLoad: requestRoleToken}
+    roleTokenLoad: requestRoleToken
+  };
+
+  // const hasErrors = 
+  //   (requestProject && requestProject.error_code) ||
+  //   (requestSections && requestSections.error_code) ||
+  //   (requestRoleToken && requestRoleToken.error_code);
+  
+  // if (hasErrors) {
+  //   console.log('❌ Обнаружены ошибки, НЕ сохраняем в кеш:', {
+  //     projectError: requestProject?.error_code,
+  //     sectionsError: requestSections?.error_code,
+  //     roleError: requestRoleToken?.error_code
+  //   });
+    
+  //   // Возвращаем результат, но НЕ сохраняем в кеш
+  //   return result;
+  // }
+
+   
+  projectCache.clear();
+  // Сохраняем в кеш
+  // console.log('✅ Данные валидны, сохраняем в кеш');
+  projectCache.set(project_id, result);
+
+  // const result = {
+  //   projectLoad: requestProject?.error_code ? { error: requestProject } : requestProject,
+  //   sectionLoad: requestSections?.error_code ? { error: requestSections } : requestSections,
+  //   roleTokenLoad: requestRoleToken?.error_code ? { error: requestRoleToken } : requestRoleToken
+  // };
+  
+  // // Сохраняем в кеш только если основные данные (project) не содержат ошибок
+  // if (!requestProject?.error_code) {
+  //   projectCache.set(project_id, result);
+  // }
+  
+  return result;
 }
 
 

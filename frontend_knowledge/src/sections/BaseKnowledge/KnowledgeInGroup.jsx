@@ -13,7 +13,7 @@ import { SaveTabListModal } from './SaveTabListModal'
 import './CSS/Search.css';
 import './CSS/SaveTabs.css';
 // import { ArrowIcon } from './SvgArrow'
-// import { LoadMoreTabListsButton } from './LoadMoreTabListsButton'
+
 // import { SearchBar } from './SearchBar'
 import { KnowledgeListPanel } from './KnowledgeListPanel';
 import { KnowledgeTabsPanel } from './KnowledgeTabsPanel';
@@ -29,6 +29,7 @@ function KnowledgeInGroup() {
   const [loading, setLoading] = useState(false);  
 	const [error, setError] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);//ключ для перезагрузки эффекта загрузки знаний
+  const [reloadKeyTab, setReloadKeyTab] = useState(0);//ключ для перезагрузки эффекта загрузки табов
 
   // СОСТОЯНИЯ ДЛЯ ПОИСКА  
   const [searchState, setSearchState] = useState({
@@ -38,7 +39,7 @@ function KnowledgeInGroup() {
     isSearchActive: false // Флаг активного поиска
   });
   
-  // состояния для пагинации
+  // состояния для пагинации знаний
   const [paginationState, setPaginationState] = useState({
     currentPage: 1,//номер текущей страницы
     perPage: 2,//максимально элементов на одной странице
@@ -67,13 +68,12 @@ function KnowledgeInGroup() {
     savedTabLists: [],
     activeTabList: null, // Текущий открытый список
     viewTabList: false, //видимость списков вкладок
-    tabsName: [],//названия знаний в сохраненном списке знаний
-    loadingTabLists: false,
+    tabsName: [],//названия знаний в сохраненном списке знаний    
     tabListsPage: 1,
-    hasMoreTabLists: true,
-    isLoadingMoreTabLists: false,
-    allTabLists: [],
-    tabListsTotal: 0
+    tabListsTotal: 0,
+    loadingTabLists: false, // Индикатор загрузки первой страницы
+    hasMoreTabLists: true, // Есть ли еще страницы для загрузки
+    isLoadingMoreTabLists: false, // Индикатор загрузки дополнительных страниц
   });  
   
   // Состояние для сворачивания левой панели
@@ -325,12 +325,7 @@ function KnowledgeInGroup() {
       )
     );
   }, [slug_gr, knowledges]);
-  
-    
-  
-
-  
-  
+     
   const lenKN = useRef(knowledges);
   lenKN.current = knowledges.length; // длинна массива знаний по факту
   
@@ -350,8 +345,7 @@ function KnowledgeInGroup() {
     setModalCreateKnowledge(false);      
     }, [slug_gr]);
 
-    
-  
+     
 
   // Обработчики для списков вкладок!!!!!!!!!!!!
   // ЗАГРУЗКА СПИСКОВ ВКЛАДОК С ПАГИНАЦИЕЙ
@@ -368,35 +362,35 @@ function KnowledgeInGroup() {
           page: page,
           per_page: TAB_LISTS_PER_PAGE
         }
-      });      
+      });
 
       const data = response.data;
       const savedTabArray = Array.isArray(data.items) ? data.items : [];
-      
-      // ДОБАВЛЯЕМ ПОЛЕ viewListTab ДЛЯ КАЖДОГО СПИСКА
+          
+      // ДОБАВЛЯЕМ ПОЛЕ viewListTab ДЛЯ КАЖДОГО СПИСКА для отображения содержимого
       const tabListsWithViewState = savedTabArray.map(item => ({
         ...item,
         viewListTab: false // По умолчанию свернуто
       }));
       
       if (isLoadMore) {
-        // Добавляем к существующим данным
+        // Добавляем к существующим данным        
         setTabListsState(prev => ({
           ...prev,
           savedTabLists: [...prev.savedTabLists, ...tabListsWithViewState],
-          tabListsPage: page,
-          hasMoreTabLists: savedTabArray.length === TAB_LISTS_PER_PAGE
+          tabListsPage: page,          
+          hasMoreTabLists: data.has_next
         }));
       } else {
         // Первая загрузка
         setTabListsState(prev => ({
           ...prev,
           savedTabLists: tabListsWithViewState,
-          tabListsPage: 1,
-          hasMoreTabLists: savedTabArray.length === TAB_LISTS_PER_PAGE,
-          tabListsTotal: response.data.total || savedTabArray.length
+          tabListsPage: page,          
+          hasMoreTabLists: data.has_next,
+          tabListsTotal: data.total
         }));
-      }
+      }      
 
     } catch (err) {
       console.error('Error whith load saved tab list:', err);
@@ -409,13 +403,13 @@ function KnowledgeInGroup() {
       }
     }
   }, []);
-
-
   
   // ЗАГРУЗКА СЛЕДУЮЩЕЙ СТРАНИЦЫ СПИСКОВ ВКЛАДОК
   const loadMoreTabLists = useCallback(async () => {
-      const { isLoadingMoreTabLists, hasMoreTabLists, tabListsPage } = tabListsState;
-      if (isLoadingMoreTabLists || !hasMoreTabLists) return;      
+      const { isLoadingMoreTabLists, hasMoreTabLists, tabListsPage } = tabListsState;      
+      if (isLoadingMoreTabLists || !hasMoreTabLists) {      
+        return;
+      } 
       const nextPage = tabListsPage + 1;
       await loadSavedTabLists(nextPage, true);
   }, [
@@ -442,9 +436,11 @@ function KnowledgeInGroup() {
       // Обновляем локальное состояние
       setTabListsState(prev => ({
         ...prev,
-        savedTabLists: [response.data, ...prev.savedTabLists]
+        savedTabLists: [response.data, ...prev.savedTabLists],
+        tabListsTotal: prev.tabListsTotal + 1
       }));
       setShowSaveTabListModal(false);
+      setReloadKeyTab(prev => prev + 1);
       
       // Показываем уведомление об успехе
       // console.log('Список вкладок успешно сохранен!');
@@ -510,18 +506,22 @@ function KnowledgeInGroup() {
     }
     
     try {
-      await API.delete(`/delete_tab_list/${tabListId}`);
+      await API.delete(`/delete_tab_list/${tabListId}`);      
       
       // Обновляем локальное состояние      
-      setTabListsState(prev => ({
+      setTabListsState(prev => (       
+        {
         ...prev,
-        savedTabLists: prev.savedTabLists.filter(list => list.id !== tabListId)
-      }));
-      
+        savedTabLists: prev.savedTabLists.filter(list => list.id !== tabListId),
+        tabListsTotal: prev.tabListsTotal - 1,        
+        }
+      ));
+            
       // Если удаляемый список был активным - сбрасываем активный список
       if (tabListsState.activeTabList === tabListId) {        
         setTabListsState(prev => ({ ...prev, activeTabList: null }));
       }
+      setReloadKeyTab(prev => prev + 1);
       
     } catch (err) {
       console.error('Error deleting tab list:', err);
@@ -529,7 +529,7 @@ function KnowledgeInGroup() {
     }
   }, [tabListsState.activeTabList]);
 
-
+  
   // РЕДАКТИРОВАНИЕ СПИСКА ВКЛАДОК
   const startEditingTabList = useCallback((tabList, event) => {
     event.stopPropagation();
@@ -611,7 +611,6 @@ function KnowledgeInGroup() {
 
     console.log("Сработал эффект загрузки")
 
-
     return () => {       
       abortController.abort();
     }
@@ -628,8 +627,12 @@ function KnowledgeInGroup() {
 
 
   useEffect(() => {
-    loadSavedTabLists(1, false);
+    loadSavedTabLists(1, false);    
   }, [loadSavedTabLists]);
+
+  useEffect(() => {
+    loadSavedTabLists(tabListsState.page, false);
+  }, [reloadKeyTab]);
 
 
   // ОБНОВЛЕНИЕ АКТИВНОГО СПИСКА (при изменении вкладок)

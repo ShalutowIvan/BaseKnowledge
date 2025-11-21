@@ -9,8 +9,8 @@ const LoadMoreTabListsButton = ({
 }) => {
   
   // if (!hasMore) return null;
-
-  if (!hasMore && loadedCount > 0) {  
+  // && loadedCount > 0
+  if (!hasMore) {  
     return (
       <div className="load-more-section">
         <div className="end-of-list">
@@ -32,13 +32,18 @@ const LoadMoreTabListsButton = ({
 
   return (
     <div className="load-more-tab-lists">
+      <div className="pagination-info">
+        Показано {loadedCount} из {total} списков
+        </div>
+        <br/>
       <button 
         onClick={onClick} 
         disabled={isLoading}
-        className="load-more-button"
+        className="toolbar-button"
       >
-        {isLoading ? 'Загрузка...' : `Загрузить еще (${loadedCount} из ${total})`}
+        {isLoading ? 'Загрузка...' : 'Загрузить еще 🢃'}        
       </button>
+      
     </div>
   );
 };

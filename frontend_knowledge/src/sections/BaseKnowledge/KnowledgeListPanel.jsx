@@ -115,7 +115,7 @@ const KnowledgeListPanel = React.memo(({
         {/* Информация о пагинации */}  
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
           <div className="pagination-info">
-            Показано {knowledges.length} из {paginationState.total} записей
+            Показано {knowledges.length} из {paginationState.total} знаний
           </div>
 
           <button 

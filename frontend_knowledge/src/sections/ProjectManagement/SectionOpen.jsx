@@ -14,12 +14,13 @@ import { useRoleStore } from './axiosRole/RoleStore';
 import { ROLES_USERS } from "./axiosRole/RoleService"
 import { axiosRole } from "./axiosRole/axiosRole"
 
+import { projectCache } from './cacheManager';
+
 // import { useSectionsStore } from './sectionStore/sectionStore'
 
 
 function SectionOpen() {
-    // const revalidator = useRevalidator();
-    // const { revalidate } = useRevalidator();
+    
     //глобальное состояние роли из zustand
     const userRole = useRoleStore(state => state.role);
 
@@ -45,24 +46,16 @@ function SectionOpen() {
 
     if (sectionLoad.error === "role_denied") {
       return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>У вас нет доступа к проекту!</h1>      
-    }    
+    }     
 
-
-     
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
                 
-                // setSection(sectionLoad);
-
                 if (sectionLoad && !sectionLoad.error) {
                     setSection(sectionLoad);
                 }
-
-
-                // setTasks(taskLoad);
-
                 if (taskLoad && !taskLoad.error) {
                     // Убедимся, что taskLoad - массив
                     const tasksArray = Array.isArray(taskLoad) ? taskLoad : [];
@@ -71,32 +64,20 @@ function SectionOpen() {
 
                 console.log("Таски длинна", tasks.length)
                 console.log("Таски тут", tasks)
-                // проблема с тасками, он не грузятся, и не парсятся сразу хз почему!!!!! нуждно понять чему равна таска и сделать для нее проверку, чтобы не отображалась ошибка на странице
-
             } catch (err) {
                 setError("Ошибка загрузки данных");
             } finally {
                 setLoading(false);
             }
-        };
-        
+        };        
         fetchData();
-    }, [section_id]);//возможно стоит добавить зависимости, ответ дипсика
-    
-
+    }, [section_id]);
     
     
     const goBack = () => {      
       return navigate(`/project/open/${section.project_id}`);}
     
-    // const reloadOnlySection = () => {
-    //   revalidate({ key: "section" }); // Перезагрузит ТОЛЬКО sectionLoad
-    // };
     
-
-    // const { removeSection } = useSectionsStore();
-
-
     //удаление секции
     const deleteSection = async () => {
       if (window.confirm('Вы уверены, что хотите удалить?')) {
@@ -104,36 +85,24 @@ function SectionOpen() {
           await axiosRole.delete(`/delete_section/${project_id}/${section_id}`,
             { params: {project_id: project_id} }
             );
+
+          // Очищаем кеш для этого проекта          
+          // projectCache.delete(project_id);
+          
           // Возвращаемся к списку разделов
           navigate(`/projects/open/${project_id}`, {
             state: { deletedSectionId: section_id }, // Передаем ID удаленной секции
-            replace: true // Важно: заменяем текущую запись в истории
-          });
-
-          // navigate(`/projects/open/${project_id}?skipRefresh=true`, { 
-          //   replace: true
-          // });
+            replace: true, // Важно: заменяем текущую запись в истории
+            preventScrollReset: true
+          });          
 
         } catch (error) {
-          console.error('Ошибка при удалении:', error);
+          console.error('Error whith delete section:', error);
+          setError(`Ошибка при удалении раздела:${error.message}`)
         }
       }
     };
-
-
-  //   const deleteSection = async () => {
-  //   if (window.confirm('Вы уверены, что хотите удалить?')) {
-  //     try {
-  //       await axios.delete(`http://127.0.0.1:8000/delete_section/${section_id}`);
-  //       removeSection(section_id);
-  //       navigate(`/projects/open/${project_id}`);
-  //     } catch (error) {
-  //       console.error('Ошибка при удалении:', error);
-  //     }
-  //   }
-  // };
-
-     
+      
   const validateForm = () => {
         if (!section.title || !section.description ) {
             setError("Есть пустые поля, заполните, пожалуйста!");
@@ -203,10 +172,6 @@ function SectionOpen() {
     if (error) {
         return <div style={{ color: "red" }}>{error}</div>;
     }
-
-
-
- 
       
   return (
     <>
@@ -358,13 +323,8 @@ function SectionOpen() {
                         {/* <br/> */}
                         </>
                     ))
-                )
-                
-                // не отображаются таски сразу когда выдали роль юзеру. Сделать условие
-            }
-
-
-            
+                )                
+            }           
         
     </div>     
     )
@@ -386,10 +346,7 @@ async function getSection(section_id, project_id) {
 
         return responseSection.data
 
-      } catch (error) {
-       
-        // console.log("Ошибка из detail при запросе секций:", error.response?.data?.detail)
-        // console.log("Статус ответа:", error.response?.status)       
+      } catch (error) {        
 
         return {"error": error.response?.data?.detail.error_code}
       }  
@@ -399,42 +356,25 @@ async function getSection(section_id, project_id) {
 async function getTasks(section_id, project_id) { 
   
   try {        
-        
         const responseTasks = await axiosRole.get(`/task_section_all/${project_id}/${section_id}`,
               {
                 params: {project_id: project_id}
               }
           );
-
         return responseTasks.data
-
-      } catch (error) {
-       
-        // console.log("Ошибка из detail при запросе секций:", error.response?.data?.detail)
-        // console.log("Статус ответа:", error.response?.status)       
-
+      } catch (error) {        
         return {"error": error.response?.data?.detail.error_code}
       }  
 }
 
 
-
-
-const SectionOpenLoader = async ({params}) => {
-  
+const SectionOpenLoader = async ({params}) => {  
   const section_id = params.section_id//после params писать название параметра которое прописали в файле AppRouter.jsx с урлками
   const project_id = params.project_id
 
   const requestSection = await getSection(section_id, project_id)
 
   const requestTasks = await getTasks(section_id, project_id)  
-    
-  
-
-  // return {
-  //   taskLoad: json(requestTasks),
-  //   sectionLoad: json(requestSection, { key: "section" })
-  // }
 
   return {
     taskLoad: requestTasks,

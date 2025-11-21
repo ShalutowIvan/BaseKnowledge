@@ -296,7 +296,8 @@ function KnowledgeLayout() {
 
 
 async function getGroups() { 
-  try {        
+  try {
+    console.log("сработала загрузка групп");
     const responseGroups = await API.get('/groups_all/');
     return responseGroups.data;
   } catch (error) {

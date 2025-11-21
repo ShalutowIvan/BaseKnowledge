@@ -1,6 +1,7 @@
 
 
 const ErrorDisplay = ({ error, onClose }) => {
+  
   if (!error) return null;
   
   return (
