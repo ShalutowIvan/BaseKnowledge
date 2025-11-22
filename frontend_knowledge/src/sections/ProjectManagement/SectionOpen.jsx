@@ -20,7 +20,7 @@ import { projectCache } from './cacheManager';
 
 
 function SectionOpen() {
-    
+    const revalidator = useRevalidator()
     //глобальное состояние роли из zustand
     const userRole = useRoleStore(state => state.role);
 
@@ -137,6 +137,8 @@ function SectionOpen() {
             setError("")
             if (response.statusText==='OK') {
                 setEditModeHeader(false)
+                // clearCachedProject(project_id);
+                revalidator.revalidate();
 
                 console.log("Update complete!")                
             } else {

@@ -2,8 +2,7 @@
 
 class ProjectCache {
   constructor() {
-    this.cache = new Map();
-    this.cache.clear();
+    this.cache = new Map();    
   }
 
   get(project_id) {

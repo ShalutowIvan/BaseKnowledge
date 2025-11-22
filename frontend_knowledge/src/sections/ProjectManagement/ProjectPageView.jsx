@@ -9,8 +9,18 @@ import './CSS/cssProjects.css'
 import { updateAccessTokenFromRefreshToken } from "../../regusers/AuthService"
 import { ErrorDisplay } from './ErrorDisplay'
 
+import { projectCache } from './cacheManager';
+
 
 function ProjectPageView() {
+
+  const test = () => {
+    let number = 5;
+    let pr = number.toString();
+    const cachedData = projectCache.get(pr);
+    console.log("это сейчас в кеше:", cachedData);
+  }
+
 	const setActive = ({isActive}) => isActive ? 'active-link' : '';
 	const {projectLoad} = useLoaderData()
 	const [projects, setProjects] = useState([]);
@@ -56,9 +66,12 @@ function ProjectPageView() {
           error={error} 
           onClose={() => setError(null)} 
         />  
+
+
 			
 			<div className='central-part'>
         <h1>Проекты</h1>
+        <button onClick={test}>test</button>
         <button className="toolbar-button" onClick={openModalClick}>Создать проект</button>        
         <br/><br/>
               <div className="projects-grid">
