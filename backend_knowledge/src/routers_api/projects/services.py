@@ -445,9 +445,6 @@ async def invite_to_project_service(role_info: tuple, user_invite: User_invite_t
 
 async def exclude_from_project_service(role_info: tuple, user_exclude: User_invite_to_project_schema, db: AsyncSession):
 
-    # role = await parse_role_service(request=request)
-    # verify = await verify_project_service(role=role, project_id=user_exclude.project_id)
-
     if role_info[2] == Role.ADMIN.value:
 
         try:
@@ -503,10 +500,12 @@ async def all_current_users_project_service(role_info: tuple, db: AsyncSession):
     
 
 async def role_project_change_service(role_info: tuple, user_role: User_role_change_schema, db: AsyncSession):
-    # role = await parse_role_service(request=request)
-    # verify = await verify_project_service(role=role, project_id=user_role.project_id)
-
+    
     if role_info[2] == Role.ADMIN.value:
+
+        # ост тут
+        if role_info[1] == user_role.user_id:            
+            return {"answer": "Нельзя изменить роль если вы администратор!"}
     
         # 1. Получаем текущую таску 3-мя полями. А с фронта принимаем 2 поля. И возвращаем ответ
         query_user_project = await db.execute(

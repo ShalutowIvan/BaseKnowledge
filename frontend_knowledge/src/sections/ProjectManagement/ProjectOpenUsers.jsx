@@ -26,7 +26,6 @@ function ProjectOpenUsers() {
 
 	const { project_id } = useParams()
 
-
 	const validateForm = () => {
         if (!email) {
             setError("Для поиска пользователя введите Email!");
@@ -172,9 +171,6 @@ function ProjectOpenUsers() {
     const [errorUser, setErrorUser] = useState("");
 
 
-
-    
-
     const AllUsersProject = async () => {
         setLoading(true);
 
@@ -224,15 +220,20 @@ function ProjectOpenUsers() {
     const handleModifyRoleUser = (userId) => {
       setCurrentUsers(prev => 
         prev.map(item => (
-          item.id === userId ? { ...item, modifyRole: true} : item
+          item.id === userId ? { ...item, modifyRole: true, originalRole: item.role} : item
           )));      
     }
 
-    const cancelEditUser = (userId) => {               
-      setCurrentUsers(prev => 
-          prev.map(item => (
-            item.id === userId ? { ...item, modifyRole: false } : item
-          )));
+    const cancelEditUser = (userId) => {
+        setCurrentUsers(prev => 
+            prev.map(item => (
+              item.id === userId ? { 
+                ...item, 
+                modifyRole: false,
+                role: item.originalRole, // возвращаем исходное значение
+                originalRole: undefined // очищаем временное значение
+              } : item
+            )));
     };
     
 
@@ -259,27 +260,28 @@ function ProjectOpenUsers() {
                     { user_id: user_id, role: role },
                     { params: {project_id: project_id} }//это для интерцептора роли, не передается в запрос
                     );
+
+            if (response.data.answer) {                
+                alert("Нельзя забрать у себя права администратора!")
+            } else if (response.statusText==='OK') {
                 setCurrentUsers(prev => 
                     prev.map(item => (
-                        item.id === user_id ? { ...item, modifyRole: false } : item
+                        item.id === user_id ? { ...item, modifyRole: false, originalRole: undefined } : item
                     )));
                 setErrorUser("")
-                if (response.statusText==='OK') {                    
-                    console.log("Update complete!")                
-                } else {
-                    const errorData = await response.data
-                    console.log(errorData, 'тут ошибка')
-                }
-            } catch (error) {
-                console.log("ошибка тут", error)
-                // setErrorUser(error)
-                if (error.response) {
-                // Сервер ответил с ошибкой 4xx/5xx
-                setErrorUser(error.response.data?.detail || error.message);
-                } 
-            } finally {
+                console.log("Update complete!")                
+            } 
+            // else {
+            //     const errorData = await response.data
+            //     console.log(errorData, 'тут ошибка')
+            // }           
+
+        } catch (error) {
+            console.log("Error whith save role user:", error)
+            setErrorUser(error.message);                 
+        } finally {
             setLoading(false);
-            }    
+        }    
     }
 
     const [modalOpen, setModalOpen] = useState(false);
@@ -319,7 +321,7 @@ function ProjectOpenUsers() {
 	return (
 		<div className="header-chapter">
 			<div className='container-user'>
-				<div>
+				<div>                
 				<h1>Текущие пользователи проекта</h1>
 				{!showCurrentUsers &&
                 <button className='toolbar-button' onClick={() => {setShowCurrentUsers(!showCurrentUsers); AllUsersProject();}}>Показать текущих пользователей</button>
@@ -366,10 +368,9 @@ function ProjectOpenUsers() {
                                             </select>
                                             &nbsp;
                                             <button onClick={(e) => saveRole(item.id, item.role)} className="accept-button"><FaCheck /></button>
-                                            {/*className="accept-button"*/}
                                             &nbsp;   
                                             <button onClick={(e) => {cancelEditUser(item.id); }} className="close-button"><FaTimes /></button>
-                                            {/*className="close-button"*/}
+                                            
 
                                         </div>
                                     </>

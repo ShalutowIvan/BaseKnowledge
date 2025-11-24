@@ -208,13 +208,14 @@ async def all_current_users_project(
     return await all_current_users_project_service(role_info=role_info, db=session)
 
 
+# , response_model=User_role_schema
 # изменение роли пользователя
-@router_project_api.patch("/role_project_change/{project_id}", response_model=User_role_schema)
+@router_project_api.patch("/role_project_change/{project_id}")
 async def role_project_change(
     user_role: User_role_change_schema, 
     role_info: tuple[int, int, str] = Depends(verify_project_service), 
     session: AsyncSession = Depends(get_async_session)
-    ) -> User_role_schema:
+    ):
     return await role_project_change_service(role_info=role_info, user_role=user_role, db=session)
 
 
