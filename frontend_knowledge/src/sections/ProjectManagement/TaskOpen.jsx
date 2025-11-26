@@ -230,12 +230,14 @@ function TaskOpen() {
           <>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
             <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
-            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {task.created_at}</span>
+            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {new Date(task.created_at).toLocaleString('ru-RU')}</span>
+            
           </div>
 
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>            
             <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{task.title}</span>
-            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {task.updated_at}</span>
+            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {new Date(task.updated_at).toLocaleString('ru-RU')}</span>
+            
           </div>
           <br/>
           
@@ -264,7 +266,8 @@ function TaskOpen() {
                 {/*первая строка без формы*/}
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                   <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
-                  <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {task.created_at}</span>
+                  <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {new Date(task.created_at).toLocaleString('ru-RU')}</span>
+                  
                 </div>
 
                 {/*вторая строка с формой названия*/}
@@ -277,7 +280,7 @@ function TaskOpen() {
                         onChange={handleHeaderChangeT}
                         disabled={loading}
                     />                
-                    <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {task.updated_at}</span>
+                    <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {new Date(task.updated_at).toLocaleString('ru-RU')}</span>                    
                 </div>
                 <br/>
 

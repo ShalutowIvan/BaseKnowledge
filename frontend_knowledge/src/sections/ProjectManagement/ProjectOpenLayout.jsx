@@ -8,15 +8,10 @@ import { ROLES_USERS } from "./axiosRole/RoleService"
 import { useRoleStore } from './axiosRole/RoleStore';
 import { ErrorDisplay } from './ErrorDisplay'
 import { projectCache } from './cacheManager';
+import { CollapsibleText } from './CollapsibleText';
 
-import {
-  getCachedProject,
-  setCachedProject,
-  clearCachedProject
-} from "./cache";
 
 function ProjectOpenLayout() {
-
 
   const location = useLocation();  
   const { project_id } = useParams();
@@ -40,12 +35,7 @@ function ProjectOpenLayout() {
     console.log("это сейчас в кеше:", cachedData);
   }
 
-  // useEffect(() => {
-  //   console.log("PROJECT ID CHANGED", project_id);
-  //   console.log("LOADER DATA:", projectLoad, sectionLoad, roleTokenLoad);
-  // }, [project_id, projectLoad, sectionLoad]);
-
-
+  
   // Флаг для предотвращения повторной загрузки при удалении
   const isDeletingSection = useRef(false);
 
@@ -249,11 +239,20 @@ const usersInvite = () => {
               <br/>
               <span style={{ fontSize: '16px', color: '#5F9EA0' }}>Дата создания: </span>
               <br/>
-              <span style={{ fontSize: '16px', color: '#E0FFFF' }}>{project?.created_at}</span>
+              <span style={{ fontSize: '16px', color: '#E0FFFF' }}>{new Date(project?.created_at).toLocaleString('ru-RU')}</span>              
               <br/>
               <span style={{ fontSize: '16px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>
-              <br/>
-              <span style={{ fontSize: '16px', color: '#E0FFFF' }}>{project?.description}</span>
+              <br/>              
+                  <div style={{ flex: 1 }}>
+                      <CollapsibleText 
+                          text={project?.description}
+                          maxLines={5}
+                          style={{
+                              fontSize: '16px',
+                              color: '#E0FFFF'
+                          }}
+                      />
+                  </div>
               <br/><br/>
               {
                 (userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) && 
@@ -287,7 +286,7 @@ const usersInvite = () => {
 
                     <span style={{ fontSize: '16px', color: '#5F9EA0' }}>Дата создания: </span>
                     <br/>
-                    <span style={{ fontSize: '16px', color: '#E0FFFF' }}>{project.created_at}</span>
+                    <span style={{ fontSize: '16px', color: '#E0FFFF' }}>{new Date(project?.created_at).toLocaleString('ru-RU')}</span>
 
                     {/*третья строка */}
                     <br/>
@@ -302,7 +301,7 @@ const usersInvite = () => {
                         value={project.description}
                         onChange={handleHeaderChange}
                         disabled={loading}
-                        rows={2}
+                        rows={3}
                       />
                     <br/>
                       
@@ -370,7 +369,17 @@ const usersInvite = () => {
                       {({ isActive }) => (
                         <div className={`list-section project-section ${isActive ? "active" : ""}`}>
                           <h2 className="name-knowledge">{section.title}</h2>
-                          <label>Описание: </label>{section.description}
+                          <label>Описание: </label>
+                          <div style={{ flex: 1 }}>
+                              <CollapsibleText 
+                                  text={section.description}
+                                  maxLines={2}
+                                  style={{
+                                      fontSize: '20px',
+                                      color: '#E0FFFF'
+                                  }}
+                              />
+                          </div>
                           <br/><br/>
                           <button className="toolbar-button">Открыть</button>
                           

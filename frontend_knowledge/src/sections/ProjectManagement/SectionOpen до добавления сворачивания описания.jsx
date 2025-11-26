@@ -12,7 +12,9 @@ import { useRoleStore } from './axiosRole/RoleStore';
 import { ROLES_USERS } from "./axiosRole/RoleService"
 import { axiosRole } from "./axiosRole/axiosRole"
 
-import { CollapsibleText } from './CollapsibleText';
+// import { projectCache } from './cacheManager';
+
+// import { useSectionsStore } from './sectionStore/sectionStore'
 
 
 function SectionOpen() {    
@@ -32,8 +34,14 @@ function SectionOpen() {
     
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const [headerLoading, setHeaderLoading] = useState(false);    
-    
+    const [headerLoading, setHeaderLoading] = useState(false);
+
+    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+
+    // Функция для определения нужно ли сворачивание
+    const needsDescriptionCollapse = section?.description && 
+                                   section.description.split('\n').length > 3;
+
     const navigate = useNavigate();    
 
     if (taskLoad.error === "role_denied") {
@@ -176,7 +184,7 @@ function SectionOpen() {
           <>          
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
             <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название раздела:</span>
-            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {new Date(section.created_at).toLocaleString('ru-RU')}</span>            
+            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {section.created_at}</span>
           </div>
 
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>            
@@ -187,20 +195,11 @@ function SectionOpen() {
           
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
             <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>
+
           </div>
 
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
-                {/* Используем компонент для описания */}
-                  <div style={{ flex: 1 }}>
-                      <CollapsibleText 
-                          text={section.description}
-                          maxLines={3}
-                          style={{
-                              fontSize: '20px',
-                              color: '#E0FFFF'
-                          }}
-                      />
-                  </div>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>            
+            <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{section.description}</span>
             
             {(userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
             <button onClick={() => setEditModeHeader(true)} className="toolbar-button">
@@ -220,7 +219,7 @@ function SectionOpen() {
                 {/*первая строка без формы*/}
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                   <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название раздела:</span>
-                  <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {new Date(section.created_at).toLocaleString('ru-RU')}</span>
+                  <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {section.created_at}</span>
                 </div>
 
                 {/*вторая строка с формой названия секции*/}
@@ -242,32 +241,26 @@ function SectionOpen() {
                 </div>
 
                 {/*четвертая строка с формой описания секции*/}
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                   <textarea
-                      placeholder="введите описание"
-                      name="description"
-                      value={section.description}
-                      onChange={handleHeaderChangeS}
-                      disabled={headerLoading}
-                      rows={4} // Увеличиваем количество строк
-                      style={{ 
-                          flex: 1,
-                          whiteSpace: 'pre-wrap', // Сохраняет переносы при редактировании
-                          minHeight: '100px',
-                          resize: 'vertical' // Позволяет растягивать по вертикали
-                      }}
+                    placeholder="введите описание"
+                    name="description"
+                    value={section.description}
+                    onChange={handleHeaderChangeS}
+                    disabled={loading}
+                    rows={2}
                   />
                 
-                  <div style={{ marginLeft: '16px' }}>
+                  <div>
                   <button className="save-button" type="submit" disabled={headerLoading}>                    
-                    {headerLoading ? 'Сохраняем...' : 'Сохранить'}
+                    {loading ? 'Сохраняем...' : 'Сохранить'}
                   </button>
                   &nbsp;&nbsp;
                   <button 
                     // тут при отмене должны возвращаться предыдущие значения, я сдела просто отмену
                     onClick={() => {setEditModeHeader(false);}}
                     className="cancel-button"
-                    disabled={headerLoading}>Отмена</button>
+                    disabled={loading}>Отмена</button>
                   </div>                  
                 </div>
                 {/*конец четвертой строки*/}

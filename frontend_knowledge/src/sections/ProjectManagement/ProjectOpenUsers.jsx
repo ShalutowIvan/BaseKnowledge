@@ -345,7 +345,7 @@ function ProjectOpenUsers() {
 
                         <tbody>
                             {currentUsers?.map(item => (
-                                <tr>
+                                <tr key={item.id}>
                                 <td>{item.name}</td>
                                 <td>{item.email}</td>
 								<td>
