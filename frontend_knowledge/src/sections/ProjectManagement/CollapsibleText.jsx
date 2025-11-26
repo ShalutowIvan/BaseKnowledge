@@ -17,6 +17,9 @@ const CollapsibleText = ({ text, maxLines = 3, className = "", style = {} }) => 
     display: needsCollapse && !isExpanded ? '-webkit-box' : 'block',
     WebkitLineClamp: needsCollapse && !isExpanded ? maxLines : 'none',
     WebkitBoxOrient: 'vertical',
+    wordWrap: 'break-word',    // Перенос длинных слов
+    wordBreak: 'break-word',   // Принудительный перенос
+    overflowWrap: 'break-word', // Современное свойство для переноса
     ...style
   };
 

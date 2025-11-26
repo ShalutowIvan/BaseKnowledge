@@ -67,10 +67,7 @@ function StageOpen() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                setLoading(true);
-                
-                // setSection(sectionLoad);
-
+                setLoading(true);                
                 if (stageLoad && !stageLoad.error) {
                     setStage(stageLoad);
                 }                

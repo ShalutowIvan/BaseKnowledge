@@ -15,7 +15,7 @@ import { TextStyleToolbar } from './MDutils/TextStyleToolbar';
 import { useRoleStore } from './axiosRole/RoleStore';
 import { ROLES_USERS } from "./axiosRole/RoleService"
 import { axiosRole } from "./axiosRole/axiosRole"
-
+import { CollapsibleText } from './CollapsibleText';
 
 
 
@@ -23,30 +23,22 @@ function TaskOpen() {
     const revalidator = useRevalidator();
 
     const userRole = useRoleStore(state => state.role);
-
-    
-
-    const { taskLoad } = useLoaderData();
-    // , sectionLoad
+    const { taskLoad } = useLoaderData();   
 
     if (taskLoad.error === "role_denied") {
       return <h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>У вас нет доступа к проекту!</h1>  
     }
-
     const [editMode, setEditMode] = useState(false);//это для редактирования контента
     const [preview, setPreview] = useState(false);//предварительный просмотр при редактировании контента
     
-    // const [section, setSection] = useState(sectionLoad)
-
     const [editModeHeader, setEditModeHeader] = useState(false);//это для редактирования шапки
 
-    const { project_id, section_id } = useParams();
+    const { project_id, section_id, task_id } = useParams();
 
     const [task, setTask] = useState(taskLoad);
     
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-
         
     // Обработчик изменений для MDEditor. Это пока убрали, так как у МД есть свой проп onChange
     const handleTextChange = (value) => {
@@ -74,31 +66,23 @@ function TaskOpen() {
       }
       };
 
-    // useEffect(() => {
-    //         // fetch(`http://127.0.0.1:8000/section_get/${task.section_id}`)
-    //         //     .then(res => res.json())
-    //         //     .then(data => setSection(data));
-    //         // переделать под интерцептор роли
+    useEffect(() => {
+      const fetchData = async () => {
+          try {
+              setLoading(true);                
+              if (taskLoad && !taskLoad.error) {
+                  setTask(taskLoad);
+              }                
 
-    //         const fetchSection = async () => {
-    //           try {
-    //             const res = await axiosRole.get(`/section_get/${project_id}/${section_id}`);
-    //             setSection(res.data);
-    //             setError(null);
-    //           } catch (error) {
-    //             if (error.response?.data?.detail?.error_code === "access_denied") {
-    //               setError("access_denied");
-    //             } else {
-    //               setError("unknown_error");
-    //             }
-    //           } finally {
-    //             setLoading(false);
-    //           }
-    //         };
-
-    //         fetchSection();
-
-    //     }, [])
+          } catch (err) {
+              setError(`Ошибка загрузки данных: ${err.error}`);
+          } finally {
+              setLoading(false);
+          }
+      };
+        
+        fetchData();
+    }, [task_id]);
 
     const navigate = useNavigate();
 
@@ -165,7 +149,6 @@ function TaskOpen() {
         }    
     };
 
-
   // статус задачи
   const [selectedState, setSelectedState] = useState('new');
   const [modifyState, setModifyState ] = useState(false)
@@ -215,12 +198,10 @@ function TaskOpen() {
         }    
   }
 
-
-        
   return (
     <>
             
-      <div className="post-container">
+      <div className="task-container">
         <div className='header-section'>
         {/*это шапка таски*/}        
         
@@ -247,7 +228,16 @@ function TaskOpen() {
           </div>
 
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>            
-            <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{task.description}</span>
+            <div style={{ flex: 1 }}>
+                <CollapsibleText 
+                    text={task.description}
+                    maxLines={3}
+                    style={{
+                        fontSize: '20px',
+                        color: '#E0FFFF'
+                    }}
+                />
+            </div>            
             {(userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
             <button onClick={() => setEditModeHeader(true)} className="toolbar-button">
               Редактировать шапку
@@ -324,7 +314,7 @@ function TaskOpen() {
     <br/>
     {/*ниже редактор контента знания*/}
     {/* <div className="post-container"> */}
-      <button onClick={goTaskList} className="toolbar-button">К списку задач раздела</button>
+      <button onClick={goTaskList} className="toolbar-button">Закрыть</button>
       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
           <h1>Содержание задачи</h1>
                              
@@ -367,9 +357,7 @@ function TaskOpen() {
               {preview ? 'Редактировать' : 'Предварительный просмотр'}
             </button>
                                     
-          </div>
-
-           
+          </div>          
 
             {/*предпросмотр получившегося маркдаун*/}
            {preview ? (
@@ -467,8 +455,7 @@ function TaskOpen() {
         </div>
       )}
       {error && <div className="error-message">{error}</div>}
-    </div>
-                    
+    </div>                    
                     
     </>
     )
@@ -483,11 +470,7 @@ async function getTaskOpen(project_id, task_id) {
               }
           );
         return responseTask.data
-      } catch (error) {       
-        // console.log("Ошибка из detail при запросе секций:", error.response?.data?.detail)
-        // console.log("Статус ответа:", error.response?.status)      
-        // console.log("Ошибка из detail при запросе таски:", error.error_code)
-        
+      } catch (error) {        
         return {"error": error.error_code}
       }    
 }
@@ -519,7 +502,7 @@ async function getSection(section_id, project_id) {
 const TaskOpenLoader = async ({params}) => {
   
   const task_id = params.task_id
-  const section_id = params.section_id
+  // const section_id = params.section_id
   const project_id = params.project_id
 
   // const requestSection = await getSection(section_id, project_id)

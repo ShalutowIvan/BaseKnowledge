@@ -17,9 +17,8 @@ import { KnowledgeOpenFree, KnowledgeOpenFreeLoader } from './sections/BaseKnowl
 import { ProjectPageView, ProjectListLoader } from './sections/ProjectManagement/ProjectPageView';
 import { ProjectOpenLayout, ProjectOpenLoader } from './sections/ProjectManagement/ProjectOpenLayout';
 import { ProjectOpenIndex } from './sections/ProjectManagement/ProjectOpenIndex';
-// import { ProjectOpen, ProjectOpenLoader } from './sections/ProjectManagement/ProjectOpen';
-// import { SectionCreate } from './sections/ProjectManagement/SectionCreate';
-import { SectionOpen, SectionOpenLoader } from './sections/ProjectManagement/SectionOpen';
+import { SectionOpen, SectionOpenLoader } from './sections/ProjectManagement/SectionOpenLayout';
+import { SectionOpenIndex } from './sections/ProjectManagement/SectionOpenIndex';
 import { TaskOpen, TaskOpenLoader } from './sections/ProjectManagement/TaskOpen';
 import { ProjectOpenUsers } from './sections/ProjectManagement/ProjectOpenUsers';
 
@@ -44,6 +43,9 @@ import { StageOpen, StageOpenLoader } from './sections/RoadMap/StageOpen';
 import { RoadMapOpenSettings } from './sections/RoadMap/RoadMapOpenSettings';
 
 
+
+
+
 const AppRouter = createBrowserRouter(createRoutesFromElements(
   
   <>
@@ -65,12 +67,13 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
           <Route path="knowledge_open_free/:slug_kn" element={<KnowledgeOpenFree />} loader={KnowledgeOpenFreeLoader} />
 
           {/* проекты */}          
-          <Route path="projects/" element={<ProjectPageView />} loader={ProjectListLoader} />                    
-          {/* тут открывающий роут, далее вложенные */}
+          <Route path="projects/" element={<ProjectPageView />} loader={ProjectListLoader} />          
           <Route path="projects/open/:project_id" element={<ProjectOpenLayout />} loader={ProjectOpenLoader}>
-            <Route index element={<ProjectOpenIndex />} />                        
-            <Route path="section_open/:section_id" element={<SectionOpen />} loader={SectionOpenLoader} />
-            <Route path="section_open/:section_id/task_open/:task_id" element={<TaskOpen />} loader={TaskOpenLoader} />
+            <Route index element={<ProjectOpenIndex />} />
+            <Route path="section_open/:section_id" element={<SectionOpen />} loader={SectionOpenLoader}>
+              <Route index element={<SectionOpenIndex />} />
+              <Route path="task_open/:task_id" element={<TaskOpen />} loader={TaskOpenLoader} />
+            </Route>
             <Route path="users_invite" element={<ProjectOpenUsers />} />
           </Route>
 
@@ -80,7 +83,7 @@ const AppRouter = createBrowserRouter(createRoutesFromElements(
           <Route path="roadmaps/open/:roadmap_id" element={<RoadMapOpenLayout />} loader={RoadMapOpenLoader}>
             <Route index element={<RoadMapOpenIndex />} />                        
             <Route path="chapter_open/:chapter_id" element={<ChapterOpen />} loader={ChapterOpenLoader}>
-              <Route index element={<ChapterOpenIndex />} />            
+              <Route index element={<ChapterOpenIndex />} />
               <Route path="stage_open/:stage_id" element={<StageOpen />} loader={StageOpenLoader} />
             </Route>
             <Route path="settings" element={<RoadMapOpenSettings />} />

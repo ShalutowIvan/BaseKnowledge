@@ -347,6 +347,14 @@ container-roadmap-view
   /*padding: 2.5%;*/
 }
 
+.task-container {
+  /*width: 100%;*/
+  width: 700px;
+  max-width: 100%;  
+  margin-left: 10%;
+  margin-top: 140px;  
+}
+
 .post-container-free {
   margin-top: 150px;
   max-width: 70%;
@@ -552,7 +560,6 @@ container-roadmap-view
   /*height: calc(100vh - 110px - 20px);*/
   padding: 2.5%;
   overflow-y: auto;
-
   color: #E0FFFF;
 }
 
@@ -639,6 +646,24 @@ container-roadmap-view
   margin-bottom: 20px;
 }
 
+.section-middle {  
+  max-width: 30%;
+  margin-left: 18%;  
+  margin-top: 110px;    
+  /*height: calc(100vh - 110px - 20px);*/
+  padding: 2.5%;
+  overflow-y: auto;
+  color: #E0FFFF;
+}
+
+.header-section {
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+
+
 .list-project {
   /* max-width: 60%; */
   width: 450px;
@@ -650,6 +675,15 @@ container-roadmap-view
   /* padding: 20px; */
   /*padding: 2.5%;*/
 }
+
+
+.container-project-section-view {
+  height: calc(100vh - 110px - 20px);
+  display: flex;
+  /*justify-content: space-between;*/
+  padding: 10px;
+}
+
 
 .list-section {
   /* max-width: 60%; */
