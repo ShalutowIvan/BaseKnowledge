@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { NavLink, useNavigate, useParams, useLoaderData, useRevalidator, Outlet } from 'react-router-dom'
+import { NavLink, useNavigate, useParams, useLoaderData, useRevalidator, Outlet, useOutletContext } from 'react-router-dom'
 
 // import { json } from 'react-router-dom/static';
 // import { json } from "react-router-dom"
@@ -18,6 +18,8 @@ import { CollapsibleText } from './CollapsibleText';
 function SectionOpen() {    
     //глобальное состояние роли из zustand
     const userRole = useRoleStore(state => state.role);
+
+    const { updateSectionInList } = useOutletContext();
 
     const { taskLoad, sectionLoad } = useLoaderData();
     const { section_id, project_id } = useParams();
@@ -117,11 +119,19 @@ function SectionOpen() {
             setError("")
             if (response.statusText==='OK') {
                 setEditModeHeader(false)
+                const updatedSection = { 
+                    ...section, 
+                    title: section.title,
+                    description: section.description,
+                    // updated_at: response.data.updated_at
+                };
+                updateSectionInList(updatedSection);
                 console.log("Update complete!")                
-            } else {
-                const errorData = await response.data
-                console.log(errorData, 'тут ошибка')     
-            }
+            } 
+            // else {
+            //     const errorData = await response.data
+            //     console.log(errorData, 'тут ошибка')     
+            // }
         } catch (error) {            
             console.log(error.error_code)              
             setError(error.message)  
@@ -157,9 +167,9 @@ function SectionOpen() {
         prevTasks.map(task => {
             if (task.id === updatedTask.id) {
                 return {
-                    ...task, // сохраняем все остальные поля задачи
-                    title: updatedTask.title, // обновляем title
-                    description: updatedTask.description // обновляем description
+                    ...task,
+                    title: updatedTask.title,
+                    description: updatedTask.description
                 };
             }
             return task; // возвращаем неизмененную задачу, если ID не совпадает
@@ -210,7 +220,7 @@ function SectionOpen() {
                   {/* Используем компонент для описания */}
                     <div style={{ flex: 1 }}>
                         <CollapsibleText 
-                            text={section.description}
+                            text={section?.description}
                             maxLines={3}
                             style={{
                                 fontSize: '20px',
@@ -331,10 +341,15 @@ function SectionOpen() {
                               {({ isActive }) => (
                             <div className={`list-stage project-section ${isActive ? "active" : ""}`}>
                               <div className="name-knowledge" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>                            
-                                <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Название: {task.title}</span>                                
+                                <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Название: {task.title}</span>
+                                <span style={{ fontSize: '15px', fontWeight: 'bold' }}>
+                                  Статус: &nbsp;
+                                  {task.state === TASK_STATES.NEW && 'Новая'}
+                                  {task.state === TASK_STATES.AT_WORK && 'В работе'}
+                                  {task.state === TASK_STATES.COMPLETED && 'Завершена'}
+                                </span>
                               </div>                          
-                              <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Описание: 
-                                
+                              <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Описание:                                 
                                 <div style={{ flex: 1 }}>
                                     <CollapsibleText 
                                         text={task.description}
@@ -347,13 +362,9 @@ function SectionOpen() {
                                 </div>
                                 
                               </span>
-                              <br/>
-                              <span style={{ fontSize: '15px', fontWeight: 'bold' }}>Статус: </span>
-                              <span style={{ fontSize: '15px', fontWeight: 'bold' }}>
-                                {task.state === TASK_STATES.NEW && 'Новая'}
-                                {task.state === TASK_STATES.AT_WORK && 'В работе'}
-                                {task.state === TASK_STATES.COMPLETED && 'Завершена'}
-                              </span>
+                              
+                              
+                              
                               <br/>                              
                                 <button className="toolbar-button">Открыть</button>                              
                               </div>                            
@@ -370,7 +381,7 @@ function SectionOpen() {
       }
 
       <div>
-        <Outlet />
+        <Outlet context={{ updateTaskInList }} />
       </div>
 
     </div>

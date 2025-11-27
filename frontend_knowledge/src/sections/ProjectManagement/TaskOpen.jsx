@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
-import { useParams, Link, useNavigate, useLoaderData, Await, redirect, useRevalidator } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLoaderData, Await, redirect, useRevalidator, useOutletContext } from 'react-router-dom'
 
 // import MDEditor from '@uiw/react-markdown-editor';//это посоветовал дипсик
 import MDEditor from '@uiw/react-md-editor';//это посоветовал чатгпт
@@ -21,6 +21,7 @@ import { CollapsibleText } from './CollapsibleText';
 
 function TaskOpen() {
     const revalidator = useRevalidator();
+    const { updateTaskInList } = useOutletContext();
 
     const userRole = useRoleStore(state => state.role);
     const { taskLoad } = useLoaderData();   
@@ -98,7 +99,7 @@ function TaskOpen() {
         { params: {project_id: project_id} }
         )
       navigate(`/projects/open/${project_id}/section_open/${section_id}`);
-      revalidator.revalidate();//принудительная перезагрузка лоадера после редиректа в списке знаний
+      revalidator.revalidate();//принудительная перезагрузка лоадера после редиректа в списке знаний. Разобраться зачем, можно наверно и без перезагрузки
     }  
   };
 
@@ -135,12 +136,20 @@ function TaskOpen() {
             setEditModeHeader(false)
             setError("")
             if (response.statusText==='OK') {
-                setTask({ ...task, updated_at: response.data.updated_at});                
+                setTask({ ...task, updated_at: response.data.updated_at});
+                const updatedTask = { 
+                    ...task, 
+                    title: task.title,
+                    description: task.description,
+                    updated_at: response.data.updated_at
+                };
+                updateTaskInList(updatedTask);
                 console.log("Update complete!")                
-            } else {
-                const errorData = await response.data
-                console.log(errorData, 'тут ошибка')
-            }
+            } 
+            // else {
+            //     const errorData = await response.data
+            //     console.log(errorData, 'тут ошибка')
+            // }
         } catch (error) {            
             console.log(error)
             setError('что-то пошло не так');            

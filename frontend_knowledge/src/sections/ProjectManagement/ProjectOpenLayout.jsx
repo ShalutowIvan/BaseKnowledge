@@ -209,6 +209,21 @@ const handleCreateSuccess = (newSection) => {
 const usersInvite = () => {
     return navigate(`/projects/open/${project_id}/users_invite/`);}
 
+const updateSectionInList = (updatedSection) => {
+    setSections(prevSections => 
+        prevSections.map(section => {
+            if (section.id === updatedSection.id) {
+                return {
+                    ...section,
+                    title: updatedSection.title,
+                    description: updatedSection.description
+                };
+            }
+            return section; // возвращаем неизмененную задачу, если ID не совпадает
+        })
+    );
+  };
+
      
   return (
     <div>
@@ -405,7 +420,7 @@ const usersInvite = () => {
       
       {/* Основной контент (меняется) */}      
       <div>
-        <Outlet />
+        <Outlet context={{ updateSectionInList }} />
       </div>
     </div>
   );
