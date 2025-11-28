@@ -21,7 +21,7 @@ import { CollapsibleText } from './CollapsibleText';
 
 function TaskOpen() {
     const revalidator = useRevalidator();
-    const { updateTaskInList } = useOutletContext();
+    const { updateTaskInList, deleteTaskInList } = useOutletContext();
 
     const userRole = useRoleStore(state => state.role);
     const { taskLoad } = useLoaderData();   
@@ -94,12 +94,17 @@ function TaskOpen() {
       
   const deleteTask = () => {
     if (window.confirm('Вы уверены, что хотите удалить?')) {
+      try {
       // Действие при подтверждении
       axiosRole.delete(`http://127.0.0.1:8000/delete_task/${project_id}/${task.id}`,
         { params: {project_id: project_id} }
         )
       navigate(`/projects/open/${project_id}/section_open/${section_id}`);
-      revalidator.revalidate();//принудительная перезагрузка лоадера после редиректа в списке знаний. Разобраться зачем, можно наверно и без перезагрузки
+      deleteTaskInList(task.id);      
+      } catch (error) {
+        console.error('Error whith delete task:', error);
+        setError(`Ошибка при удалении задачи: ${error.message}`)
+      }
     }  
   };
 

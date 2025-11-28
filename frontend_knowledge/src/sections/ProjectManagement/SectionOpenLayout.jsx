@@ -19,7 +19,7 @@ function SectionOpen() {
     //глобальное состояние роли из zustand
     const userRole = useRoleStore(state => state.role);
 
-    const { updateSectionInList } = useOutletContext();
+    const { updateSectionInList, deleteSectionInList } = useOutletContext();
 
     const { taskLoad, sectionLoad } = useLoaderData();
     const { section_id, project_id } = useParams();
@@ -71,11 +71,13 @@ function SectionOpen() {
             { params: {project_id: project_id} }
             );          
           // Возвращаемся к списку разделов
-          navigate(`/projects/open/${project_id}`, {
-            state: { deletedSectionId: section_id }, // Передаем ID удаленной секции
-            replace: true, // Важно: заменяем текущую запись в истории
-            preventScrollReset: true
-          });
+          navigate(`/projects/open/${project_id}`);
+          //   , {
+          //   state: { deletedSectionId: section_id }, // Передаем ID удаленной секции
+          //   replace: true, // Важно: заменяем текущую запись в истории
+          //   preventScrollReset: true
+          // });
+          deleteSectionInList(section.id)
         } catch (error) {
           console.error('Error whith delete section:', error);
           setError(`Ошибка при удалении раздела:${error.message}`)
@@ -177,6 +179,12 @@ function SectionOpen() {
     );
   };
 
+  //функция для удаления таски в состоянии
+  const deleteTaskInList = (taskId) => {
+    setTasks(prev => prev.filter(task => task.id !== taskId));
+  };
+  
+
 
   if (!section) {
       return <div>Загрузка...</div>;
@@ -202,8 +210,8 @@ function SectionOpen() {
           {!editModeHeader ? (
             <>          
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-              <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название раздела:</span>
-              <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {new Date(section.created_at).toLocaleString('ru-RU')}</span>            
+              <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
+              <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {new Date(section.created_at).toLocaleString('ru-RU')}</span>
             </div>
 
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>            
@@ -246,7 +254,8 @@ function SectionOpen() {
 
                   {/*первая строка без формы*/}
                   <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название раздела:</span>
+                    <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название раздела:</span>                    
+
                     <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {new Date(section.created_at).toLocaleString('ru-RU')}</span>
                   </div>
 
@@ -381,7 +390,7 @@ function SectionOpen() {
       }
 
       <div>
-        <Outlet context={{ updateTaskInList }} />
+        <Outlet context={{ updateTaskInList, deleteTaskInList }} />
       </div>
 
     </div>

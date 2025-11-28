@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import axios from 'axios';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { API } from "../../apiAxios/apiAxios"
 import { ROLES_USERS } from "./axiosRole/RoleService"
@@ -24,6 +23,13 @@ function ProjectOpenUsers() {
     //состояние для отображения информации об удалении проекта
     const [visibleInfoDelete, setVisibleInfoDelete] = useState(false)
 
+    const [showCurrentUsers, setShowCurrentUsers] = useState(false);
+    const [errorUser, setErrorUser] = useState("");
+
+    const [modifyRole, setModifyRole ] = useState(false)
+
+    const [modalOpen, setModalOpen] = useState(false);
+
 	const { project_id } = useParams()
 
 	const validateForm = () => {
@@ -40,38 +46,29 @@ function ProjectOpenUsers() {
   const SearchToInvite = async (event) => {
         event.preventDefault();
         if (!validateForm()) return;
-        setLoading(true);
-
+        
         try {
+            setLoading(true);
             const response = await axiosRole.get(`http://127.0.0.1:8000/search_user/${project_id}`, {
                 params: {                 
                     email_user: email,
                     project_id: project_id//этот параметр для интерцептора axiosRole, он удалятся при запросе на Бэк
                 }
                 }
-                );
-            setLoading(false);
-            
-            // тут обработать ошибку валидации когда список пользаков пустой!!!!!!!!!!!!! Типа если статус ответа 400 то пустой список записываем в состояние списка пользаков, или ничего не меняем. 
+                );            
             console.log(response.status, "статус")
             if (response.statusText==='OK') {
 				setEmail("");
 				setUsersearch(response.data.user)
-                setVisibleInvite(response.data.invite)
-      
+                setVisibleInvite(response.data.invite)      
             } 
-        } catch (error) {
-        
-              // if (axios.isAxiosError(error) && error.response?.status === 400) {                
-              //   setUsersearch("")
-              //   setError(`Пользователь не найден!`);            
-              // }               
-
+        } catch (error) {            
+            console.error("Error whith search user:", error);
+            // setError(`Ошибка при поиске пользователя: ${error.response?.data?.detail}`);
+            setError(`Ошибка при поиске пользователя: ${error.message}`);            
+        } finally {
             setLoading(false);
-            console.log("Ошибка на сервере:", error)
-
-            setError(`что-то пошло не так, ошибка: ${error.response?.data?.detail}`);            
-        }    
+        }
     };
 
 	const inviteToProject = async () => {
@@ -85,10 +82,15 @@ function ProjectOpenUsers() {
                 );
             setLoading(false);
             
-            if (response.statusText==='OK') {
-				console.log("Пользователь добавлен в проект!")
-                setVisibleInvite(false)
-                      
+            if (response.statusText==='OK') {				
+                setVisibleInvite(false);//это для переключения кнопки пригласить/исключить пользака
+                if (currentUsers != []) {
+                    const newUser = usersearch;                    
+                    newUser.role = ROLES_USERS.GUEST;
+                    newUser.isEditing = false;
+                    setCurrentUsers(prevUsers => [...prevUsers, newUser])
+                }
+                console.log("Пользователь добавлен в проект!")
             } else {
                 const errorData = await response.data
                 console.log(errorData, 'тут ошибка')     
@@ -99,7 +101,6 @@ function ProjectOpenUsers() {
             setError('что-то пошло не так');            
         }    
 	}
-
 
 	const excludeFromProject = async () => {
 		setLoading(true);
@@ -116,10 +117,12 @@ function ProjectOpenUsers() {
             if (response.data.answer) {
                 alert("Нельзя удалить себя!")
             }            
-            else if (response.statusText==='OK') {
-				console.log("Пользователь исключен из проекта!")
-				setVisibleInvite(true)
-      
+            else if (response.statusText==='OK') {				
+                if (currentUsers != []) {
+                    setCurrentUsers(prev => prev.filter(user => user.id !== usersearch.id));
+                }                
+				setVisibleInvite(true);
+                console.log("Пользователь исключен из проекта!")
             } else {
                 const errorData = await response.data
                 console.log(errorData, 'тут ошибка')     
@@ -130,63 +133,19 @@ function ProjectOpenUsers() {
             setError('что-то пошло не так');            
         }    
 	}
-
-
-	// const SearchCurrentUsers = async (event) => {
-    //     event.preventDefault();
-    //     if (!validateForm()) return;
-    //     setLoading(true);
-
-    //     try {
-    //         const response = await axiosRole.get('/search_current_users', {
-    //             params: {                 
-    //                 email_user: emailCurrentUser,
-    //                 project_id: project_id
-    //             }
-    //             }
-    //             );
-    //         setLoading(false);
-
-    //         // if (!response.data?.id) {
-    //         //     throw new Error("Некорректный формат ответа сервера");
-    //         //   }
-            
-    //         if (response.statusText==='OK') {
-	// 			setEmailCurrentUser("");
-	// 			setCurrentUsers(response.data)                
-      
-    //         } else {
-    //             const errorData = await response.data
-    //             console.log(errorData, 'тут ошибка')     
-    //         }
-    //     } catch (error) {
-    //         setLoading(false);
-    //         console.log(error)
-    //         setError('что-то пошло не так');            
-    //     }    
-    // };
-
-
-    const [showCurrentUsers, setShowCurrentUsers] = useState(false);
-    const [errorUser, setErrorUser] = useState("");
-
+    
 
     const AllUsersProject = async () => {
-        setLoading(true);
-
         try {
+            setLoading(true);
             const response = await axiosRole.get(`/all_current_users_project/${project_id}`,
                 {
                 params: {project_id: project_id}
                 }
                 );
-            setLoading(false);
-
-            // if (!response.data?.id) {
-            //     throw new Error("Некорректный формат ответа сервера");
-            //   }
+            setLoading(false);            
             
-            if (response.statusText==='OK') {				
+            if (response.statusText==='OK') {               
                 const data = response.data
              
                 if (Array.isArray(data)) {
@@ -209,13 +168,14 @@ function ProjectOpenUsers() {
                 setErrorUser('Возможно вы зашли в другой проект. Попруйте обновить страницу');                
             } else {
                 setErrorUser('что-то пошло не так');                
-            }
-            
+            }            
         }  
     }
 
-    const [modifyRole, setModifyRole ] = useState(false)
-    // const [selectedRole, setSelectedRole] = useState("");
+    useEffect(() => {
+        AllUsersProject()        
+      }, []) 
+
 
     const handleModifyRoleUser = (userId) => {
       setCurrentUsers(prev => 
@@ -284,7 +244,7 @@ function ProjectOpenUsers() {
         }    
     }
 
-    const [modalOpen, setModalOpen] = useState(false);
+    
 
     const deleteProject = async () => {
         setLoading(true);
@@ -323,15 +283,16 @@ function ProjectOpenUsers() {
 			<div className='container-user'>
 				<div>                
 				<h1>Текущие пользователи проекта</h1>
-				{!showCurrentUsers &&
-                <button className='toolbar-button' onClick={() => {setShowCurrentUsers(!showCurrentUsers); AllUsersProject();}}>Показать текущих пользователей</button>
-                }
+				{/*{!showCurrentUsers &&
+                <button className='toolbar-button' onClick={() => {setShowCurrentUsers(!showCurrentUsers);}}>Показать текущих пользователей</button>
+                }                
                 {showCurrentUsers && 
                 <button className='toolbar-button' onClick={() => {setShowCurrentUsers(!showCurrentUsers);}}>Скрыть текущих пользователей</button>
-                }
-                <br/><br/>
+                }*/}
+                {/*<br/><br/>*/}
+                
 
-                {showCurrentUsers && 
+                
                 <div className='table-editor'>
 				<table>
                         <thead>
@@ -370,7 +331,6 @@ function ProjectOpenUsers() {
                                             <button onClick={(e) => saveRole(item.id, item.role)} className="accept-button"><FaCheck /></button>
                                             &nbsp;   
                                             <button onClick={(e) => {cancelEditUser(item.id); }} className="close-button"><FaTimes /></button>
-                                            
 
                                         </div>
                                     </>
@@ -387,8 +347,8 @@ function ProjectOpenUsers() {
                         </tbody>
                     </table>
 				</div>
-                }
-                {!showCurrentUsers && <p>Текущие пользователи проекта.</p>}
+                
+                {/*{!showCurrentUsers && <p>Текущие пользователи проекта.</p>}*/}
                 
                 {errorUser && <div className="error-message">{errorUser}</div>}
 

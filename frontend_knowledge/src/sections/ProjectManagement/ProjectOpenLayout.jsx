@@ -116,19 +116,24 @@ function ProjectOpenLayout() {
     dataLoad();
     
     // Обрабатываем удаление, если есть ID в location.state
-    if (location.state?.deletedSectionId) {            
-      // Устанавливаем флаг удаления перед обновлением состояния
-      isDeletingSection.current = true;
-      setSections(prev => prev.filter(s => s.id !== location.state.deletedSectionId));
+    // if (location.state?.deletedSectionId) {            
+    //   // Устанавливаем флаг удаления перед обновлением состояния
+    //   isDeletingSection.current = true;
+    //   setSections(prev => prev.filter(s => s.id !== location.state.deletedSectionId));
       
-      // Навигация с preventScrollReset чтобы избежать перезагрузки loader
-      navigate(location.pathname, { 
-        replace: true, 
-        state: undefined,
-        // preventScrollReset: true  // ← КЛЮЧЕВАЯ СТРОКА
-      });
-    }
-  }, [location.state, navigate]);
+    //   // Навигация с preventScrollReset чтобы избежать перезагрузки loader
+    //   navigate(location.pathname, { 
+    //     replace: true, 
+    //     state: undefined,
+    //     // preventScrollReset: true  // ← КЛЮЧЕВАЯ СТРОКА
+    //   });
+    // }
+  }, []);
+  // location.state, navigate
+
+  const deleteSectionInList = (sectionId) => {
+    setSections(prev => prev.filter(section => section.id !== sectionId));
+  };
 
 
 
@@ -223,6 +228,8 @@ const updateSectionInList = (updatedSection) => {
         })
     );
   };
+
+
 
      
   return (
@@ -420,7 +427,7 @@ const updateSectionInList = (updatedSection) => {
       
       {/* Основной контент (меняется) */}      
       <div>
-        <Outlet context={{ updateSectionInList }} />
+        <Outlet context={{ updateSectionInList, deleteSectionInList }} />
       </div>
     </div>
   );
