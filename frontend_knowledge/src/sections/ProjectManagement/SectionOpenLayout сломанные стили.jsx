@@ -7,6 +7,7 @@ import { ROLES_USERS } from "./axiosRole/RoleService"
 import { axiosRole } from "./axiosRole/axiosRole"
 
 import { CollapsibleText } from './CollapsibleText';
+import './CSS/cssProjects.css';
 
 
 function SectionOpen() {    
@@ -190,7 +191,7 @@ function SectionOpen() {
     }
       
   return (    
-    <div className='container-project-section-view'>
+    <div className='container-project-section-view scroll-isolation-container'>
     {/*<div className='container-knowledges-view'>*/}
       
         {/*<div className='height-project-section'>*/}
@@ -198,7 +199,7 @@ function SectionOpen() {
               (<h1 style={{ textAlign: 'center', marginTop: '200px', color: 'white' }}>У вас нет прав для проекта</h1>) 
               : (
               // <div className='header-chapter'>
-              <div className='section-middle'>
+              <div className='section-middle scroll-isolation-content'>
                 
                 <div className="project-section">
                   {/*это шапка раздела*/}  
@@ -333,7 +334,8 @@ function SectionOpen() {
                       />
                     )}			      
                   <br/><br/>
-                          <div className="section-tasks-container">
+                    
+                    <div className="section-tasks-list">
                     {
                           tasks.length === 0 ? (<div className="name-knowledge">В этом разделе пока нет задач. Попробуйте обновить страницу.</div>)
                           : 
@@ -380,8 +382,8 @@ function SectionOpen() {
                                   </>
                               ))
                             )                  
-                      }     
-                      </div>      
+                      } 
+                      </div>          
                   
               </div>     
               )

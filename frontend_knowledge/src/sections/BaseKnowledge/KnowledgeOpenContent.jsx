@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback  } from 'react';
 import ReactMarkdown from 'react-markdown';
-import axios from 'axios';
 import { API } from "../../apiAxios/apiAxios"
 import { useParams, Link, useNavigate, useLoaderData, Await, redirect, useRevalidator } from 'react-router-dom'
 // import MDEditor from '@uiw/react-markdown-editor';//это посоветовал дипсик
@@ -99,9 +98,7 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
       }
     }, [currentKnowledge?.id]); // Зависимость от ID знания
 
-  
-
-    
+      
     // Обработчик сохранения контента. Он сохраняет контент знания на сервере    
     const handleSave = useCallback(async () => {
       try {

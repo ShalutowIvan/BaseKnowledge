@@ -18,9 +18,16 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-html, body {
+/*html, body {
   height: 100%;
   margin: 0;
+}*/
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 /*это атрибут className для товаров*/
@@ -102,22 +109,15 @@ main{
   
 }
 
-  aside {
-  /* float: left; */
+  aside {  
   width: 15%;
   position: fixed;
-  padding: 1.5%;
-  /* background-color: #2c3e50; */
-  color: #ecf0f1;
-  /* height: 100%; */
-  
+  padding: 1.5%;  
+  color: #ecf0f1;  
   top: 120px;
   bottom: 120px;
-
   left: 0;
-  margin-left: 30px;
-  /* padding-bottom: 120px; */
-  
+  margin-left: 30px;  
   overflow-y: auto;
 }
 
@@ -337,23 +337,52 @@ container-roadmap-view
   background-color: #2F4F4F;
 }
 
-.post-container {
-  max-width: 70%;
-  margin-left: 20%;
-  margin-top: 140px;
-  /*margin: 0 auto;*/
-  /*auto;*/
-  /*padding: 20px;*/
-  /*padding: 2.5%;*/
+.task-content-area {
+  /*height: 100vh;*/
+  height: calc(100vh - 110px - 20px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.task-container {
-  /*width: 100%;*/
+.task-container {  
   width: 700px;
-  max-width: 100%;  
-  margin-left: 10%;
-  margin-top: 140px;  
+  /*max-width: 100%;  */
+  /*margin-left: 10%;*/
+  margin-top: 155px;  
+  overflow: auto;
 }
+
+
+.task-controls {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.task-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1;
+  margin-left: 16px;
+}
+
+
+
+
+.section-tasks-container {
+  max-height: 50vh;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px;
+  margin-top: 16px;
+}
+
+
 
 .post-container-free {
   margin-top: 150px;
@@ -649,8 +678,7 @@ container-roadmap-view
 .section-middle {  
   max-width: 30%;
   margin-left: 18%;  
-  margin-top: 110px;    
-  /*height: calc(100vh - 110px - 20px);*/
+  margin-top: 110px;
   padding: 2.5%;
   overflow-y: auto;
   color: #E0FFFF;
@@ -660,6 +688,7 @@ container-roadmap-view
   border: 2px solid #ddd;
   border-radius: 8px;
   padding: 15px;
+  /*flex-shrink: 0;*/
 }
 
 
@@ -677,13 +706,57 @@ container-roadmap-view
 }
 
 
-.container-project-section-view {
-  height: calc(100vh - 110px - 20px);
+.container-project-section-view {  
+  /*top: 120px;*/
+  /*bottom: 120px;*/
   display: flex;
+  height: calc(100vh - 110px - 20px);
+  /*height: 100vh;*/
   /*justify-content: space-between;*/
-  padding: 10px;
+  padding: 10px;  
+  flexDirection: column;
+  /*overflow-y: auto;  */
+  overflow: hidden;
 }
 
+.container-project-section-view3{
+  display: flex;
+  height: 100vh;
+  /*position: absolute;*/
+  /*top: 120px; */
+  /*bottom: 120px; */
+  /*max-width: 100%;  */
+  left: 20%;  
+  /*right: 0;*/
+  /*overflow: hidden;*/
+  overflow-y: auto;  
+}
+
+  /*display: flex;
+  position: absolute;
+  top: 120px; 
+  bottom: 120px; 
+  max-width: 100%;  
+  left: 20%;  
+  right: 0;
+  overflow: hidden;*/
+
+.shpora {
+  display: flex;
+  position: absolute;
+  top: 120px; /* Отступ от header */
+  bottom: 120px; /* Отступ от footer */
+  max-width: 100%;
+  /*margin-left: 20%;  */
+  left: 20%;  
+  right: 0;
+  overflow: hidden;
+}
+
+
+/*.height-project-section {
+  height: calc(100vh - 110px - 20px);
+}*/
 
 .list-section {
   /* max-width: 60%; */
@@ -1037,8 +1110,7 @@ container-roadmap-view
   position: absolute;
   top: 120px; /* Отступ от header */
   bottom: 120px; /* Отступ от footer */
-  max-width: 100%;
-  /*margin-left: 20%;  */
+  max-width: 100%;  
   left: 20%;  
   right: 0;
   overflow: hidden;

@@ -137,20 +137,6 @@ function ProjectOpenLayout() {
 
 
 
-  // useEffect(() => {
-  //   let isMounted = true;
-    
-  //   if (location.state?.deletedSectionId && isMounted) {      
-  //     setSections(prev => prev.filter(s => s.id !== location.state.deletedSectionId));
-  //     navigate(location.pathname, { replace: true, state: undefined });
-  //   }
-    
-  //   return () => { isMounted = false };
-  // }, [location.state, navigate]);
-
-
-  
-  
 const validateForm = () => {
       if (!project.title || !project.description ) {
           setError("Есть пустые поля, заполните, пожалуйста!");
@@ -228,9 +214,6 @@ const updateSectionInList = (updatedSection) => {
         })
     );
   };
-
-
-
      
   return (
     <div>

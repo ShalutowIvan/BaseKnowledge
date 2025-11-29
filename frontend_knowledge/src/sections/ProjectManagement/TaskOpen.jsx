@@ -16,11 +16,11 @@ import { useRoleStore } from './axiosRole/RoleStore';
 import { ROLES_USERS } from "./axiosRole/RoleService"
 import { axiosRole } from "./axiosRole/axiosRole"
 import { CollapsibleText } from './CollapsibleText';
-
+import { FaCheck, FaTimes } from 'react-icons/fa';
 
 
 function TaskOpen() {
-    const revalidator = useRevalidator();
+    
     const { updateTaskInList, deleteTaskInList } = useOutletContext();
 
     const userRole = useRoleStore(state => state.role);
@@ -37,6 +37,7 @@ function TaskOpen() {
     const { project_id, section_id, task_id } = useParams();
 
     const [task, setTask] = useState(taskLoad);
+    const [originalStatus, setOriginalStatus] = useState(undefined);
     
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
@@ -174,7 +175,7 @@ function TaskOpen() {
     };
 
   const handleChangeState = (event) => {
-    setSelectedState(event.target.value);
+    setSelectedState(event.target.value);    
   };
 
   const saveState = async (event) => {
@@ -212,9 +213,23 @@ function TaskOpen() {
         }    
   }
 
+  const cancelEditStatus = (taskId) => {
+        setTask(prev => 
+            prev.map(item => (
+              item.id === userId ? { 
+                ...item, 
+                modifyRole: false,
+                role: item.originalRole, // возвращаем исходное значение
+                originalRole: undefined // очищаем временное значение
+              } : item
+            )));
+    };
+
   return (
     <>
             
+      {/*<div className="task-container task-content-area">*/}
+    <div className="task-content-area">
       <div className="task-container">
         <div className='header-section'>
         {/*это шапка таски*/}        
@@ -326,8 +341,7 @@ function TaskOpen() {
           }
       </div>
     <br/>
-    {/*ниже редактор контента знания*/}
-    {/* <div className="post-container"> */}
+    {/*ниже редактор контента*/}    
       <button onClick={goTaskList} className="toolbar-button">Закрыть</button>
       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
           <h1>Содержание задачи</h1>
@@ -343,18 +357,24 @@ function TaskOpen() {
             </span>
             
             {(userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
-            <button onClick={() => {setModifyState(true);}} className="change-button"></button>}
+            <button onClick={() => {setModifyState(true); setSelectedState(task.state)}} className="change-button"></button>}
 
             </>
           ) : (
-          <>
-          <select value={selectedState} onChange={handleChangeState}>
-            <option value={TASK_STATES.NEW}>Новая</option>
-            <option value={TASK_STATES.AT_WORK}>В работе</option>
-            <option value={TASK_STATES.COMPLETED}>Завершена</option>
-          </select>
-          <button onClick={saveState} className="accept-button"></button>
-          </>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+              <span style={{ fontSize: '20px', fontWeight: 'bold' }}>Статус: </span>
+              &nbsp;
+              <select value={selectedState} onChange={handleChangeState}>
+                <option value={TASK_STATES.NEW}>Новая</option>
+                <option value={TASK_STATES.AT_WORK}>В работе</option>
+                <option value={TASK_STATES.COMPLETED}>Завершена</option>
+              </select>
+              &nbsp;
+              <button onClick={saveState} className="accept-button"><FaCheck /></button>
+              &nbsp;
+              <button onClick={() => {setModifyState(false);}} className="close-button"><FaTimes /></button>
+              {/*onClick={(e) => {cancelEditUser(item.id); }} */}
+          </div>
           )
           }          
           </div>
@@ -374,6 +394,7 @@ function TaskOpen() {
           </div>          
 
             {/*предпросмотр получившегося маркдаун*/}
+            <div style={{ flex: 1, overflow: 'hidden', margin: '8px 0' }}>
            {preview ? (
             <div className="markdown-content">
               <ReactMarkdown 
@@ -412,6 +433,7 @@ function TaskOpen() {
 
             </>
           )}
+          </div>
 
 
           <div className="editor-actions">
@@ -469,7 +491,8 @@ function TaskOpen() {
         </div>
       )}
       {error && <div className="error-message">{error}</div>}
-    </div>                    
+    </div>
+  </div>                    
                     
     </>
     )
@@ -490,37 +513,10 @@ async function getTaskOpen(project_id, task_id) {
 }
 
 
-async function getSection(section_id, project_id) { 
-  
-  try {        
-        
-        const responseSection = await axiosRole.get(`/section_get/${project_id}/${section_id}`,
-              {
-                params: {project_id: project_id}
-              }
-          );
-
-        return responseSection.data
-
-      } catch (error) {
-       
-        // console.log("Ошибка из detail при запросе секций:", error.response?.data?.detail)
-        // console.log("Статус ответа:", error.response?.status)       
-
-        // return {"error": error.response?.data?.detail.error_code}
-        return {"error": error.error_code}
-      }  
-}
-
-
 const TaskOpenLoader = async ({params}) => {
   
-  const task_id = params.task_id
-  // const section_id = params.section_id
-  const project_id = params.project_id
-
-  // const requestSection = await getSection(section_id, project_id)
-  // , sectionLoad: requestSection
+  const task_id = params.task_id  
+  const project_id = params.project_id  
 
   const requestTask = await getTaskOpen(project_id, task_id)  
   

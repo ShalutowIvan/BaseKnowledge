@@ -9,5 +9,232 @@
 }
 
 
+/* Общие стили для изоляции прокрутки */
+.scroll-isolation-container {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 
+.scroll-isolation-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px;
+}
+
+.scroll-isolation-fixed {
+  flex-shrink: 0;
+}
+
+/* Стили для SectionOpen */
+.section-tasks-list {
+  max-height: 60vh;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px;
+  margin-top: 16px;
+}
+
+.section-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Стили для TaskOpen */
+.task-main-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.task-content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.task-header-section {
+  flex-shrink: 0;
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+.task-body-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 0;
+}
+
+.task-controls-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 8px 0;
+  margin-bottom: 16px;
+}
+
+.task-editor-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.task-editor-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.task-editor-toolbar {
+  flex-shrink: 0;
+}
+
+.task-editor-content {
+  flex: 1;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.task-preview-content {
+  height: 100%;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.task-actions-panel {
+  flex-shrink: 0;
+  padding: 16px 0;
+  border-top: 1px solid #ccc;
+  margin-top: 16px;
+}
+
+.task-view-mode {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.task-markdown-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.task-buttons-panel {
+  flex-shrink: 0;
+  padding: 16px 0;
+}
+
+
+/* Дополнительные стили для TaskOpen */
+.task-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.task-header-label {
+  font-size: 24px;
+  color: #5F9EA0;
+  font-weight: bold;
+}
+
+.task-header-date {
+  font-size: 18px;
+  color: #5F9EA0;
+}
+
+.task-header-value {
+  font-size: 20px;
+  color: #E0FFFF;
+}
+
+.task-description-row {
+  align-items: flex-start;
+}
+
+.task-description-content {
+  flex: 1;
+}
+
+.task-header-form {
+  margin-bottom: 1rem;
+}
+
+.task-header-input {
+  flex: 1;
+  margin-right: 16px;
+}
+
+.task-header-textarea {
+  flex: 1;
+  margin-right: 16px;
+}
+
+.task-header-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.task-status-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1;
+  margin-left: 16px;
+}
+
+.task-status-controls {
+  display: flex;
+  align-items: center;
+}
+
+.task-status-display,
+.task-status-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-status-label {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.task-status-value {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.task-status-select {
+  padding: 4px 8px;
+}
+
+.task-editor-title {
+  margin-bottom: 16px;
+}
+
+.task-editor-wrapper {
+  height: 100%;
+}
+
+.error-text {
+  color: red;
+  margin-top: 8px;
+}
 
