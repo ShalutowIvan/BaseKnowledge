@@ -754,11 +754,11 @@ async def save_uploaded_file(file, upload_dir: str) -> tuple[str, str]:
     filename = f"{uuid.uuid4()}.{file_ext}"
     filepath = os.path.join(upload_dir, filename)
     
-    #использую тут библиотеку aiofiles, можно и без нее, но с ней лучше
+    #использую тут библиотеку aiofiles для сохранения файла, можно и без нее, но с ней лучше
     async with aiofiles.open(filepath, "wb") as buffer:
         await buffer.write(await file.read())
 
-    # # Асинхронное сохранение файла. Вариант без aiofiles
+    # синхронное сохранение файла. Вариант без aiofiles
     # contents = await file.read()
     # with open(filepath, "wb") as buffer:
     #     buffer.write(contents)
@@ -811,14 +811,14 @@ async def view_file_image_service(file_name: str):
 
 #удаление картинки по ссылке из БД и файл с сервера
 async def delete_image_by_url(db: AsyncSession, image_url: str) -> bool:
-    print("идет удаление, такую ссылку получили!!!!!!!!!!!!!!!", image_url)
+    # print("идет удаление, такую ссылку получили!!!!!!!!!!!!!!!", image_url)
     # 1. Извлекаем имя файла из URL
     filename = image_url.split('/')[-1]
     
     # 2. Удаляем запись из БД
     result = await db.execute(
-        delete(Images)
-        .where(Images.filename == filename)
+        delete(Image)
+        .where(Image.filename == filename)
     )    
     # 3. Удаляем файл с диска
     filepath = os.path.join(UPLOAD_FOLDER, filename)

@@ -118,7 +118,7 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
           // updated_at: new Date().toISOString(), // или с сервера
           updated_at: updatedKnowledgeServer.updated_at
         };// тут муть, скоре всего норм, но проверить
-
+        setError("")
         setEditMode(false);
         // Сообщаем родителю об обновлении, обновление в массиве вкладок делаем setActiveTabs
         onUpdate(currentKnowledge?.id, updatedKnowledge);
