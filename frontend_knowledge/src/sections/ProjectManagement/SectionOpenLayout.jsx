@@ -190,8 +190,8 @@ function SectionOpen() {
     }
       
   return (    
-    <div className='container-project-section-view'>
-    {/*<div className='container-knowledges-view'>*/}
+      <div className='container-project-section-view'>
+    
       
         {/*<div className='height-project-section'>*/}
               {userRole === ROLES_USERS.GUEST ? 
@@ -317,7 +317,7 @@ function SectionOpen() {
                     {/* <button onClick={goBack} className="toolbar-button">Назад</button>           */}
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>            
                       <button onClick={goSectionList} className="toolbar-button">Закрыть</button>
-                      <button className="cancel-button" onClick={deleteSection}>Удалить раздел</button>
+                      <button className="delete-button" onClick={deleteSection}>Удалить раздел</button>
                     </div>
                     <h1>Задачи в разделе</h1>
                     <p>______________________________________________________</p>
@@ -333,7 +333,7 @@ function SectionOpen() {
                       />
                     )}			      
                   <br/><br/>
-                          <div className="section-tasks-container">
+                          {/* <div className="section-tasks-container"> */}
                     {
                           tasks.length === 0 ? (<div className="name-knowledge">В этом разделе пока нет задач. Попробуйте обновить страницу.</div>)
                           : 
@@ -381,13 +381,13 @@ function SectionOpen() {
                               ))
                             )                  
                       }     
-                      </div>      
+                      {/* </div>       */}
                   
               </div>     
               )
               }
 
-        {/*</div>*/}
+        {/* </div> */}
 
 
         <div>

@@ -231,266 +231,269 @@ function TaskOpen() {
       {/*<div className="task-container task-content-area">*/}
     <div className="task-content-area">
       <div className="task-container">
-        <div className='header-section'>
-        {/*это шапка таски*/}        
-        
-        {/*начало шапки*/}
-        {/*если не редачим шапку отображаются поля шапки*/}
-        {!editModeHeader ? (
-          <>
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-            <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
-            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {new Date(task.created_at).toLocaleString('ru-RU')}</span>
+            <div className='header-section'>
+            {/*это шапка таски*/}        
             
-          </div>
+            {/*начало шапки*/}
+            {/*если не редачим шапку отображаются поля шапки*/}
+            {!editModeHeader ? (
+              <>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
+                <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {new Date(task.created_at).toLocaleString('ru-RU')}</span>
+                
+              </div>
 
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>            
-            <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{task.title}</span>
-            <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {new Date(task.updated_at).toLocaleString('ru-RU')}</span>
-            
-          </div>
-          <br/>
-          
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-            <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>            
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>            
+                <span style={{ fontSize: '20px', color: '#E0FFFF' }}>{task.title}</span>
+                <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {new Date(task.updated_at).toLocaleString('ru-RU')}</span>
+                
+              </div>
+              <br/>
               
-          </div>
-
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>            
-            <div style={{ flex: 1 }}>
-                <CollapsibleText 
-                    text={task.description}
-                    maxLines={3}
-                    style={{
-                        fontSize: '20px',
-                        color: '#E0FFFF'
-                    }}
-                />
-            </div>            
-            {(userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
-            <button onClick={() => setEditModeHeader(true)} className="toolbar-button">
-              Редактировать шапку
-            </button>
-            }
-            
-          </div>
-          </>
-          ) : (
-          <>
-          {/*отображаются поля формы если редактируем шапку*/}
-          {/*начало формы*/}
-          
-          <form onSubmit={saveHeaderChanges} style={{ marginBottom: '1rem' }}>
-
-                {/*первая строка без формы*/}
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
-                  <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {new Date(task.created_at).toLocaleString('ru-RU')}</span>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>            
                   
-                </div>
+              </div>
 
-                {/*вторая строка с формой названия*/}
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <input 
-                        placeholder="введите назвнаие"
-                        name="title"
-                        type="text"                        
-                        value={task.title}
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>            
+                <div style={{ flex: 1 }}>
+                    <CollapsibleText 
+                        text={task.description}
+                        maxLines={3}
+                        style={{
+                            fontSize: '20px',
+                            color: '#E0FFFF'
+                        }}
+                    />
+                </div>            
+                {(userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
+                <button onClick={() => setEditModeHeader(true)} className="toolbar-button">
+                  Редактировать шапку
+                </button>
+                }
+                
+              </div>
+              </>
+              ) : (
+              <>
+              {/*отображаются поля формы если редактируем шапку*/}
+              {/*начало формы*/}
+              
+              <form onSubmit={saveHeaderChanges} style={{ marginBottom: '1rem' }}>
+
+                    {/*первая строка без формы*/}
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                      <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Название:</span>
+                      <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата создания: {new Date(task.created_at).toLocaleString('ru-RU')}</span>
+                      
+                    </div>
+
+                    {/*вторая строка с формой названия*/}
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <input 
+                            placeholder="введите назвнаие"
+                            name="title"
+                            type="text"                        
+                            value={task.title}
+                            onChange={handleHeaderChangeT}
+                            disabled={loading}
+                        />                
+                        <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {new Date(task.updated_at).toLocaleString('ru-RU')}</span>                    
+                    </div>
+                    <br/>
+
+                    {/*третья строка с чекбоксом*/}
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                      <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>
+                    </div>
+
+                    {/*четвертая строка с формой описания знания*/}
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                      <textarea
+                        placeholder="введите описание"
+                        name="description"
+                        value={task.description}
                         onChange={handleHeaderChangeT}
                         disabled={loading}
-                    />                
-                    <span style={{ fontSize: '18px', color: '#5F9EA0' }}>Дата изменения: {new Date(task.updated_at).toLocaleString('ru-RU')}</span>                    
-                </div>
-                <br/>
+                        rows={2}
+                      />
+                    
+                      <div>
+                      <button className="save-button" type="submit" disabled={loading}>                    
+                        {loading ? 'Сохраняем...' : 'Сохранить'}
+                      </button>
+                      &nbsp;&nbsp;
+                      <button 
+                        onClick={() => {setTask(taskLoadLoad); setEditModeHeader(false);}}
+                        className="cancel-button"
+                        disabled={loading}>Отмена</button>
+                      </div>                  
+                    </div>
+                    {/*конец четвертой строки*/}
+                  {error && <p style={{ color: 'red'}}>{error}</p>}
+                </form>
 
-                {/*третья строка с чекбоксом*/}
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <span style={{ fontSize: '24px', color: '#5F9EA0', fontWeight: 'bold' }}>Описание:</span>
-                </div>
-
-                {/*четвертая строка с формой описания знания*/}
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <textarea
-                    placeholder="введите описание"
-                    name="description"
-                    value={task.description}
-                    onChange={handleHeaderChangeT}
-                    disabled={loading}
-                    rows={2}
-                  />
-                
-                  <div>
-                  <button className="save-button" type="submit" disabled={loading}>                    
-                    {loading ? 'Сохраняем...' : 'Сохранить'}
-                  </button>
-                  &nbsp;&nbsp;
-                  <button 
-                    onClick={() => {setTask(taskLoadLoad); setEditModeHeader(false);}}
-                    className="cancel-button"
-                    disabled={loading}>Отмена</button>
-                  </div>                  
-                </div>
-                {/*конец четвертой строки*/}
-              {error && <p style={{ color: 'red'}}>{error}</p>}
-            </form>
-
-          {/*конец формы*/}
-        
-          </>
-            )
-          }
-      </div>
-    <br/>
-    {/*ниже редактор контента*/}    
-      <button onClick={goTaskList} className="toolbar-button">Закрыть</button>
-      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-          <h1>Содержание задачи</h1>
-                             
-          <div>
-          {!modifyState ? (
-            <>
-            <span style={{ fontSize: '20px', fontWeight: 'bold' }}>Статус: </span>
-            <span style={{ fontSize: '20px', fontWeight: 'bold' }}>
-             {task.state === TASK_STATES.NEW && 'Новая'}
-             {task.state === TASK_STATES.AT_WORK && 'В работе'}
-             {task.state === TASK_STATES.COMPLETED && 'Завершена'}
-            </span>
+              {/*конец формы*/}
             
-            {(userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
-            <button onClick={() => {setModifyState(true); setSelectedState(task.state)}} className="change-button"></button>}
-
-            </>
-          ) : (
+              </>
+                )
+              }
+          </div>
+        <br/>
+        {/*ниже редактор контента*/}    
+          <button onClick={goTaskList} className="toolbar-button">Закрыть</button>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-              <span style={{ fontSize: '20px', fontWeight: 'bold' }}>Статус: </span>
-              &nbsp;
-              <select value={selectedState} onChange={handleChangeState}>
-                <option value={TASK_STATES.NEW}>Новая</option>
-                <option value={TASK_STATES.AT_WORK}>В работе</option>
-                <option value={TASK_STATES.COMPLETED}>Завершена</option>
-              </select>
-              &nbsp;
-              <button onClick={saveState} className="accept-button"><FaCheck /></button>
-              &nbsp;
-              <button onClick={() => {setModifyState(false);}} className="close-button"><FaTimes /></button>
-              {/*onClick={(e) => {cancelEditUser(item.id); }} */}
+              <h1>Содержание задачи</h1>
+                                
+              <div>
+              {!modifyState ? (
+                <>
+                <span style={{ fontSize: '20px', fontWeight: 'bold' }}>Статус: </span>
+                <span style={{ fontSize: '20px', fontWeight: 'bold' }}>
+                {task.state === TASK_STATES.NEW && 'Новая'}
+                {task.state === TASK_STATES.AT_WORK && 'В работе'}
+                {task.state === TASK_STATES.COMPLETED && 'Завершена'}
+                </span>
+                
+                {(userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
+                <button onClick={() => {setModifyState(true); setSelectedState(task.state)}} className="change-button"></button>}
+
+                </>
+              ) : (
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <span style={{ fontSize: '20px', fontWeight: 'bold' }}>Статус: </span>
+                  &nbsp;
+                  <select value={selectedState} onChange={handleChangeState}>
+                    <option value={TASK_STATES.NEW}>Новая</option>
+                    <option value={TASK_STATES.AT_WORK}>В работе</option>
+                    <option value={TASK_STATES.COMPLETED}>Завершена</option>
+                  </select>
+                  &nbsp;
+                  <button onClick={saveState} className="accept-button"><FaCheck /></button>
+                  &nbsp;
+                  <button onClick={() => {setModifyState(false);}} className="close-button"><FaTimes /></button>
+                  {/*onClick={(e) => {cancelEditUser(item.id); }} */}
+              </div>
+              )
+              }          
+              </div>
+                      
           </div>
-          )
-          }          
-          </div>
-                   
-      </div>
-      
-      
-      {editMode ? (
+          
+          
+            {editMode ? (
 
-        <div className="editor-section">
-          <h3>Редактор задачи</h3>
-          <div className="editor-toolbar">
-            <button type="button" className="toolbar-button" onClick={() => setPreview(!preview)}>
-              {preview ? 'Редактировать' : 'Предварительный просмотр'}
-            </button>
-                                    
-          </div>          
+              <div className="editor-section">
+                <h3>Редактор задачи</h3>
+                <div className="editor-toolbar">
+                  <button type="button" className="toolbar-button" onClick={() => setPreview(!preview)}>
+                    {preview ? 'Редактировать' : 'Предварительный просмотр'}
+                  </button>
+                                          
+                </div>          
 
-            {/*предпросмотр получившегося маркдаун*/}
-            <div style={{ flex: 1, overflow: 'hidden', margin: '8px 0' }}>
-           {preview ? (
-            <div className="markdown-content">
-              <ReactMarkdown 
-              remarkPlugins={markdownPlugins.remark}
-              rehypePlugins={markdownPlugins.rehype}
-              components={markdownComponents}
-              >
-                {task.content}
-              </ReactMarkdown>
-            </div>
-          ) : (
-            
-            <>
-            {/* размер и стили шрифта */}
-            <TextStyleToolbar onApplyStyle={(openTag, closeTag = openTag) => {
-              const textarea = document.querySelector('.w-md-editor-text-input'); // получаем textarea MDEditor
-              if (!textarea) return;
+                  {/*предпросмотр получившегося маркдаун*/}                
+                {preview ? (
+                  <div className="markdown-content">
+                    <ReactMarkdown 
+                    remarkPlugins={markdownPlugins.remark}
+                    rehypePlugins={markdownPlugins.rehype}
+                    components={markdownComponents}
+                    >
+                      {task.content}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  
+                  <>
+                  {/* размер и стили шрифта */}
+                  <TextStyleToolbar onApplyStyle={(openTag, closeTag = openTag) => {
+                    const textarea = document.querySelector('.w-md-editor-text-input'); // получаем textarea MDEditor
+                    if (!textarea) return;
 
-              const start = textarea.selectionStart;
-              const end = textarea.selectionEnd;
-              const selected = textarea.value.slice(start, end);
-              const before = textarea.value.slice(0, start);
-              const after = textarea.value.slice(end);
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    const selected = textarea.value.slice(start, end);
+                    const before = textarea.value.slice(0, start);
+                    const after = textarea.value.slice(end);
 
-              const newText = `${before}${openTag}${selected}${closeTag}${after}`;
+                    const newText = `${before}${openTag}${selected}${closeTag}${after}`;
 
-              setTask(prev => ({ ...prev, content: newText }));
-            }} />
-            
-            <MDEditor              
-              value={task.content}
-              onChange={handleTextChange}
-              height={500}
-              preview="edit"            
-            />
+                    setTask(prev => ({ ...prev, content: newText }));
+                  }} />
+                  
+                  <MDEditor              
+                    value={task.content}
+                    onChange={handleTextChange}
+                    height={500}
+                    preview="edit"            
+                  />
 
-            </>
-          )}
-          </div>
+                  </>
+                )}
+                
 
 
-          <div className="editor-actions">
-            {/*кнопка сохранить*/}
-            <button 
-                onClick={handleSave} 
-                className="save-button"
-                disabled={loading}
-              >
-                {loading ? 'Сохранение...' : 'Сохранить'}
-              </button>
+                <div className="editor-actions">
+                  {/*кнопка сохранить*/}
+                  <button 
+                      onClick={handleSave} 
+                      className="save-button"
+                      disabled={loading}
+                    >
+                      {loading ? 'Сохранение...' : 'Сохранить'}
+                    </button>
 
-            {/*кнопка отменить*/}
-            <button onClick={() => {
-                setTask(task);
-                setEditMode(false);
-              }}
-              className="cancel-button"
-              disabled={loading}
-            >
-              Отмена
-            </button>
-          </div>
-        </div>
-      ) : (
+                  {/*кнопка отменить*/}
+                  <button onClick={() => {
+                      setTask(task);
+                      setEditMode(false);
+                    }}
+                    className="cancel-button"
+                    disabled={loading}
+                  >
+                    Отмена
+                  </button>
+                </div>
+              </div>
+            ) : (
+              
+              // отображение сохраненного контента
+              <div className="view-mode">
+                <div className="markdown-content" data-color-mode="light">
+                    <ReactMarkdown
+                      remarkPlugins={markdownPlugins.remark}
+                      rehypePlugins={markdownPlugins.rehype}
+                      components={markdownComponents}
+                      >
+                      {task.content}
+                    </ReactMarkdown>
+                  </div>
+                  <br/>
+                  {task.state !== TASK_STATES.COMPLETED && 
+                  <>
+                  {
+                    (userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
+                    <button onClick={() => setEditMode(true)} className="toolbar-button">
+                      Редактировать задачу
+                    </button>
+                  }
+                  
+                  {
+                    (userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
+                    <button onClick={deleteTask} className="delete-button">Удалить задачу</button>
+                  }
+                  </>
+                  }            
+
+              </div>
+            )}
+            <div style={{ height: '40px' }}></div>
         
-        // отображение сохраненного контента
-        <div className="view-mode">
-          <div className="markdown-content" data-color-mode="light">
-              <ReactMarkdown
-                remarkPlugins={markdownPlugins.remark}
-                rehypePlugins={markdownPlugins.rehype}
-                components={markdownComponents}
-                >
-                {task.content}
-              </ReactMarkdown>
-            </div>
-            <br/>
-            {task.state !== TASK_STATES.COMPLETED && 
-            <>
-            {
-              (userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
-              <button onClick={() => setEditMode(true)} className="toolbar-button">
-                Редактировать задачу
-              </button>
-            }
-            
-            {
-              (userRole === ROLES_USERS.ADMIN || userRole === ROLES_USERS.EDITOR) &&
-              <button onClick={deleteTask} className="delete-button">Удалить задачу</button>
-            }
-            </>
-            }            
 
-        </div>
-      )}
-      {error && <div className="error-message">{error}</div>}
+
+        {error && <div className="error-message">{error}</div>}
     </div>
   </div>                    
                     
