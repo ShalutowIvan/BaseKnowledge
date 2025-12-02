@@ -134,7 +134,10 @@ async def upload_image(
 
 # Эндпоинт для отображения на фронте загруженных файлов изображений, то есть чтобы можно было по ссылке обратиться и отобразить файл на фронте. Тут пользак не проверяется решил так оставить. Так как это просто просмотр файла
 @router_knowledge_api.get("/uploads/{file_name}")
-async def view_file_image(file_name: str):
+async def view_file_image(    
+    file_name: str,
+    # user_id: int = Depends(verify_user_service),
+    ):
     return await view_file_image_service(file_name=file_name)
 
 

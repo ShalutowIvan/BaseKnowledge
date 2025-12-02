@@ -110,18 +110,20 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
         const updatedKnowledgeServer = await API.put(`/knowledges_update/${currentKnowledge?.id}`,
           { content: currentKnowledge?.content }
         );
-
+        
         //  Создаем обновленный объект знания
         const updatedKnowledge = {
           ...currentKnowledge,
           content: currentKnowledge?.content,
           // updated_at: new Date().toISOString(), // или с сервера
-          updated_at: updatedKnowledgeServer.updated_at
-        };// тут муть, скоре всего норм, но проверить
+          updated_at: updatedKnowledgeServer.data.updated_at,
+          group: currentKnowledge.group
+        };// тут муть, скоре всего норм, но проверить. группу тут берем не из респонсе и из текущей группы, так надо потому что мы не редактируем группу, а только контент
         setError("")
         setEditMode(false);
         // Сообщаем родителю об обновлении, обновление в массиве вкладок делаем setActiveTabs
-        onUpdate(currentKnowledge?.id, updatedKnowledge);
+        const inContent = true;//это метка что обновление идет для контента, а не шапки
+        onUpdate(currentKnowledge?.id, updatedKnowledge, inContent);
       } catch (error) {
         console.error('Error saving knowledge: ', error);
         setError('Ошибка сохранения');

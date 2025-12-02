@@ -281,36 +281,39 @@ function KnowledgeInGroup() {
 
  
   // функция используется когда знание редактируется
-  const updateTabKnowledge = useCallback((tabId, updatedKnowledge) => {    
-    // если группа слева (slug_gr) не равна выбранной группе при редактировании шапки, то удаляем знание
-    if (slug_gr !== updatedKnowledge.group.slug) {
+  const updateTabKnowledge = useCallback((tabId, updatedKnowledge, inContent = false) => { 
+    // updatedKnowledge тут должен быть параметр updated_at
+    // console.log("слаг", updatedKnowledge.group.slug)//тут undefined
+    // если группа слева (slug_gr) которая сейчас в текущем парметр ссылки, не равна выбранной группе при редактировании шапки, то удаляем знание     
+    if (slug_gr !== updatedKnowledge.group.slug && !inContent) {      
       setKnowledges(prev => prev.filter(kn => kn.id !== tabId));
       setPaginationState(prev => ({ ...prev, total: prev.total - 1 }));
     }
+
     // если группа слева (slug_gr) равна выбранной группе при редактировании шапки и знания нет в текущем списке, то добавляем знание
     if (slug_gr === updatedKnowledge.group.slug) {
-      // делаем сет из id списка загруженных знаний    
-      const knowledgeIdsSet = new Set(knowledges.map(item => item.id));
-      //если знания нет в списке, то добавляем его
-      if (!knowledgeIdsSet.has(tabId)) {
-        setKnowledges(prevKnowledge =>         
-        [
-          {id: updatedKnowledge.id, title: updatedKnowledge.title, description: updatedKnowledge.description}, ...prevKnowledge
-        ]
-        );
-        setPaginationState(prev => ({ ...prev, total: prev.total + 1 }));  
-      }
+        // делаем сет из id списка загруженных знаний    
+        const knowledgeIdsSet = new Set(knowledges.map(item => item.id));
+        //если знания нет в списке, то добавляем его
+        if (!knowledgeIdsSet.has(tabId)) {          
+          setKnowledges(prevKnowledge =>         
+          [
+            {id: updatedKnowledge.id, title: updatedKnowledge.title, description: updatedKnowledge.description, updated_at: updatedKnowledge.updated_at}, ...prevKnowledge
+          ]
+          );
+          setPaginationState(prev => ({ ...prev, total: prev.total + 1 }));  
+        }
 
-    //это для изменения названия в списке знаний
-    if (knowledgeIdsSet.has(tabId)) {
-        setKnowledges(prevKnowledges =>
-              prevKnowledges.map(item =>
-                item.id === tabId
-                  ? { ...item, title: updatedKnowledge.title, description: updatedKnowledge.description } 
-                  : item
-              )
-          );}
-          }
+        //это для изменения названия в списке знаний
+        if (knowledgeIdsSet.has(tabId)) {            
+            setKnowledges(prevKnowledges =>
+                  prevKnowledges.map(item =>
+                    item.id === tabId
+                      ? { ...item, title: updatedKnowledge.title, description: updatedKnowledge.description, updated_at: updatedKnowledge.updated_at } 
+                      : item
+                  )
+              );}
+    }
 
     // обновление состояния вкладок знаний
     setActiveTabs(prev => 
@@ -326,6 +329,8 @@ function KnowledgeInGroup() {
     );
   }, [slug_gr, knowledges]);
      
+  
+
   const lenKN = useRef(knowledges);
   lenKN.current = knowledges.length; // длинна массива знаний по факту
   

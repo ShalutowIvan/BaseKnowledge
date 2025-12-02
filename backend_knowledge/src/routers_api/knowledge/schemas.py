@@ -36,6 +36,7 @@ class DeleteGroupRequest(BaseModel):
 
 class GroupShema(BaseModel):
     name_group: str = Field(max_length=255)
+    slug: str = Field(max_length=255)
 
 
 class GroupShemaFull(GroupShema):
@@ -95,9 +96,9 @@ class KnowledgesSchemaFull(KnowledgesSchema):
     free_access: bool
     slug: str
 
-    
     class Config:
         from_attributes = True
+
 
 class KnowledgesSchemaOpen(KnowledgesSchemaFull):
     group: Optional[GroupShema] = None    
