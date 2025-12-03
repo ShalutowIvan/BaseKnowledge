@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Integer, String, TIMESTAMP, ForeignKey, Float, Boolean, Text, Table, Column, JSON, text, Enum, func, Computed
+from sqlalchemy import Integer, String, TIMESTAMP, ForeignKey, Float, Boolean, Text, Table, Column, JSON, text, Enum, func, Computed, BigInteger
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Annotated, Optional, List
@@ -51,9 +51,6 @@ class Knowledge(Base):
     )
 
     
-
-
-    
 class Group(Base):
     __tablename__ = "group"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -64,7 +61,6 @@ class Group(Base):
 
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
     user: Mapped["User"] = relationship(back_populates="group_user")
-
 
 
 class Image(Base):
@@ -78,7 +74,6 @@ class Image(Base):
     #связи. В полях таблицы Images будет указываться к какому знанию принадлежит изображение
     knowledge_id: Mapped[int] = mapped_column(ForeignKey("knowledge.id", ondelete="CASCADE"))
     knowledge: Mapped["Knowledge"] = relationship(back_populates="images")
-
 
 
 class SavedSearch(Base):
@@ -154,9 +149,21 @@ class Saved_tab(Base):
     knowledge_connect: Mapped["Knowledge"] = relationship(back_populates="saved_tab_connect")
 
     
+class UserStorage(Base):
+    __tablename__ = "user_storage"
+    
+    id: Mapped[int] = mapped_column(primary_key=True)    
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), unique=True, nullable=False)
+    user: Mapped["User"] = relationship(back_populates="storage_usage")    
+    total_files_count: Mapped[int] = mapped_column(default=0)
+    # total_storage_bytes = Column(BigInteger, default=0)  # В байтах
+    total_storage_bytes: Mapped[int] = mapped_column(BigInteger, default=0)  # В байтах
+    # last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_updated: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"), server_onupdate=text("TIMEZONE('utc', now())"))
     
     
-# вроде сделал, перепроверить....
+    
+    
 
 
 # памятка для миграций БД
