@@ -23,7 +23,7 @@ class FileValidator:
     async def validate_mime_type(file_content: bytes, allowed_mime_types: set) -> bool:
         """Проверка MIME типа через python-magic"""
         try:
-            import magic
+            # import magic
             mime = magic.from_buffer(file_content, mime=True)
             return mime in allowed_mime_types
         except ImportError:

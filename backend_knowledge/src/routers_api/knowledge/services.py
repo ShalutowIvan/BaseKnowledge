@@ -20,6 +20,8 @@ from db_api.database import logger
 import math
 
 
+
+
 # для знаний
 ############################################################
 UPLOAD_FOLDER = "uploads"
@@ -802,11 +804,11 @@ async def upload_image_service(request: Request, knowledge_id: int, db: AsyncSes
 
 
 #функция для возврата ссылки на файл изображения
-async def view_file_image_service(file_name: str):
-    file_path = os.path.join(UPLOAD_FOLDER, file_name)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file_path)
+# async def view_file_image_service(file_name: str):
+#     file_path = os.path.join(UPLOAD_FOLDER, file_name)
+#     if not os.path.exists(file_path):
+#         raise HTTPException(status_code=404, detail="File not found")
+#     return FileResponse(file_path)
 
 
 #удаление картинки по ссылке из БД и файл с сервера

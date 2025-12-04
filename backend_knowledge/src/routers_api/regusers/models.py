@@ -15,8 +15,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)#пока так, если что потом заменить на uuid
     name: Mapped[str] = mapped_column(String(256))
     time_create_user: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
-    email: Mapped[str] = mapped_column(String(length=320), unique=True, nullable=False)
-    # phone: Mapped[str] = mapped_column(String(length=320), unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(length=320), unique=True, nullable=False)    
     hashed_password: Mapped[str] = mapped_column(String(length=1024), nullable=False)
     is_active: Mapped[bool] = mapped_column(default=False, nullable=False)
 
@@ -28,15 +27,11 @@ class User(Base):
     stage_user: Mapped["Stage"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
     storage_usage: Mapped["UserStorage"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
 
-
     # сохранение поиска пока решил не делать. Пока не нужно. Но модель оставил
-    saved_search_user: Mapped["SavedSearch"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+    # saved_search_user: Mapped["SavedSearch"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
 
     # сохранение списка вкладок
     tab_list_user: Mapped["Tab_list"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
-
-
-
 
     tokens: Mapped["Token"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")    
     client_generate: Mapped["Code_verify_client"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")

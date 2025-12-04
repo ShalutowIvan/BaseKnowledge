@@ -2,8 +2,16 @@
 
 import aiofiles
 from fastapi import UploadFile, HTTPException, Request
+from fastapi.responses import FileResponse
 import uuid
 import os
+from sqlalchemy.ext.asyncio import AsyncSession
+from .file_validator import FileValidator
+from .image_compressor import ImageCompressor
+from .storage_manager import StorageManager
+from .storage_config import config
+from pathlib import Path
+from ..models import *
 
 class UploadService:
     def __init__(self, db: AsyncSession):
@@ -12,7 +20,7 @@ class UploadService:
         self.compressor = ImageCompressor()
         self.storage_manager = StorageManager(db)
     
-    async def upload_image(
+    async def upload_image_service(
         self,
         request: Request,
         knowledge_id: int,
@@ -47,7 +55,9 @@ class UploadService:
             
             # 3. Проверка лимитов
             await self.storage_manager.check_user_limits(user_id, original_size)
-            await self.storage_manager.check_knowledge_limits(knowledge_id, original_size)
+            # await self.storage_manager.check_knowledge_limits(knowledge_id, original_size) # это пока не работает. Там проблема с тем что в таблице Image не хранится объем фото на данный момент. И нет возможности посчитать общий объем фото в знании
+
+            # тут проверка лимитов и проверяются не сжатые файлы, странно, грузится же будут сжатые
             
             # 4. Сжатие если нужно
             if compress:
@@ -58,8 +68,8 @@ class UploadService:
                         max_dimensions=config.MAX_DIMENSIONS,
                         output_format="WEBP"
                     )
-                except Exception as e:
-                    print(f"Compression skipped: {e}")
+                except Exception as ex:
+                    print(f"Compression skipped: {ex}")
                     # Продолжаем с оригинальным файлом
             
             final_size = len(file_content)
@@ -72,7 +82,8 @@ class UploadService:
             upload_path = Path(config.UPLOAD_FOLDER)
             upload_path.mkdir(parents=True, exist_ok=True)
             
-            filepath = upload_path / filename
+            filepath = upload_path / filename # через слеш указывается путь к папке, знак деление тут передалан через маг методы в библиотеке pathlib класс Path
+            # filepath = os.path.join(upload_path, filename)# можно и через os.path.join, но это менее удобный метод
             
             async with aiofiles.open(filepath, "wb") as buffer:
                 await buffer.write(file_content)
@@ -97,11 +108,13 @@ class UploadService:
                 filename=filename,
                 filepath=f"/uploads/images/{filename}",
                 knowledge_id=knowledge_id,
-                file_size=final_size,
-                original_size=original_size,
-                compressed=compress
+                # file_size=final_size,
+                # original_size=original_size,
+                # compressed=compress
             )
-            
+            # пока убрал 3 доп поля. Они нужны для проверки загруженного объема в знании
+
+                        
             self.db.add(db_image)
             await self.db.commit()
             await self.db.refresh(db_image)
@@ -111,7 +124,8 @@ class UploadService:
             
             # 10. Формирование ответа
             base_url = str(request.base_url).rstrip('/')
-            
+                    
+
             return {
                 "id": db_image.id,
                 "filename": filename,
@@ -126,10 +140,10 @@ class UploadService:
             
         except HTTPException:
             raise
-        except Exception as e:
+        except Exception as ex:
             raise HTTPException(
                 status_code=500,
-                detail=f"Upload failed: {str(e)}"
+                detail=f"Upload failed: {str(ex)}"
             )
     
     async def batch_compress_existing(self, user_id: int = None):
@@ -194,3 +208,11 @@ class UploadService:
             "compressed_count": compressed_count,
             "total_saved_mb": total_saved / 1024 / 1024
         }
+
+
+
+async def view_file_image_service(file_name: str):
+    file_path = os.path.join(config.UPLOAD_FOLDER, file_name)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(file_path)     

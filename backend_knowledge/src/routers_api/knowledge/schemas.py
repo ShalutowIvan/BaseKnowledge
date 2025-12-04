@@ -36,7 +36,7 @@ class DeleteGroupRequest(BaseModel):
 
 class GroupShema(BaseModel):
     name_group: str = Field(max_length=255)
-    slug: str = Field(max_length=255)
+    slug: Optional[str] = None
 
 
 class GroupShemaFull(GroupShema):

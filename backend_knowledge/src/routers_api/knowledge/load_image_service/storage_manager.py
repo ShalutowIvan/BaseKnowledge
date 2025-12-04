@@ -4,6 +4,11 @@ from sqlalchemy import select, func
 from datetime import datetime, timedelta
 import asyncio
 from pathlib import Path
+from ..models import *
+from .storage_config import config
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException
+# , Request, UploadFile, File, Body, status
 
 class StorageManager:
     def __init__(self, db: AsyncSession):
@@ -40,6 +45,7 @@ class StorageManager:
                 )
         
         return True
+
     
     async def check_knowledge_limits(self, knowledge_id: int, new_file_size: int) -> bool:
         """Проверка лимитов знания"""
@@ -58,7 +64,8 @@ class StorageManager:
         
         # Проверка общего объема файлов знания
         knowledge_files_size = await self.db.execute(
-            select(func.sum(func.length(Image.filepath)))  # Здесь нужно хранить размер в БД
+            select(func.sum(func.length(Image.filepath)))  # Здесь нужно хранить размер в БД, тут написано не правильно. Пока оставил так и не использую эту проверку
+            # Должно быть: select(func.sum(Image.file_size))
             .where(Image.knowledge_id == knowledge_id)
         )
         total_size = knowledge_files_size.scalar() or 0
@@ -79,12 +86,12 @@ class StorageManager:
             select(UserStorage)
             .where(UserStorage.user_id == user_id)
         )
-        storage = storage.scalar_one_or_none()
-        
+        storage = storage.scalar_one_or_none()        
         if not storage:
-            storage = UserStorage(user_id=user_id)
+            storage = UserStorage(user_id=user_id, total_files_count=0, total_storage_bytes=0, )
             self.db.add(storage)
-        
+                
+        # print(vars(storage))
         if increment:
             storage.total_files_count += 1
             storage.total_storage_bytes += file_size

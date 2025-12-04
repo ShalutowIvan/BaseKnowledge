@@ -1,7 +1,4 @@
-lst = [1, 33, 55, 66]
-
-for i, j in enumerate(lst):
-	print(i, j)
-
-        
-    
+q = "asd"
+a = "qwezxc"
+res = q / a
+print(res)

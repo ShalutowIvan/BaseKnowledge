@@ -76,18 +76,19 @@ class Image(Base):
     knowledge: Mapped["Knowledge"] = relationship(back_populates="images")
 
 
-class SavedSearch(Base):
-    __tablename__ = "saved_searches"
+# решил не использовать сохранение поиска
+# class SavedSearch(Base):
+#     __tablename__ = "saved_searches"
     
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)    
-    name_search: Mapped[str] = mapped_column(nullable=False)    
-    search_query: Mapped[str] = mapped_column(nullable=False) # Поисковый запрос
-    search_type: Mapped[str] = mapped_column(default="plain") # Тип поиска
-    group_slug: Mapped[str] = mapped_column(unique=True, nullable=False) # Группа, в которой выполнялся поиск
-    created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))    
-    # Связь с пользователем
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
-    user: Mapped["User"] = relationship(back_populates="saved_search_user")
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True)    
+#     name_search: Mapped[str] = mapped_column(nullable=False)    
+#     search_query: Mapped[str] = mapped_column(nullable=False) # Поисковый запрос
+#     search_type: Mapped[str] = mapped_column(default="plain") # Тип поиска
+#     group_slug: Mapped[str] = mapped_column(unique=True, nullable=False) # Группа, в которой выполнялся поиск
+#     created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))    
+#     # Связь с пользователем
+#     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
+#     user: Mapped["User"] = relationship(back_populates="saved_search_user")
     
 
 # вроде сделал модель для сохранения поиска. Перепроверить... 
@@ -156,7 +157,7 @@ class UserStorage(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), unique=True, nullable=False)
     user: Mapped["User"] = relationship(back_populates="storage_usage")    
     total_files_count: Mapped[int] = mapped_column(default=0)
-    # total_storage_bytes = Column(BigInteger, default=0)  # В байтах
+    # total_storage_bytes = Column(BigInteger, default=0)
     total_storage_bytes: Mapped[int] = mapped_column(BigInteger, default=0)  # В байтах
     # last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_updated: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"), server_onupdate=text("TIMEZONE('utc', now())"))

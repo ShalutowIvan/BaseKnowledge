@@ -13,19 +13,24 @@ from .schemas import *
 from .services import *
 
 from routers_api.regusers.verify_user import verify_user_service
+
+from routers_api.knowledge.load_image_service.upload_service import UploadService, view_file_image_service
+
+import os
+import sys
 # from src.regusers.models import User
 # from src.regusers.secure import test_token_expire, access_token_decode
 
 # from jose.exceptions import ExpiredSignatureError
 
-# import requests
 # import uuid
-import os
-import sys
+
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 # from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, OAuth2PasswordRequestFormStrict
 # from src.settings import templates, EXPIRE_TIME, KEY, KEY2, ALG, EXPIRE_TIME_REFRESH, KEY3, KEY4, CLIENT_ID
+
+
 
 
 router_knowledge_api = APIRouter(
@@ -126,17 +131,29 @@ async def knowledges_open_free(
 async def upload_image(
     request: Request, 
     knowledge_id: int, 
+    compress: bool = True,
     user_id: int = Depends(verify_user_service), 
     file: UploadFile = File(...), 
     session: AsyncSession = Depends(get_async_session)):
-    return await upload_image_service(request=request, knowledge_id=knowledge_id, file=file, db=session)
+        
+    upload_service = UploadService(session)
+
+    # return await upload_image_service(request=request, knowledge_id=knowledge_id, file=file, db=session)
+    return await upload_service.upload_image_service(
+        request=request,
+        knowledge_id=knowledge_id,
+        user_id=user_id,
+        file=file,
+        compress=compress
+    )
+
 
 
 # Эндпоинт для отображения на фронте загруженных файлов изображений, то есть чтобы можно было по ссылке обратиться и отобразить файл на фронте. Тут пользак не проверяется решил так оставить. Так как это просто просмотр файла
-@router_knowledge_api.get("/uploads/{file_name}")
+@router_knowledge_api.get("/uploads/images/{file_name}")
 async def view_file_image(    
     file_name: str,
-    # user_id: int = Depends(verify_user_service),
+    #user_id: int = Depends(verify_user_service),
     ):
     return await view_file_image_service(file_name=file_name)
 
