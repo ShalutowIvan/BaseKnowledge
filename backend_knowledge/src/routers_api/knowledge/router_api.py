@@ -16,20 +16,11 @@ from routers_api.regusers.verify_user import verify_user_service
 
 from routers_api.knowledge.load_image_service.upload_service import UploadService, view_file_image_service
 
+from middleware.rate_limiter import limiter
+
+
 import os
 import sys
-# from src.regusers.models import User
-# from src.regusers.secure import test_token_expire, access_token_decode
-
-# from jose.exceptions import ExpiredSignatureError
-
-# import uuid
-
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-
-# from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, OAuth2PasswordRequestFormStrict
-# from src.settings import templates, EXPIRE_TIME, KEY, KEY2, ALG, EXPIRE_TIME_REFRESH, KEY3, KEY4, CLIENT_ID
-
 
 
 
@@ -41,7 +32,9 @@ router_knowledge_api = APIRouter(
 
 # создание группы
 @router_knowledge_api.post("/group_create/", response_model=GroupShemaFull)
+@limiter.limit("15/minute")
 async def group_create(
+    request: Request,
     group: GroupShema, 
     user_id: int = Depends(verify_user_service),
     session: AsyncSession = Depends(get_async_session)):
@@ -100,7 +93,9 @@ async def knowledges_in_group(
 
 # создание знания
 @router_knowledge_api.post("/knowledges_create/")
+@limiter.limit("10/minute")
 async def knowledges_create(
+    request: Request,
     knowledge: KnowledgesCreateSchema, 
     user_id: int = Depends(verify_user_service),    
     session: AsyncSession = Depends(get_async_session)):
@@ -137,8 +132,7 @@ async def upload_image(
     session: AsyncSession = Depends(get_async_session)):
         
     upload_service = UploadService(session)
-
-    # return await upload_image_service(request=request, knowledge_id=knowledge_id, file=file, db=session)
+    
     return await upload_service.upload_image_service(
         request=request,
         knowledge_id=knowledge_id,

@@ -100,7 +100,7 @@ class StorageManager:
             storage.total_storage_bytes = max(0, storage.total_storage_bytes - file_size)
         
         storage.last_updated = datetime.utcnow()
-        await self.db.commit()
+        # await self.db.commit()# комит в файле где вызываем функцию
     
     async def cleanup_orphaned_files(self):
         """Очистка неиспользуемых файлов"""

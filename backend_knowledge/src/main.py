@@ -12,24 +12,26 @@ from routers_api.roadmap.router_api import router_roadmap_api
 
 from db_api.database import logger
 
+from slowapi import _rate_limit_exceeded_handler
+# from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from middleware.rate_limiter import limiter 
+
 
 app = FastAPI(title="База знаний", debug=True)#debug=True это для того чтобы в документации выводилсь ошибки как в консоли. 
 
-
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
-#пояснения к статичным файлам
-# ("папка из фаст апи вшитая", StaticFiles(directory="путь к папке со статичными файлами"), name="имя")
-
-# UPLOAD_FOLDER = "uploads"
-# os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
 
 #роутеры
 app.include_router(router_knowledge_api)
 app.include_router(router_reg_api)
 app.include_router(router_project_api)
 app.include_router(router_roadmap_api)
+
+# для ограничения большого количества регистраций
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 
 origins = [
     "http://localhost:5173",  
@@ -44,6 +46,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
 
 
 # @app.middleware("http")

@@ -71,6 +71,14 @@ class Image(Base):
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
     filepath: Mapped[str] = mapped_column(String(512), nullable=False)    
     created_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
+        
+    file_size: Mapped[int] = mapped_column(Integer, nullable=True)  # Размер в байтах сжатого файла
+    original_size: Mapped[int] = mapped_column(Integer, nullable=True)  # Исходный размер без сжатия
+    compression_ratio: Mapped[float] = mapped_column(Float, nullable=True)  # Процент сжатия
+    # compressed: Mapped[bool] = mapped_column(Boolean, default=False)  # Был ли сжат
+    
+
+
     #связи. В полях таблицы Images будет указываться к какому знанию принадлежит изображение
     knowledge_id: Mapped[int] = mapped_column(ForeignKey("knowledge.id", ondelete="CASCADE"))
     knowledge: Mapped["Knowledge"] = relationship(back_populates="images")

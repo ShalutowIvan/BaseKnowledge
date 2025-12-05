@@ -58,7 +58,7 @@ class UploadService:
             # await self.storage_manager.check_knowledge_limits(knowledge_id, original_size) # это пока не работает. Там проблема с тем что в таблице Image не хранится объем фото на данный момент. И нет возможности посчитать общий объем фото в знании
 
             # тут проверка лимитов и проверяются не сжатые файлы, странно, грузится же будут сжатые
-            
+                    
             # 4. Сжатие если нужно
             if compress:
                 try:
@@ -89,38 +89,41 @@ class UploadService:
                 await buffer.write(file_content)
             
             # 7. Создание thumbnail если нужно
-            thumbnail_path = None
-            if config.CREATE_THUMBNAILS:
-                thumbnail_folder = Path(config.THUMBNAIL_FOLDER)
-                thumbnail_folder.mkdir(parents=True, exist_ok=True)
+            # thumbnail_path = None
+            # if config.CREATE_THUMBNAILS:
+            #     thumbnail_folder = Path(config.THUMBNAIL_FOLDER)
+            #     thumbnail_folder.mkdir(parents=True, exist_ok=True)
                 
-                thumbnail_content = await self.compressor.create_thumbnail(
-                    file_content,
-                    size=config.THUMBNAIL_SIZE
-                )
+            #     thumbnail_content = await self.compressor.create_thumbnail(
+            #         file_content,
+            #         size=config.THUMBNAIL_SIZE
+            #     )
                 
-                thumbnail_path = thumbnail_folder / filename
-                async with aiofiles.open(thumbnail_path, "wb") as buffer:
-                    await buffer.write(thumbnail_content)
+            #     thumbnail_path = thumbnail_folder / filename
+            #     async with aiofiles.open(thumbnail_path, "wb") as buffer:
+            #         await buffer.write(thumbnail_content)
             
             # 8. Сохранение в БД
+            percent_compress = ((original_size - final_size) / original_size) * 100
+
             db_image = Image(
                 filename=filename,
                 filepath=f"/uploads/images/{filename}",
                 knowledge_id=knowledge_id,
-                # file_size=final_size,
-                # original_size=original_size,
-                # compressed=compress
+                file_size=final_size,
+                original_size=original_size,
+                compression_ratio=percent_compress
             )
-            # пока убрал 3 доп поля. Они нужны для проверки загруженного объема в знании
-
+            # пока убрал 3 доп поля. Они нужны для проверки лимитов загруженного объема в знании
                         
             self.db.add(db_image)
-            await self.db.commit()
-            await self.db.refresh(db_image)
+            # await self.db.commit()
+            # await self.db.refresh(db_image)
             
-            # 9. Обновление статистики пользователя
-            await self.storage_manager.update_user_storage(user_id, final_size, increment=True)
+            # 9. Обновление статистики пользователя в базе
+            await self.storage_manager.update_user_storage(user_id, final_size, increment=True)            
+            
+            await self.db.commit()#общий комит
             
             # 10. Формирование ответа
             base_url = str(request.base_url).rstrip('/')
@@ -130,7 +133,7 @@ class UploadService:
                 "id": db_image.id,
                 "filename": filename,
                 "url": f"{base_url}/uploads/images/{filename}",
-                "thumbnail_url": f"{base_url}/uploads/thumbnails/{filename}" if thumbnail_path else None,
+                # "thumbnail_url": f"{base_url}/uploads/thumbnails/{filename}" if thumbnail_path else None,
                 "size_kb": final_size / 1024,
                 "original_size_kb": original_size / 1024,
                 "compressed": compress,

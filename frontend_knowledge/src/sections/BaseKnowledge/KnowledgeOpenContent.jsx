@@ -76,6 +76,7 @@ function KnowledgeOpenContent({ knowledge, onUpdate, onDeleteKnowledge, onCloseT
 
       try {
         setLoading(true);
+        setError("")
         const formData = new FormData();
         formData.append('file', file);
         

@@ -803,7 +803,7 @@ async def upload_image_service(request: Request, knowledge_id: int, db: AsyncSes
         )
 
 
-#функция для возврата ссылки на файл изображения
+#функция для возврата ссылки на файл изображения. Перенес в другой файл
 # async def view_file_image_service(file_name: str):
 #     file_path = os.path.join(UPLOAD_FOLDER, file_name)
 #     if not os.path.exists(file_path):
@@ -823,11 +823,11 @@ async def delete_image_by_url(db: AsyncSession, image_url: str) -> bool:
         .where(Image.filename == filename)
     )    
     # 3. Удаляем файл с диска
-    filepath = os.path.join(UPLOAD_FOLDER, filename)
+    filepath = os.path.join("uploads/images", filename)
     if os.path.exists(filepath):
         os.unlink(filepath)
     
-    await db.commit()
+    # await db.commit()
     return result.rowcount > 0
 
 
@@ -848,7 +848,7 @@ async def update_knowledge_service(request: Request, user_id: int, knowledge_id:
         # 3. Удаляем отсутствующие изображения
         images_to_delete = old_images - new_images
         for url in images_to_delete:
-            if url.startswith(base_url + '/uploads/'):  # Удаляем локальные файлы по ссылкам которые начинаются с текста base_url + '/uploads/'
+            if url.startswith(base_url + '/uploads/images/'):  # Удаляем локальные файлы по ссылкам которые начинаются с текста base_url + '/uploads/'
                 await delete_image_by_url(db=db, image_url=url)
 
     # 5. Обновляем знание
@@ -860,7 +860,7 @@ async def update_knowledge_service(request: Request, user_id: int, knowledge_id:
     return db_knowledge
 
 
-# удаление знания и изображений в нем. ОСТ ТУТ!!!!!!!!!!!!!!
+# удаление знания и изображений в нем.
 async def delete_knowledge_service(db: AsyncSession, knowledge_id: int, user_id: int) -> bool:    
     try:
         # 1. Получаем знание с изображениями
@@ -870,7 +870,7 @@ async def delete_knowledge_service(db: AsyncSession, knowledge_id: int, user_id:
 
         # 2. Удаляем файлы связанных изображений
         for image in knowledge.images:
-            filepath = os.path.join(UPLOAD_FOLDER, image.filename)
+            filepath = os.path.join("uploads/images", image.filename)
             if os.path.exists(filepath):
                 os.unlink(filepath)
         

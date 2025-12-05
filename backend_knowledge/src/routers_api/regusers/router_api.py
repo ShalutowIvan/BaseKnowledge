@@ -29,6 +29,8 @@ from datetime import datetime, timedelta
 
 # from jose.exceptions import ExpiredSignatureError
 
+from middleware.rate_limiter import limiter
+
 
 
 
@@ -45,6 +47,7 @@ router_reg_api = APIRouter(
 # name: str, email: EmailStr, password1: str, password2: str,
 
 @router_reg_api.post("/registration")#response_model это валидация для запроса
+@limiter.limit("3/hour")
 async def api_registration_post(request: Request, formData: UserRegShema, session: AsyncSession = Depends(get_async_session) ):
 
     name = formData.name
