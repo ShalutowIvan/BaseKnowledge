@@ -112,14 +112,13 @@ def create_client_token(data: dict, expires_delta: timedelta | None = None):
 	return encoded_jwt
 
 
-
+# эту функцию использую в роутере при обновлении токенов
 async def update_tokens(RT, db):#передаем сюда рефреш токен и сессию с ДБ
 	#расшифровка рефреш токена
 	try:
 		payload = jwt.decode(RT, KEY2, algorithms=[ALG])
 		pl_id = payload.get("sub")
-		# pl_email = payload.get("iss")
-		# print("ВАСЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯ!!!!!!!")
+		# pl_email = payload.get("iss")		
 		# print(pl_id)
 
 	except Exception as ex:#если истек рефреш то его просто удаляем, и нужно заново логиниться
@@ -137,10 +136,10 @@ async def update_tokens(RT, db):#передаем сюда рефреш токе
         
     #проверка совпадает ли токен из кук с базой для безопасности, в случае если злоумышленник обновил уже токен, а мы нет, то все токены должны удалиться
 	RT_in_db: Token = await db.scalar(select(Token).where(Token.refresh_token == RT))#ищем рефреш в ДБ по токену из кук
-	# print("ВАСЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯ!!!!!!!")
+	
 	# print(RT_in_db)
 	if not RT_in_db:
-		tk: Token = await db.scalar(select(Token).where(Token.user_id == int(pl_id)))#ищем токен по ID пользака и удаляем его, это мошенников чтобы их обезвредить
+		tk: Token = await db.scalar(select(Token).where(Token.user_id == int(pl_id)))#ищем токен по ID пользака и удаляем его, это от мошенников чтобы их обезвредить
 		client_token: Code_verify_client = await db.scalar(select(Code_verify_client).where(Code_verify_client.user_id == int(pl_id)))
 		if tk:
 			await db.delete(tk)
@@ -161,7 +160,7 @@ async def update_tokens(RT, db):#передаем сюда рефреш токе
 	#аксес токен
 	user: User = await db.scalar(select(User).where(User.id == int(pl_id)))
 	access_token_expires = timedelta(minutes=int(EXPIRE_TIME))
-	access_token_jwt = create_access_token(data={"sub": pl_id, "user_name": user.name}, expires_delta=access_token_expires)
+	access_token_jwt = create_access_token(data={"sub": pl_id, "user_name": user.name, "active": user.service_active, "role": user.user_role}, expires_delta=access_token_expires)
 
 	#обновляем рефреш в базе	
 	new_RT: Token = Token(user_id=int(pl_id), refresh_token=refresh_token_jwt)#для создания объекта нужен Ид пользака
@@ -175,11 +174,7 @@ async def update_tokens(RT, db):#передаем сюда рефреш токе
 
 
 
-
-
-
-
-#функция для обновления аксес по рефрешу, без обновления рефреш
+#функция для обновления аксес по рефрешу, без обновления рефреш. Не используется
 async def update_acces_token(RT, db):#передаем сюда рефреш токен и сессию с ДБ
 	#расшифровка рефреш токена
 	try:
@@ -187,7 +182,7 @@ async def update_acces_token(RT, db):#передаем сюда рефреш т�
 		pl_id = payload.get("sub")		
 
 	except Exception as ex:#если истек рефреш то его просто удаляем, и нужно заново логиниться
-		print("ОШИБКА ОБНОВЛЕНИЯ ТУТ!!!!!!!!!")
+		print("ОШИБКА ОБНОВЛЕНИЯ ТОКЕНА ТУТ!!!!!!!!!")
 		print(ex)
 		if type(ex) == jwt.ExpiredSignatureError:
 			us_token: Token = await db.scalar(select(Token).where(Token.refresh_token == RT))
@@ -233,9 +228,7 @@ async def update_acces_token(RT, db):#передаем сюда рефреш т�
 
 
 
-
-
-#функция проверки токена.
+#функция проверки токена. Это используется при декодировании
 async def access_token_decode(acces_token: str):#проверка аксес токена из куки  
     
     try:
@@ -243,9 +236,12 @@ async def access_token_decode(acces_token: str):#проверка аксес т�
         
         user_id = payload.get("sub")#у меня тут user_id, а не юзернейм
         user_name = payload.get("user_name")
+        is_active = payload.get("active")
+        user_role = payload.get("role")
+
         if user_id is None:
             print("нет такого user_id")
-            return [False, None, " "]
+            return [False, None, " ", None]
                 
     except Exception as ex:
                 
@@ -253,14 +249,14 @@ async def access_token_decode(acces_token: str):#проверка аксес т�
             
             print("ОШИБКА АКСЕС ТУТ")
             print(ex)
-            return [ex, None, " "]#если токен истек то это
+            return [ex, None, " ", None]#если токен истек то это
     
-        return [False, None, " "]#если токена нет вообще, то это возвращается
+        return [False, None, " ", None]#если токена нет вообще, то это возвращается
         
-    return [True, user_id, user_name]
+    return [is_active, user_id, user_name, user_role]
 
 
-#функция для удобной проверки и обновления токенов
+#функция для удобной проверки и обновления токенов. Не используется
 async def test_token_expire(RT, db):
     tokens = await update_tokens(RT=RT, db=db)
     check = await access_token_decode(acces_token=tokens[1])

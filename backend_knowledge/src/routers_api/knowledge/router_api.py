@@ -30,6 +30,9 @@ router_knowledge_api = APIRouter(
 )
 
 
+# что если сделать так в verify_user_service сделать проверку активированного сервиса, если он не активирован, то не давать юзер ид а кидать ошибку
+# а для активации кода активации сделать отдельную функцию 
+
 # создание группы
 @router_knowledge_api.post("/group_create/", response_model=GroupShemaFull)
 @limiter.limit("15/minute")

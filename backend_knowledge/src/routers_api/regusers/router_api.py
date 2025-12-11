@@ -44,8 +44,6 @@ router_reg_api = APIRouter(
 
 #роутеры для реги
 
-# name: str, email: EmailStr, password1: str, password2: str,
-
 @router_reg_api.post("/registration")#response_model это валидация для запроса
 @limiter.limit("3/hour")
 async def api_registration_post(request: Request, formData: UserRegShema, session: AsyncSession = Depends(get_async_session) ):
@@ -80,42 +78,16 @@ async def api_registration_post(request: Request, formData: UserRegShema, sessio
         print("Ошибка при регистрации: ", ex)
         return {"Error": ex}
 
-# (trapped) error reading bcrypt version 
-# AttributeError: module 'bcrypt' has no attribute '__about__'
-
-
-#это просто подсказка, о том что нужно зайти на почту и перейти по ссылке
-# @router_reg_api.get("/verification/check/", response_model=None, status_code=201)
-# async def confirm_email(request: Request, session: AsyncSession = Depends(get_async_session)):
-
-#     t = "Перейдите в вашу почту и перейдите по ссылке из письма для подтверждения адреса почты и активации пользователя"
-    
-#     context = await base_requisites(db=session, request=request)
-#     context["t"] = t
-
-#     response = templates.TemplateResponse("regusers/check_email.html", context)
-#     return response
-
 
 #функция обработки ссылки из письма при активации пользака
 @router_reg_api.get("/verification/check_user/{token}", status_code=201)
 async def api_activate_user(request: Request, token: str, session: AsyncSession = Depends(get_async_session)):
     
     try:
-        payload = jwt.decode(token, KEY3, algorithms=[ALG])#в acces_token передается просто строка
-        
-        user_id = payload.get("sub")#у меня тут user_id
-        # if user_id is None:
-        #     context = await base_requisites(db=session, request=request)
-        #     return templates.TemplateResponse("showcase/user_not_found.html", context)
-            
-    
-    except Exception as ex:
-        
-        print(ex)
-        # context = await base_requisites(db=session, request=request)
-        # return templates.TemplateResponse("showcase/user_not_found.html", context)
-    
+        payload = jwt.decode(token, KEY3, algorithms=[ALG])#в acces_token передается просто строка        
+        user_id = payload.get("sub")#у меня тут user_id    
+    except Exception as ex:        
+        print(ex)            
 
     user = await session.scalar(select(User).where(User.id == int(user_id)))
     
@@ -124,18 +96,7 @@ async def api_activate_user(request: Request, token: str, session: AsyncSession 
     await session.commit()
     
     return {"message": "Все супер!"}
-    # return RedirectResponse("/regusers/auth/", status_code=303) 
-
-
-#функция get для страницы забыли пароль
-# @router_reg_api.get("/forgot_password/", response_model=None, response_class=HTMLResponse)
-# async def forgot_password_get(request: Request, session: AsyncSession = Depends(get_async_session)):
     
-#     context = await base_requisites(db=session, request=request)
-
-#     response = templates.TemplateResponse("regusers/forgot_password.html", context)
-#     return response
-
 
 #функция post для страницы забыли пароль
 @router_reg_api.post("/forgot_password/")
@@ -151,29 +112,8 @@ async def api_forgot_password_post(request: Request, formData: EmailShema, sessi
     return {"message": "Все супер!"}
 
 
-#это просто подсказка, о том что нужно зайти на почту и перейти по ссылке при сбросе пароля
-# @router_reg_api.get("/restore/pass/", response_model=None, status_code=201)
-# async def confirm_email_restore_pass(request: Request, session: AsyncSession = Depends(get_async_session)):
-
-#     t = "Перейдите в вашу почту и перейдите по ссылке из письма для восстановления пароля пользователя"
-    
-#     context = await base_requisites(db=session, request=request)
-#     context["t"] = t
-#     response = templates.TemplateResponse("regusers/go_to_restore_password.html", context)
-#     return response
 
 #тут форма для ввода нового пароля, пароль нужно запрашивать дважды. при реге тоже. регу переделать. Затык с формой опять же.... УРЛ из письма должна запускать форму, а функция для формы должна забирать данные из html. Просто ввод нового пароля без токена не подходит, потому что теряется смысл безопаности и любой у кого есть ссылка напишет почту и новый пароль.
-
-#get запрос для отрисовки страницы формы восстановления пароля....
-# @router_reg_api.get("/restore/password_user/{token}")
-# async def restore_password_user_get(request: Request, token: str, session: AsyncSession = Depends(get_async_session)):
-    
-#     context = await base_requisites(db=session, request=request)
-#     context["token"] = token
-
-#     response = templates.TemplateResponse("regusers/new_password.html", context)
-#     return response
-
 
 #функция для обработки ссылки из письма для сброса пароля. token автоматом закидывается в форму, и поле с токеном в html сделал невидимым
 @router_reg_api.post("/restore/password_user/{token}")
@@ -209,29 +149,12 @@ async def api_restore_password_user(request: Request, token: str, formData: Forg
     return {"message": "Все супер!"}
 
 
-#функция get авторизации
-# @router_reg_api.get("/auth", response_model=None, response_class=HTMLResponse)
-# async def auth_get(request: Request, session: AsyncSession = Depends(get_async_session)):
-    
-#     context = await base_requisites(db=session, request=request)
-
-#     response = templates.TemplateResponse("regusers/login.html", context)
-#     return response
-
-
-
-# 2 схемы для преимки формы из аутха с фронта. Работает только моя, из фастапи не пашет, хз почему
-# formData: OAuth2PasswordRequestForm = Depends()
-# formData: AuthShema
-# спросить у дипсик какую схему надо тут выбирать и зачем OAuth2PasswordRequestForm.... ост тут
-
 #функция post авторизации
 @router_reg_api.post("/auth")
 async def auth_user(response: Response, formData: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_async_session)):
 
     email = formData.username#тут у меня почта
-    password = formData.password
-    
+    password = formData.password    
 
     user: User = await session.scalar(select(User).where(User.email == email))#ищем пользователя по емейл
     
@@ -246,7 +169,6 @@ async def auth_user(response: Response, formData: OAuth2PasswordRequestForm = De
     if user.is_active != True:        
         # return {"message": "Пользователь не активирован! Перейдите по ссылке из письма, которое пришло вам на почту для активации!"}
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user")
-
     
     refresh_token: Token = await session.scalar(select(Token).where(Token.user_id == user.id))
     
@@ -270,7 +192,7 @@ async def auth_user(response: Response, formData: OAuth2PasswordRequestForm = De
 
         #аксес токен
         access_token_expires = timedelta(minutes=int(EXPIRE_TIME))        
-        access_token_jwt = create_access_token(data={"sub": str(user.id), "user_name": user.name}, expires_delta=access_token_expires)
+        access_token_jwt = create_access_token(data={"sub": str(user.id), "user_name": user.name, "active": user.service_active, "role": user.user_role}, expires_delta=access_token_expires)
         
         #создаем объект рефреш токена
         token: Token = Token(user_id=user.id, refresh_token=refresh_token_jwt)
@@ -281,7 +203,7 @@ async def auth_user(response: Response, formData: OAuth2PasswordRequestForm = De
     else:
         refresh_token_jwt = refresh_token.refresh_token
         access_token_expires = timedelta(minutes=int(EXPIRE_TIME))
-        access_token_jwt = create_access_token(data={"sub": str(user.id), "user_name": user.name}, expires_delta=access_token_expires)
+        access_token_jwt = create_access_token(data={"sub": str(user.id), "user_name": user.name, "active": user.service_active, "role": user.user_role}, expires_delta=access_token_expires)
     
     #логика клиент токена
     client_token: Code_verify_client = await session.scalar(select(Code_verify_client).where(Code_verify_client.user_id == user.id))
@@ -311,20 +233,20 @@ async def auth_user(response: Response, formData: OAuth2PasswordRequestForm = De
 
 
 
+# лишние функции
+# #тут проверка защищенного роута, для теста кук из респонса
+# def get_current_user2(request: Request):
+#     session_token = request.cookies.get("Authorization")
+#     if not session_token:
+#         raise HTTPException(status_code=401, detail="Not authenticated")
+#     # Здесь можно добавить логику проверки валидности токена
+#     # Например, расшифровать токен и проверить его содержимое
+#     return {"username": "example_user"}  # Возвращаем данные пользователя
 
-#тут проверка защищенного роута, для теста кук из респонса
-def get_current_user2(request: Request):
-    session_token = request.cookies.get("Authorization")
-    if not session_token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    # Здесь можно добавить логику проверки валидности токена
-    # Например, расшифровать токен и проверить его содержимое
-    return {"username": "example_user"}  # Возвращаем данные пользователя
 
-
-@router_reg_api.get("/protected")
-async def protected_route(user: dict = Depends(get_current_user2)):
-    return {"message": f"Hello, {user['username']}"}
+# @router_reg_api.get("/protected")
+# async def protected_route(user: dict = Depends(get_current_user2)):
+#     return {"message": f"Hello, {user['username']}"}
 
 
 
@@ -481,3 +403,22 @@ async def uri_update_access_token(response: Response, refreshToken: str, session
 #     <a href="{{ url_for('test_token') }}"><h1>Проверка токена</h1></a>
 
 
+# функции активации
+@router_reg_api.get("/activation/", status_code=201)
+async def api_activate_user(request: Request, token: str, session: AsyncSession = Depends(get_async_session)):
+    
+    try:
+        payload = jwt.decode(token, KEY3, algorithms=[ALG])#в acces_token передается просто строка        
+        user_id = payload.get("sub")#у меня тут user_id    
+    except Exception as ex:        
+        print(ex)
+            
+
+    user = await session.scalar(select(User).where(User.id == int(user_id)))
+    
+    user.is_active = True
+    session.add(user)
+    await session.commit()
+    
+    return {"message": "Все супер!"}
+    
