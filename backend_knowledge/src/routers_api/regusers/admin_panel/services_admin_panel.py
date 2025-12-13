@@ -1,27 +1,20 @@
-# routes/admin_codes.py
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from datetime import datetime, timedelta, timezone 
-from typing import List, Optional
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, func, and_
 from ..models import *
-from db_api import get_async_session
 from ..schemas import *
 from .utils_codes import *
-from .dependencies import require_admin
+import math
 
 
-router_admin_panel = APIRouter(prefix="/admin/codes", tags=["Admin_panel"])
-
-# создание кода активации админом
-@router_admin_panel.post("/create", response_model=ActivationCodeResponse)
-async def create_activation_code(
-    days_valid: int = Query(30, ge=1, le=365, description="Срок действия в днях"),
+# """Создать новый код активации"""
+async def create_activation_code_service(
+    days_valid: int,
     # note: Optional[str] = Query(None, max_length=255),
-    admin_id: int = Depends(require_admin),#надо понять откуда берется это
-    db: AsyncSession = Depends(get_async_session)
-    ):
-    """Создать новый код активации"""
+    admin_id: int,#надо понять откуда берется это
+    db: AsyncSession
+    ):    
     # Генерируем уникальный код
     while True:
         code = generate_activation_code()
@@ -50,212 +43,201 @@ async def create_activation_code(
     
     return activation_code
 
-# код создается, но там схема ответа мутная, надо смотреть что там за схемы, ОСТ ТУТ
 
-# # получение списка кодов активации
-# @router_admin_panel.get("/", response_model=PaginatedResponseCodes)
-# async def get_activation_codes(
-#     status_filter: Optional[str] = Query(None, regex="^(active|used|expired|deactivated|all)$"),
-#     page: int = 1,
-#     per_page: int = 50,
-#     admin: User = Depends(require_admin),
-#     db: AsyncSession = Depends(get_async_session)
-# ):
-#     try:
-#         """Получить список кодов активации с деталями"""
 
-#         if page < 1 or per_page < 1:
-#             raise HTTPException(
-#                 status_code=403,
-#                     detail="Номер страницы и размер страницы должны быть положительными числами"
-#                 )
 
-#         if per_page > 100:
-#             raise HTTPException(
-#                     status_code=400, 
-#                     detail="Размер страницы не может превышать 100"
-#                 )
+# """Получить список кодов активации с деталями"""
+async def get_activation_codes_services(
+    admin_id: int,
+    db: AsyncSession,
+    status_filter: str = None,
+    page: int = 1,
+    per_page: int = 50    
+    ):
+    
+    try:        
 
-#         offset = (page - 1) * per_page
+        if page < 1 or per_page < 1:
+            raise HTTPException(
+                status_code=403,
+                    detail="Номер страницы и размер страницы должны быть положительными числами"
+                )
+
+        if per_page > 100:
+            raise HTTPException(
+                    status_code=400, 
+                    detail="Размер страницы не может превышать 100"
+                )
+
+        offset = (page - 1) * per_page
         
-#         data_query = select(ActivationCode)
+        data_query = select(ActivationCode)
 
-#         count_query = select(func.count(ActivationCode.id))
+        count_query = select(func.count(ActivationCode.id))
 
-#         data_query = data_query.order_by(ActivationCode.created_at.desc())        
+        data_query = data_query.order_by(ActivationCode.created_at.desc())        
 
-#         data_query = data_query.limit(per_page).offset(offset)
+        data_query = data_query.limit(per_page).offset(offset)
 
-#         data_result = await db.execute(data_query)
+        data_result = await db.execute(data_query)
         
-#         count_result = await db.execute(count_query)
+        count_result = await db.execute(count_query)
 
-#         items_data = data_result.all()
-                
-#         total_count = count_result.scalar()
+        items_data = data_result.scalars().all()
 
-#         total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
+        total_count = count_result.scalar()
 
-#         if page > total_pages and total_pages > 0:
-#             raise HTTPException(
-#                 status_code=404,
-#                 detail=f"Страница {page} не найдена. Всего страниц: {total_pages}"
-#             )
+        total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
 
-#         first_item = items[0]["id"] if items else None
-#         last_item = items[-1]["id"] if items else None
+        if page > total_pages and total_pages > 0:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Страница {page} не найдена. Всего страниц: {total_pages}"
+            )       
 
-#         has_next = page < total_pages
-#         has_prev = page > 1
+        first_item = items_data[0].id if items_data else None#тут словарь в items_data?         
+        last_item = items_data[-1].id if items_data else None
 
-#         # Обновляем статусы просроченных кодов. В базе статусы кодов не обновляются пока мы к ним не обратимся и сами не обновим с помощью кода ниже. 
-#         expired_codes = [c for c in items_data if c.status == ActivationCodeStatus.NOT_ACTIVATED and datetime.utcnow() > c.expires_at]
-#         for code in expired_codes:
-#             code.status = ActivationCodeStatus.EXPIRED
+        has_next = page < total_pages
+        has_prev = page > 1
 
-#         if expired_codes:
-#             await db.commit()
+        # Обновляем статусы просроченных кодов. В базе статусы кодов не обновляются пока мы к ним не обратимся и сами не обновим с помощью кода ниже. 
+        expired_codes = [c for c in items_data if c.status == ActivationCodeStatus.NOT_ACTIVATED and datetime.now(timezone.utc) > c.expires_at ]
+        for code in expired_codes:
+            code.status = ActivationCodeStatus.EXPIRED
+
+        if expired_codes:
+            await db.commit()
         
-#         return PaginatedResponseCodes(
-#                 items=items_data,
-#                 total=total_count,
-#                 page=page,
-#                 per_page=per_page,
-#                 total_pages=total_pages,
-#                 has_next=has_next,
-#                 has_prev=has_prev,
-#                 first_item=first_item,
-#                 last_item=last_item
-#             )
+        return PaginatedResponseCodes(
+                items=items_data,
+                total=total_count,
+                page=page,
+                per_page=per_page,
+                total_pages=total_pages,
+                has_next=has_next,
+                has_prev=has_prev,
+                first_item=first_item,
+                last_item=last_item
+            )
+           
+    except HTTPException:        
+        raise
+
+    except Exception as ex:
+        # Логируем ошибку и возвращаем пользователю
+        print(f"Ошибка в get_activation_codes_services: {str(ex)}")
+        raise HTTPException(
+            status_code=400, 
+            detail="Ошибка при получении данных"
+        )
 
 
-#         # # Фильтрация по статусу. Пока не надо. Если что добавить можно
-#         # if status_filter and status_filter != "all":
-#         #     if status_filter == "expired":
-#         #         query = query.filter(
-#         #             (ActivationCode.status == "active") &
-#         #             (ActivationCode.expires_at < datetime.utcnow())
-#         #         )
-#         #     else:
-#         #         query = query.filter(ActivationCode.status == status_filter)
-        
-        
-        
+# """Активировать аккаунт пользователя по коду"""
+async def activate_code_service(
+    code_data: ActivateAccountRequest,
+    user_id: int,
+    db: AsyncSession
+    ):    
     
-#     except HTTPException:        
-#         raise
+    query = select(ActivationCode).where(
+        ActivationCode.code == code_data.code.strip().upper(), 
+        ActivationCode.status == ActivationCodeStatus.NOT_ACTIVATED
+        )
+    result = await db.execute(query)
+    code = result.scalar_one_or_none()
 
-#     except Exception as ex:
-#         # Логируем ошибку и возвращаем пользователю
-#         print(f"Ошибка в knowledges_in_group_service: {str(ex)}")
-#         raise HTTPException(
-#             status_code=400, 
-#             detail="Ошибка при получении данных"
-#         )
+    
+    if not code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Code not found or not access for activated"
+        )
+    
+    # Проверяем срок действия
+    if datetime.now(timezone.utc) > code.expires_at:
+        code.status = ActivationCodeStatus.EXPIRED
+        await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The code has expired"
+        )
+    
+    # Проверяем, не использован ли код другим пользователем
+    if code.user_id and code.user_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The code has already been used by another user."
+        )
+    
+    # Активируем пользователя
+    query_user = select(User).where(User.id == user_id)
+    result_user = await db.execute(query_user)
+    current_user = result_user.scalar_one_or_none()
 
-
-# @router_admin_panel.post("/{code_id}/deactivate")
-# def deactivate_code(
-#     code_id: int,
-#     admin: User = Depends(require_admin),
-#     db: Session = Depends(get_db)
-# ):
-#     """Деактивировать код и пользователя"""
-#     code = db.query(ActivationCode).filter(ActivationCode.id == code_id).first()
+    current_user.service_active = True
+    current_user.activated_at = datetime.now(timezone.utc)
     
-#     if not code:
-#         raise HTTPException(status_code=404, detail="Код не найден")
+    # Обновляем код
+    code.status = ActivationCodeStatus.ACTIVATED
+    code.user_id = current_user.id
+    code.used_at = datetime.now(timezone.utc)
     
-#     if code.status == "deactivated":
-#         raise HTTPException(status_code=400, detail="Код уже деактивирован")
+    await db.commit()
     
-#     if code.status != "used":
-#         raise HTTPException(status_code=400, detail="Можно деактивировать только использованные коды")
-    
-#     # Деактивируем код
-#     code.status = "deactivated"
-    
-#     # Деактивируем пользователя, если он существует
-#     if code.user_id:
-#         user = db.query(User).filter(User.id == code.user_id).first()
-#         if user:
-#             user.is_active = False
-#             user.activated_at = None
-            
-#             # Создаем запись в лог
-#             log = DeactivationLog(
-#                 user_id=user.id,
-#                 code_id=code.id,
-#                 deactivated_by=admin.id,
-#                 reason="manual_deactivation"
-#             )
-#             db.add(log)
-    
-#     db.commit()
-    
-#     return {"message": "Код и пользователь деактивированы"}
-
-
-# @router_admin_panel.delete("/{code_id}")
-# def delete_activation_code(
-#     code_id: int,
-#     admin: User = Depends(require_admin),
-#     db: Session = Depends(get_db)
-# ):
-#     """Удалить код активации"""
-#     code = db.query(ActivationCode).filter(ActivationCode.id == code_id).first()
-    
-#     if not code:
-#         raise HTTPException(status_code=404, detail="Код не найден")
-    
-#     if code.status == "used":
-#         raise HTTPException(
-#             status_code=400, 
-#             detail="Нельзя удалить использованный код. Сначала деактивируйте его."
-#         )
-    
-#     if code.user_id:
-#         raise HTTPException(
-#             status_code=400, 
-#             detail="Код привязан к пользователю. Сначала деактивируйте."
-#         )
-    
-#     db.delete(code)
-#     db.commit()
-    
-#     return {"message": "Код удален"}
+    return {
+        "message": "Аккаунт успешно активирован",
+        "user": {
+            "email": current_user.email,
+            "username": current_user.name,
+            "service_active": current_user.service_active
+        },
+        # "code": {
+        #     "code": code.code,
+        #     "created_by_admin": code.creator_admin.email if code.creator_admin else "Unknown"
+        # }
+    }
 
 
-# @router_admin_panel.post("/bulk-create")
-# def bulk_create_codes(
-#     count: int = Query(10, ge=1, le=100),
-#     days_valid: int = 30,
-#     admin: User = Depends(require_admin),
-#     db: Session = Depends(get_db)
-# ):
-#     """Создать несколько кодов сразу"""
-#     created_codes = []
+
+# """Деактивировать код и пользователя""".
+async def deactivate_code_service(
+    code_id: int,
+    admin_id: int,
+    db: AsyncSession
+    ):    
+    query = select(ActivationCode).where(ActivationCode.id == code_id)    
+    result = await db.execute(query)
+    code = result.scalar_one_or_none()
     
-#     for _ in range(count):
-#         while True:
-#             code = generate_activation_code()
-#             exists = db.query(ActivationCode).filter(ActivationCode.code == code).first()
-#             if not exists:
-#                 break
-        
-#         activation_code = ActivationCode(
-#             code=code,
-#             status="active",
-#             expires_at=datetime.utcnow() + timedelta(days=days_valid),
-#             created_by=admin.id
-#         )
-        
-#         db.add(activation_code)
-#         created_codes.append(code)
+    if not code:
+        raise HTTPException(status_code=404, detail="Code not found")
     
-#     db.commit()
+    # if code.status == ActivationCodeStatus.DEACTIVATED:
+    #     raise HTTPException(status_code=400, detail="Code already deactivated")
     
-#     return {
-#         "message": f"Создано {count} кодов",
-#         "codes": created_codes
-#     }
+    if code.status != ActivationCodeStatus.ACTIVATED:
+        raise HTTPException(status_code=400, detail="You must deactivated only activated codes")
+    
+    # Деактивируем код
+    code.status = ActivationCodeStatus.DEACTIVATED
+    
+    # Деактивируем пользователя, если он существует
+    if code.user_id:
+        # user = db.query(User).filter(User.id == code.user_id).first()
+        query_user = select(User).where(User.id == code.user_id)
+        result_user = await db.execute(query_user)
+        user = result_user.scalar_one_or_none()
+        if user:
+            user.service_active = False            
+    
+    await db.commit()
+    
+    return {"message": "Код и пользователь деактивированы"}
+
+
+
+
+
+
+

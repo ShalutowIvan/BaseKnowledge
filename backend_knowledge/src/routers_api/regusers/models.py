@@ -2,7 +2,7 @@ from sqlalchemy import Integer, String, TIMESTAMP, ForeignKey, Float, Boolean, T
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 from db_api import Base
@@ -22,6 +22,7 @@ class ActivationCodeStatus(str, enum.Enum):
     NOT_ACTIVATED = "not_activated"
     ACTIVATED = "activated"
     EXPIRED = "expired"
+    DEACTIVATED = "deactivated"
 
 
 class User(Base):
@@ -121,14 +122,14 @@ class ActivationCode(Base):
         foreign_keys=[created_by]
     )
 
-    # Свойства для удобства
-    @property
-    def is_expired(self) -> bool:
-        return datetime.utcnow() > self.expires_at
+    # # Свойства для удобства
+    # @property
+    # def is_expired(self) -> bool:
+    #     return datetime.utcnow() > self.expires_at
     
-    @property
-    def is_valid(self) -> bool:
-        return self.status == "active" and not self.is_expired
+    # @property
+    # def is_valid(self) -> bool:
+    #     return self.status == "active" and not self.is_expired
 
 
 

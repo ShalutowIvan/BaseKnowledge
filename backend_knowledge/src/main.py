@@ -8,7 +8,7 @@ import os
 from routers_api.knowledge.router_api import router_knowledge_api
 
 from routers_api.regusers.router_api import router_reg_api
-from routers_api.regusers.admin_panel.services_admin_panel import router_admin_panel
+from routers_api.regusers.admin_panel.routers_admin_panel import router_admin_panel
 
 from routers_api.projects.router_api import router_project_api
 from routers_api.roadmap.router_api import router_roadmap_api

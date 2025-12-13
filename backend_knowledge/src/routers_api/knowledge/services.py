@@ -407,8 +407,7 @@ async def knowledges_in_group_service(
 
         items_data = data_result.all()
                 
-        total_count = count_result.scalar()
-            
+        total_count = count_result.scalar()            
         
         # ОБРАБОТКА РЕЗУЛЬТАТОВ
         if use_fts and search and search.strip():

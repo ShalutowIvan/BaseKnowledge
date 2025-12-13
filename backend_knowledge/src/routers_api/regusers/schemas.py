@@ -121,7 +121,7 @@ class ActivationCodeWithDetails(ActivationCodeResponse):
         return data
 
 class ActivateAccountRequest(BaseModel):
-    code: str
+    code: str    
     
     @validator('code')
     def clean_code(cls, v):
@@ -147,7 +147,7 @@ class BulkCreateCodesRequest(BaseModel):
 
 
 class PaginatedResponseCodes(BaseModel):
-    items: list[ActivationCodeWithDetails]   # Список элементов текущей страницы
+    items: list[ActivationCodeResponse]   # Список элементов текущей страницы
     total: int                      # ОБЩЕЕ количество элементов во всей таблице
     page: int                       # Текущая страница
     per_page: int                   # Количество элементов на странице
