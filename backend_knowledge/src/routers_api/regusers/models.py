@@ -99,7 +99,8 @@ class ActivationCode(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.utcnow() + timedelta(days=30))    
-    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)#дата использования активации кода
+    updated_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"), server_onupdate=text("TIMEZONE('utc', now())"))
+
 
     # note: Mapped[str | None] = mapped_column(String(255), nullable=True)  # заметка админа может быть и не надо
     
@@ -113,7 +114,9 @@ class ActivationCode(Base):
     activated_user: Mapped[User | None] = relationship(
         "User", 
         back_populates="activation_code", 
-        foreign_keys=[user_id]
+        foreign_keys=[user_id],
+        # lazy="select"
+
     )
     
     creator_admin: Mapped[User] = relationship(

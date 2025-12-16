@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, EmailStr, validator, UUID4
-from typing import Optional
+from typing import Optional, Any
 from datetime import datetime
 from .models import ActivationCode
 
@@ -18,6 +18,9 @@ class ForgotPasswordShema(BaseModel):
 
 class EmailShema(BaseModel):
     email: EmailStr
+
+    class Config:
+        from_attributes = True
 
 
 class AuthShema(BaseModel):
@@ -87,40 +90,81 @@ class ActivationCodeCreate(ActivationCodeBase):
             raise ValueError('Срок действия должен быть от 1 до 365 дней')
         return v
 
-class ActivationCodeResponse(BaseModel):
+# class ActivationCodeResponse(BaseModel):
+#     id: int
+#     code: str
+#     status: str
+#     # note: Optional[str]
+#     created_at: datetime
+#     expires_at: datetime
+#     used_at: Optional[datetime]
+#     # is_expired: bool
+    
+#     class Config:
+#         from_attributes = True
+
+
+class ActivationCodeWithUserResponse(BaseModel):
+    """Схема для кода активации с email пользователя"""
     id: int
     code: str
     status: str
-    # note: Optional[str]
     created_at: datetime
     expires_at: datetime
-    used_at: Optional[datetime]
-    # is_expired: bool
+    used_at: Optional[datetime]    
     
+    activated_user: Optional[EmailShema] = None
+
+
     class Config:
         from_attributes = True
 
-class ActivationCodeWithDetails(ActivationCodeResponse):
-    activated_user_email: Optional[str] = None
-    activated_user_username: Optional[str] = None
-    creator_admin_email: Optional[str] = None
-    creator_admin_username: Optional[str] = None
     
-    @classmethod
-    def from_orm_with_details(cls, code: ActivationCode):
-        data = cls.from_orm(code)
+
+# class ActivationCodeWithUserResponse(BaseModel):
+#     """Упрощенная схема - работает всегда"""
+#     id: int
+#     code: str
+#     status: str
+#     created_at: datetime
+#     expires_at: datetime
+#     used_at: Optional[datetime]
+#     user_email: Optional[str] = None  # ⚠️ Используем str вместо EmailStr для отладки
+    
+#     @classmethod
+#     def create_from_code(cls, code) -> "ActivationCodeWithUserResponse":
+#         """Создает объект из кода"""
+#         return cls(
+#             id=code.id,
+#             code=code.code,
+#             status=code.status,
+#             created_at=code.created_at,
+#             expires_at=code.expires_at,
+#             used_at=code.used_at,
+#             user_email=code.activated_user.email if code.activated_user else None
+#         )
+    
+
+# class ActivationCodeWithDetails(ActivationCodeResponse):
+#     email: Optional[EmailShema] = None
+    
+    # @classmethod
+    # def from_orm(cls, obj: Any) -> "ActivationCodeWithDetails":
+    #     """
+    #     Переопределяем from_orm для обработки связанных данных
+    #     """
+    #     # Создаем базовый объект
+    #     instance = super().from_orm(obj)
         
-        if code.activated_user:
-            data.activated_user_email = code.activated_user.email
-            data.activated_user_username = code.activated_user.username
+    #     # Добавляем email пользователя
+    #     if hasattr(obj, 'activated_user') and obj.activated_user:
+    #         instance.email = obj.activated_user.email
         
-        if code.creator_admin:
-            data.creator_admin_email = code.creator_admin.email
-            data.creator_admin_username = code.creator_admin.username
-        
-        return data
+    #     return instance
+
 
 class ActivateAccountRequest(BaseModel):
+    user_id: int
     code: str    
     
     @validator('code')
@@ -133,6 +177,7 @@ class ActivateAccountRequest(BaseModel):
             v = f"{v[:4]}-{v[4:]}"
         
         return v
+        
 
 class BulkCreateCodesRequest(BaseModel):
     count: int = 10
@@ -147,7 +192,7 @@ class BulkCreateCodesRequest(BaseModel):
 
 
 class PaginatedResponseCodes(BaseModel):
-    items: list[ActivationCodeResponse]   # Список элементов текущей страницы
+    items: list[ActivationCodeWithUserResponse]   # Список элементов текущей страницы
     total: int                      # ОБЩЕЕ количество элементов во всей таблице
     page: int                       # Текущая страница
     per_page: int                   # Количество элементов на странице

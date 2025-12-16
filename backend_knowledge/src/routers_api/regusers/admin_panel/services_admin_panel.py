@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, func, and_
+from sqlalchemy.orm import selectinload, joinedload, load_only
 from ..models import *
 from ..schemas import *
 from .utils_codes import *
@@ -71,7 +72,9 @@ async def get_activation_codes_services(
 
         offset = (page - 1) * per_page
         
-        data_query = select(ActivationCode)
+        
+        data_query = select(ActivationCode).options(joinedload(ActivationCode.activated_user))
+        # data_query = select(ActivationCode).options(selectinload(ActivationCode.activated_user))
 
         count_query = select(func.count(ActivationCode.id))
 
@@ -83,7 +86,7 @@ async def get_activation_codes_services(
         
         count_result = await db.execute(count_query)
 
-        items_data = data_result.scalars().all()
+        items_data = data_result.unique().scalars().all()
 
         total_count = count_result.scalar()
 
@@ -108,6 +111,9 @@ async def get_activation_codes_services(
 
         if expired_codes:
             await db.commit()
+
+        print(items_data[5].activated_user.email)
+        
         
         return PaginatedResponseCodes(
                 items=items_data,
@@ -134,7 +140,7 @@ async def get_activation_codes_services(
 
 
 # """Активировать аккаунт пользователя по коду"""
-async def activate_code_service(
+async def activate_code_user_service(
     code_data: ActivateAccountRequest,
     user_id: int,
     db: AsyncSession
@@ -199,6 +205,70 @@ async def activate_code_service(
     }
 
 
+async def activate_code_admin_service(
+    code_data: ActivateAccountRequest,    
+    db: AsyncSession
+    ):    
+    
+    query = select(ActivationCode).where(
+        ActivationCode.code == code_data.code.strip().upper(), 
+        ActivationCode.status != ActivationCodeStatus.ACTIVATED
+        )
+    result = await db.execute(query)
+    code = result.scalar_one_or_none()
+
+    if not code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Code not found or not access for activated"
+        )
+    
+    # Проверяем срок действия
+    if datetime.now(timezone.utc) > code.expires_at:
+        code.status = ActivationCodeStatus.EXPIRED
+        await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The code has expired"
+        )
+    
+    # Проверяем, не использован активирован ли код другим пользователем
+    if code.user_id and code.user_id != code_data.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The code has already been used by another user."
+        )
+    
+    # Активируем пользователя
+    query_user = select(User).where(User.id == code_data.user_id)
+    result_user = await db.execute(query_user)
+    current_user = result_user.scalar_one_or_none()
+
+    current_user.service_active = True
+    current_user.activated_at = datetime.now(timezone.utc)
+    
+    # Обновляем код
+    code.status = ActivationCodeStatus.ACTIVATED
+    code.user_id = current_user.id
+    # code.updated_at = datetime.now(timezone.utc)
+    code.updated_at = datetime.utcnow() 
+    
+    await db.commit()
+    
+    return {
+        "message": "Аккаунт успешно активирован",
+        "user": {
+            "email": current_user.email,
+            "username": current_user.name,
+            "service_active": current_user.service_active
+        },
+        # "code": {
+        #     "code": code.code,
+        #     "created_by_admin": code.creator_admin.email if code.creator_admin else "Unknown"
+        # }
+    }
+
+
 
 # """Деактивировать код и пользователя""".
 async def deactivate_code_service(
@@ -223,13 +293,15 @@ async def deactivate_code_service(
     code.status = ActivationCodeStatus.DEACTIVATED
     
     # Деактивируем пользователя, если он существует
-    if code.user_id:
-        # user = db.query(User).filter(User.id == code.user_id).first()
+    if code.user_id:        
         query_user = select(User).where(User.id == code.user_id)
         result_user = await db.execute(query_user)
         user = result_user.scalar_one_or_none()
         if user:
-            user.service_active = False            
+            user.service_active = False
+        code.user_id = None
+    code.updated_at = datetime.utcnow() 
+
     
     await db.commit()
     
@@ -237,7 +309,38 @@ async def deactivate_code_service(
 
 
 
+async def delete_activation_code_service(
+    code_id: int,
+    admin_id: int,
+    db: AsyncSession
+    ):  
 
+    query = select(ActivationCode).where(ActivationCode.id == code_id)
+    result = await db.execute(query)
+    code = result.scalar_one_or_none()
+    
+    if not code:
+        raise HTTPException(status_code=404, detail="Code not found")
+    
+    if code.status == ActivationCodeStatus.ACTIVATED:
+        raise HTTPException(
+            status_code=400, 
+            detail="You can't delete a used code. Please deactivate it first."
+        )
+
+    # ост тут...
+    
+    if code.user_id:
+        raise HTTPException(
+            status_code=400, 
+            detail="Код привязан к пользователю. Сначала деактивируйте."
+        )
+    
+    await db.delete(code)    
+
+    await db.commit()
+    
+    return {"message": "Code is delete"}
 
 
 
