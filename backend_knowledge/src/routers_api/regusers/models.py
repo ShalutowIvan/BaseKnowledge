@@ -63,6 +63,8 @@ class User(Base):
 
     service_active: Mapped[bool] = mapped_column(default=False, nullable=False)#это обозначение того, что активны ли сервисы. Решил сделать закрытый проект, в котором будут только те участники которым я дам код активации
 
+    # activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)# дата активации, надо или нет?
+
     is_banned: Mapped[bool] = mapped_column(Boolean, default=False) # Заблокирован ли
 
     # связи для кодов активации

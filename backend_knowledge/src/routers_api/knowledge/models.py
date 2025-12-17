@@ -164,8 +164,7 @@ class UserStorage(Base):
     id: Mapped[int] = mapped_column(primary_key=True)    
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), unique=True, nullable=False)
     user: Mapped["User"] = relationship(back_populates="storage_usage")    
-    total_files_count: Mapped[int] = mapped_column(default=0)
-    # total_storage_bytes = Column(BigInteger, default=0)
+    total_files_count: Mapped[int] = mapped_column(default=0)    
     total_storage_bytes: Mapped[int] = mapped_column(BigInteger, default=0)  # В байтах
     # last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_updated: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"), server_onupdate=text("TIMEZONE('utc', now())"))

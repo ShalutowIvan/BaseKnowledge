@@ -139,77 +139,77 @@ async def get_activation_codes_services(
         )
 
 
-# """Активировать аккаунт пользователя по коду"""
-async def activate_code_user_service(
-    code_data: ActivateAccountRequest,
-    user_id: int,
-    db: AsyncSession
-    ):    
+# # """Активировать аккаунт пользователя по коду пользователем"""
+# async def activate_code_user_service(
+#     code_data: ActivateAccountRequest,
+#     user_id: int,
+#     db: AsyncSession
+#     ):    
     
-    query = select(ActivationCode).where(
-        ActivationCode.code == code_data.code.strip().upper(), 
-        ActivationCode.status == ActivationCodeStatus.NOT_ACTIVATED
-        )
-    result = await db.execute(query)
-    code = result.scalar_one_or_none()
+#     query = select(ActivationCode).where(
+#         ActivationCode.code == code_data.code.strip().upper(), 
+#         ActivationCode.status == ActivationCodeStatus.NOT_ACTIVATED
+#         )
+#     result = await db.execute(query)
+#     code = result.scalar_one_or_none()
 
     
-    if not code:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Code not found or not access for activated"
-        )
+#     if not code:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="Code not found or not access for activated"
+#         )
     
-    # Проверяем срок действия
-    if datetime.now(timezone.utc) > code.expires_at:
-        code.status = ActivationCodeStatus.EXPIRED
-        await db.commit()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The code has expired"
-        )
+#     # Проверяем срок действия
+#     if datetime.now(timezone.utc) > code.expires_at:
+#         code.status = ActivationCodeStatus.EXPIRED
+#         await db.commit()
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="The code has expired"
+#         )
     
-    # Проверяем, не использован ли код другим пользователем
-    if code.user_id and code.user_id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The code has already been used by another user."
-        )
+#     # Проверяем, не использован ли код другим пользователем
+#     if code.user_id and code.user_id != user_id:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="The code has already been used by another user."
+#         )
     
-    # Активируем пользователя
-    query_user = select(User).where(User.id == user_id)
-    result_user = await db.execute(query_user)
-    current_user = result_user.scalar_one_or_none()
+#     # Активируем пользователя
+#     query_user = select(User).where(User.id == user_id)
+#     result_user = await db.execute(query_user)
+#     current_user = result_user.scalar_one_or_none()
 
-    current_user.service_active = True
-    current_user.activated_at = datetime.now(timezone.utc)
+#     current_user.service_active = True
+#     current_user.activated_at = datetime.now(timezone.utc)
     
-    # Обновляем код
-    code.status = ActivationCodeStatus.ACTIVATED
-    code.user_id = current_user.id
-    code.used_at = datetime.now(timezone.utc)
+#     # Обновляем код
+#     code.status = ActivationCodeStatus.ACTIVATED
+#     code.user_id = current_user.id
+#     code.used_at = datetime.now(timezone.utc)
     
-    await db.commit()
+#     await db.commit()
     
-    return {
-        "message": "Аккаунт успешно активирован",
-        "user": {
-            "email": current_user.email,
-            "username": current_user.name,
-            "service_active": current_user.service_active
-        },
-        # "code": {
-        #     "code": code.code,
-        #     "created_by_admin": code.creator_admin.email if code.creator_admin else "Unknown"
-        # }
-    }
+#     return {
+#         "message": "Аккаунт успешно активирован",
+#         "user": {
+#             "email": current_user.email,
+#             "username": current_user.name,
+#             "service_active": current_user.service_active
+#         },
+#         # "code": {
+#         #     "code": code.code,
+#         #     "created_by_admin": code.creator_admin.email if code.creator_admin else "Unknown"
+#         # }
+#     }
 
 
 async def activate_code_admin_service(
     code_data: ActivateAccountRequest,    
     db: AsyncSession
     ):    
-    
+    # ищем код активации в базе
     query = select(ActivationCode).where(
         ActivationCode.code == code_data.code.strip().upper(), 
         ActivationCode.status != ActivationCodeStatus.ACTIVATED
@@ -232,20 +232,27 @@ async def activate_code_admin_service(
             detail="The code has expired"
         )
     
-    # Проверяем, не использован активирован ли код другим пользователем
+    # Проверяем, не использован (не активирован) ли код другим пользователем
     if code.user_id and code.user_id != code_data.user_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The code has already been used by another user."
         )
-    
+        
     # Активируем пользователя
     query_user = select(User).where(User.id == code_data.user_id)
     result_user = await db.execute(query_user)
     current_user = result_user.scalar_one_or_none()
 
+    if not current_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # проверка не активирован ли уже пользователь. Это норм проверка вроде. 
+    if current_user.service_active == True:
+        raise HTTPException(status_code=422, detail="The User is already activated")
+
     current_user.service_active = True
-    current_user.activated_at = datetime.now(timezone.utc)
+    # current_user.activated_at = datetime.now(timezone.utc)
     
     # Обновляем код
     code.status = ActivationCodeStatus.ACTIVATED
@@ -261,11 +268,7 @@ async def activate_code_admin_service(
             "email": current_user.email,
             "username": current_user.name,
             "service_active": current_user.service_active
-        },
-        # "code": {
-        #     "code": code.code,
-        #     "created_by_admin": code.creator_admin.email if code.creator_admin else "Unknown"
-        # }
+        }        
     }
 
 
