@@ -22,7 +22,7 @@ async def create_activation_code_service(
         # exists = db.query(ActivationCode).filter(ActivationCode.code == code).first()
         result = await db.execute(select(ActivationCode).where(ActivationCode.code == code))
         activation_code = result.scalar_one_or_none()
-
+        #получается тут идет генарация кода пока не сгенерируется код который не будет совпадает с кодом из базы. немного кривой алгоритм
         if not activation_code:
             break
     
@@ -43,8 +43,6 @@ async def create_activation_code_service(
     await db.refresh(activation_code)
     
     return activation_code
-
-
 
 
 # """Получить список кодов активации с деталями"""
@@ -110,10 +108,7 @@ async def get_activation_codes_services(
             code.status = ActivationCodeStatus.EXPIRED
 
         if expired_codes:
-            await db.commit()
-
-        print(items_data[5].activated_user.email)
-        
+            await db.commit()                
         
         return PaginatedResponseCodes(
                 items=items_data,
@@ -346,4 +341,5 @@ async def delete_activation_code_service(
     return {"message": "Code is delete"}
 
 
-
+async def change_user_service():
+    return

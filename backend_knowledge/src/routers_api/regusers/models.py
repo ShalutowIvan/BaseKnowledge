@@ -102,14 +102,16 @@ class ActivationCode(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.utcnow() + timedelta(days=30))    
     updated_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"), server_onupdate=text("TIMEZONE('utc', now())"))
+    # server_onupdate=text("TIMEZONE('utc', now())") # по идее это для постгреса не работает
 
 
     # note: Mapped[str | None] = mapped_column(String(255), nullable=True)  # заметка админа может быть и не надо
     
     # Внешние ключи. 
-    # Кем создан
+    # кем активирован
     user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("user.id"), nullable=True)
-    # И кем активирован
+    
+    # Кем создан
     created_by: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False)
     
     # Связи с более понятными именами

@@ -14,7 +14,7 @@ router_admin_panel = APIRouter(prefix="/admin/codes", tags=["Admin_panel"])
 
 # , response_model=ActivationCodeResponse
 # создание кода активации админом
-@router_admin_panel.post("/create")
+@router_admin_panel.post("/create", response_model=ActivationCodeResponse)
 async def create_activation_code(
     days_valid: int = Query(30, ge=1, le=365, description="Срок действия в днях"),
     # note: Optional[str] = Query(None, max_length=255),
@@ -23,7 +23,6 @@ async def create_activation_code(
     ):
     return await create_activation_code_service(days_valid=days_valid, admin_id=admin_id, db=db)
     
-
 
 # # получение списка кодов активации
 @router_admin_panel.get("/", response_model=PaginatedResponseCodes)
@@ -48,18 +47,6 @@ async def deactivate_code(
     return await deactivate_code_service(code_id=code_id, admin_id=admin_id, db=db)
 
 
-
-
-# активация кода и сервисов юзера
-# @router_admin_panel.post("/activate_from_user")
-# async def activate_code_user(    
-#     code_data: ActivateAccountRequest,
-#     user_id: int = Depends(require_active_user),#тут проверка не активирован ли уже пользак
-#     db: AsyncSession = Depends(get_async_session)
-#     ):
-#     return await activate_code_user_service(code_data=code_data, user_id=user_id, db=db)
-
-
 # активация кодов админом
 @router_admin_panel.post("/activate_from_admin")
 async def activate_code_admin(
@@ -70,9 +57,6 @@ async def activate_code_admin(
     return await activate_code_admin_service(code_data=code_data, db=db)
 
 
-
-
-
 # """Удалить код активации"""
 @router_admin_panel.delete("/{code_id}")
 async def delete_activation_code(
@@ -81,6 +65,19 @@ async def delete_activation_code(
     db: AsyncSession = Depends(get_async_session)
     ):    
     return await delete_activation_code_service(code_id=code_id, admin_id=admin_id, db=db)
+
+# , response_model=ProjectsCreateSchema
+# редактирование пользователя
+@router_admin_panel.patch("/change_user/{user_id}")
+async def change_user(
+    user_id: int,
+    user_update: ChangeUserSchema, 
+    admin_id: int = Depends(require_admin),
+    db: AsyncSession = Depends(get_async_session)
+    ):    
+    return await change_user_service(user_id=user_id, user_update=user_update, admin_id=admin_id, db=db)
+
+
 
 
 # @router_admin_panel.post("/bulk-create")
@@ -116,3 +113,14 @@ async def delete_activation_code(
 #         "message": f"Создано {count} кодов",
 #         "codes": created_codes
 #     }
+
+
+
+# активация кода и сервисов юзера со стороны юзера
+# @router_admin_panel.post("/activate_from_user")
+# async def activate_code_user(    
+#     code_data: ActivateAccountRequest,
+#     user_id: int = Depends(require_active_user),#тут проверка не активирован ли уже пользак
+#     db: AsyncSession = Depends(get_async_session)
+#     ):
+#     return await activate_code_user_service(code_data=code_data, user_id=user_id, db=db)

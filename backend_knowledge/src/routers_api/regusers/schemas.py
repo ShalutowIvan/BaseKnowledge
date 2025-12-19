@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, EmailStr, validator, UUID4
 from typing import Optional, Any
 from datetime import datetime
-from .models import ActivationCode
+from .models import ActivationCode, UserRole
 
 
 class UserRegShema(BaseModel):
@@ -81,6 +81,7 @@ class ActivationCodeBase(BaseModel):
     code: str
     note: Optional[str] = None
 
+
 class ActivationCodeCreate(ActivationCodeBase):
     days_valid: int = 30
     
@@ -90,93 +91,49 @@ class ActivationCodeCreate(ActivationCodeBase):
             raise ValueError('Срок действия должен быть от 1 до 365 дней')
         return v
 
-# class ActivationCodeResponse(BaseModel):
-#     id: int
-#     code: str
-#     status: str
-#     # note: Optional[str]
-#     created_at: datetime
-#     expires_at: datetime
-#     used_at: Optional[datetime]
-#     # is_expired: bool
-    
-#     class Config:
-#         from_attributes = True
 
-
-class ActivationCodeWithUserResponse(BaseModel):
-    """Схема для кода активации с email пользователя"""
+class ActivationCodeResponse(BaseModel):
     id: int
     code: str
     status: str
     created_at: datetime
     expires_at: datetime
-    used_at: Optional[datetime]    
-    
-    activated_user: Optional[EmailShema] = None
-
+    updated_at: datetime
+    created_by: int
+    used_id: Optional[int] = None
 
     class Config:
         from_attributes = True
 
-    
-
-# class ActivationCodeWithUserResponse(BaseModel):
-#     """Упрощенная схема - работает всегда"""
-#     id: int
-#     code: str
-#     status: str
-#     created_at: datetime
-#     expires_at: datetime
-#     used_at: Optional[datetime]
-#     user_email: Optional[str] = None  # ⚠️ Используем str вместо EmailStr для отладки
-    
-#     @classmethod
-#     def create_from_code(cls, code) -> "ActivationCodeWithUserResponse":
-#         """Создает объект из кода"""
-#         return cls(
-#             id=code.id,
-#             code=code.code,
-#             status=code.status,
-#             created_at=code.created_at,
-#             expires_at=code.expires_at,
-#             used_at=code.used_at,
-#             user_email=code.activated_user.email if code.activated_user else None
-#         )
-    
-
-# class ActivationCodeWithDetails(ActivationCodeResponse):
-#     email: Optional[EmailShema] = None
-    
-    # @classmethod
-    # def from_orm(cls, obj: Any) -> "ActivationCodeWithDetails":
-    #     """
-    #     Переопределяем from_orm для обработки связанных данных
-    #     """
-    #     # Создаем базовый объект
-    #     instance = super().from_orm(obj)
         
-    #     # Добавляем email пользователя
-    #     if hasattr(obj, 'activated_user') and obj.activated_user:
-    #         instance.email = obj.activated_user.email
-        
-    #     return instance
 
+
+class ActivationCodeWithUserResponse(ActivationCodeResponse):
+    """Схема для кода активации с email пользователя"""
+    
+    
+    activated_user: Optional[EmailShema] = None
+
+
+    # class Config:
+    #     from_attributes = True
+
+    
 
 class ActivateAccountRequest(BaseModel):
     user_id: int
     code: str    
     
-    @validator('code')
-    def clean_code(cls, v):
-        # Убираем пробелы и приводим к верхнему регистру
-        v = v.strip().upper().replace(' ', '')
+    # @validator('code')
+    # def clean_code(cls, v):
+    #     # Убираем пробелы и приводим к верхнему регистру
+    #     v = v.strip().upper().replace(' ', '')
         
-        # Добавляем дефис если его нет
-        if len(v) == 8 and '-' not in v:
-            v = f"{v[:4]}-{v[4:]}"
+    #     # Добавляем дефис если его нет
+    #     if len(v) == 8 and '-' not in v:
+    #         v = f"{v[:4]}-{v[4:]}"
         
-        return v
+    #     return v
         
 
 class BulkCreateCodesRequest(BaseModel):
@@ -201,4 +158,13 @@ class PaginatedResponseCodes(BaseModel):
     has_prev: bool                  # Есть ли предыдущая страница
     first_item: int | None          # ID первого элемента на странице
     last_item: int | None           # ID последнего элемента на странице
+
+
+class ChangeUserSchema(BaseModel):
+    name: str
+    email: EmailStr
+    user_role: UserRole
+
+
+# сделать схему для юзера после редактирования ост тут!!!!!!!!!!
 
