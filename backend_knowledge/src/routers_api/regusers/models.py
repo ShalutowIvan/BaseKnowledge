@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, TIMESTAMP, ForeignKey, Float, Boolean, Text, Table, Column, DateTime, text, Enum
+from sqlalchemy import Integer, String, TIMESTAMP, ForeignKey, Float, Boolean, Text, Table, Column, DateTime, text, Enum, BigInteger
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
@@ -44,6 +44,7 @@ class User(Base):
     chapter_user: Mapped["Chapter"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
     stage_user: Mapped["Stage"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
     storage_usage: Mapped["UserStorage"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+    stats: Mapped["UserStats"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
 
     # сохранение поиска пока решил не делать. Пока не нужно. Но модель оставил
     # saved_search_user: Mapped["SavedSearch"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
@@ -62,8 +63,6 @@ class User(Base):
     user_role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.USER)#админ или нет
 
     service_active: Mapped[bool] = mapped_column(default=False, nullable=False)#это обозначение того, что активны ли сервисы. Решил сделать закрытый проект, в котором будут только те участники которым я дам код активации
-
-    # activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)# дата активации, надо или нет?
 
     is_banned: Mapped[bool] = mapped_column(Boolean, default=False) # Заблокирован ли
 
@@ -102,10 +101,7 @@ class ActivationCode(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.utcnow() + timedelta(days=30))    
     updated_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"), server_onupdate=text("TIMEZONE('utc', now())"))
-    # server_onupdate=text("TIMEZONE('utc', now())") # по идее это для постгреса не работает
-
-
-    # note: Mapped[str | None] = mapped_column(String(255), nullable=True)  # заметка админа может быть и не надо
+    # server_onupdate=text("TIMEZONE('utc', now())") # по идее это для постгреса не работает    
     
     # Внешние ключи. 
     # кем активирован
@@ -120,24 +116,69 @@ class ActivationCode(Base):
         back_populates="activation_code", 
         foreign_keys=[user_id],
         # lazy="select"
-
-    )
-    
+    )    
     creator_admin: Mapped[User] = relationship(
         "User", 
         back_populates="created_activation_codes", 
         foreign_keys=[created_by]
     )
 
-    # # Свойства для удобства
-    # @property
-    # def is_expired(self) -> bool:
-    #     return datetime.utcnow() > self.expires_at
     
-    # @property
-    # def is_valid(self) -> bool:
-    #     return self.status == "active" and not self.is_expired
+# таблица со статистикой пользователей. Проверить потом
+class UserStats(Base):
+    __tablename__ = "user_stats"
 
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+
+    # ========== Статистика знаний (Knowledge) ==========
+    knowledge_count: Mapped[int] = mapped_column(default=0)#количество знаний
+    knowledge_average_text_size: Mapped[int] = mapped_column(default=0)# средний размер текста в байтах
+    knowledge_total_size: Mapped[int] = mapped_column(BigInteger, default=0)# общий размер текста знаний 
+    
+    # ========== Статистика изображений (Image) ==========
+    images_count: Mapped[int] = mapped_column(default=0)#количество знаний
+    images_average_size: Mapped[int] = mapped_column(default=0)# средний размер текста в байтах
+    images_total_size: Mapped[int] = mapped_column(BigInteger, default=0)# общий размер текста знаний в байтах
+
+    # ========== Статистика проектов ==========
+    projects_count: Mapped[int] = mapped_column(default=0)
+    sections_count: Mapped[int] = mapped_column(default=0)
+    
+    tasks_count: Mapped[int] = mapped_column(default=0)
+    tasks_average_size: Mapped[int] = mapped_column(default=0)
+    tasks_total_size: Mapped[int] = mapped_column(BigInteger, default=0)  # в байтах
+
+    # ========== Временные метки ==========    
+    updated_at: Mapped[datetime] = mapped_column(
+        server_default=text("TIMEZONE('utc', now())"),
+        onupdate=datetime.utcnow
+    )
+    last_activity_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"), nullable=True)#дата последней активности пользователя или когда он входил в свою учетную запись
+
+    # Связь с пользователем
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,  # Один пользователь - одна запись статистики
+        index=True
+    )
+    user: Mapped["User"] = relationship(back_populates="stats")
+
+    # ========== Дополнительная статистика ==========
+    # Количество проектов, где пользователь является участником. Кажется нет смысла в этом поле...
+    # projects_participating_count: Mapped[int] = mapped_column(default=0)
+    
+    # # Индексы для быстрого поиска наиболее активных пользователей
+    # __table_args__ = (
+    #     Index('ix_user_stats_knowledge_count', 'knowledge_count'),
+    #     Index('ix_user_stats_images_total_size', 'images_total_size'),
+    #     Index('ix_user_stats_last_activity', 'last_activity'),
+    # )
+
+
+
+
+    
 
 
 
