@@ -158,6 +158,7 @@ class Saved_tab(Base):
     knowledge_connect: Mapped["Knowledge"] = relationship(back_populates="saved_tab_connect")
 
     
+# статистика по файлам пользователя скорее всего для отдельного пользователя, чтобы знать сколько файлов и байт уже загрузил, чтобы не выйти за рамки лимита
 class UserStorage(Base):
     __tablename__ = "user_storage"
     
@@ -165,8 +166,7 @@ class UserStorage(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), unique=True, nullable=False)
     user: Mapped["User"] = relationship(back_populates="storage_usage")    
     total_files_count: Mapped[int] = mapped_column(default=0)    
-    total_storage_bytes: Mapped[int] = mapped_column(BigInteger, default=0)  # В байтах
-    # last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    total_storage_bytes: Mapped[int] = mapped_column(BigInteger, default=0)  # В байтах    
     last_updated: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"), server_onupdate=text("TIMEZONE('utc', now())"))
     
     

@@ -5,8 +5,8 @@ from db_api import get_async_session
 from ..schemas import *
 from .dependencies import require_admin, require_active_user
 from .services_admin_panel import *
-
-
+from .user_stats_service import UserStatsService
+from typing import Dict, Any, List
 
 
 
@@ -76,6 +76,39 @@ async def change_user(
     db: AsyncSession = Depends(get_async_session)
     ):    
     return await change_user_service(user_id=user_id, user_update=user_update, admin_id=admin_id, db=db)
+
+
+
+# обновление статистики
+@router_admin_panel.put("/recalculate-stats", response_model=Dict[str, Any])
+async def recalculate_stats(
+    admin_id: int = Depends(require_admin),
+    db: AsyncSession = Depends(get_async_session)
+):
+    """Сверхбыстрое обновление статистики"""
+    return await UserStatsService.recalculate_all_stats_raw_sql(session=db, admin_id=admin_id)
+
+
+# обновление последней активности
+@router_admin_panel.patch("/update-last_activity", response_model=Dict[str, Any])
+async def update_last_activity(
+    admin_id: int = Depends(require_admin),
+    db: AsyncSession = Depends(get_async_session)
+):
+    """Сверхбыстрое обновление активности"""
+    return await UserStatsService.update_last_activity_raw_sql(session=db, admin_id=admin_id)
+
+
+
+@router_admin_panel.get("/system-totals-stats", response_model=Dict[str, Any])
+async def get_system_totals(
+    admin_id: int = Depends(require_admin),
+    db: AsyncSession = Depends(get_async_session)
+):
+    """Быстрое получение итогов системы"""
+    return await UserStatsService.get_system_totals_raw_sql(session=db)
+
+
 
 
 
