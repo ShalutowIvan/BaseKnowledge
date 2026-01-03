@@ -46,7 +46,7 @@ router_reg_api = APIRouter(
 
 @router_reg_api.post("/registration")#response_model это валидация для запроса
 @limiter.limit("3/hour")
-async def api_registration_post(request: Request, formData: UserRegShema, session: AsyncSession = Depends(get_async_session) ):
+async def api_registration_post(request: Request, formData: UserRegSchema, session: AsyncSession = Depends(get_async_session) ):
 
     name = formData.name
     email = formData.email
@@ -100,7 +100,7 @@ async def api_activate_user(request: Request, token: str, session: AsyncSession 
 
 #функция post для страницы забыли пароль
 @router_reg_api.post("/forgot_password/")
-async def api_forgot_password_post(request: Request, formData: EmailShema, session: AsyncSession = Depends(get_async_session)):
+async def api_forgot_password_post(request: Request, formData: EmailSchema, session: AsyncSession = Depends(get_async_session)):
     user = await session.scalar(select(User).where(User.email == formData.email))
 
     if user is None:        
@@ -117,7 +117,7 @@ async def api_forgot_password_post(request: Request, formData: EmailShema, sessi
 
 #функция для обработки ссылки из письма для сброса пароля. token автоматом закидывается в форму, и поле с токеном в html сделал невидимым
 @router_reg_api.post("/restore/password_user/{token}")
-async def api_restore_password_user(request: Request, token: str, formData: ForgotPasswordShema, session: AsyncSession = Depends(get_async_session)):
+async def api_restore_password_user(request: Request, token: str, formData: ForgotPasswordSchema, session: AsyncSession = Depends(get_async_session)):
 
     password1 = formData.password1
     password2 = formData.password2
@@ -142,6 +142,7 @@ async def api_restore_password_user(request: Request, token: str, formData: Forg
         return {"message": "Пользователь не найден! Перейдите по ссылке из письма повторно и повторите попытку ввода нового пароля!"}
 
     user.hashed_password = pwd_context.hash(password1)
+    user.requires_password_reset = False
     session.add(user)
     await session.commit()
     
@@ -158,9 +159,12 @@ async def auth_user(response: Response, formData: OAuth2PasswordRequestForm = De
 
     user: User = await session.scalar(select(User).where(User.email == email))#ищем пользователя по емейл
     
-    if not user:        
-        # return {"message": "Пользователь не зарегистрирован!"}
+    if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username")
+
+    if user.requires_password_reset == True:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You need to change your password. Use the forgot password function.")
+
     
     if not pwd_context.verify(password, user.hashed_password):#сверка пароля с БД                       
         # return {"message": "Неверный пароль!"}
@@ -396,11 +400,6 @@ async def uri_update_access_token(response: Response, refreshToken: str, session
 ################################################################################
 
 
-# <a href="{{ url_for('url_reg') }}"><h1>РЕГА</h1></a>
-#     <br>    
-#     <a href="{{ url_for('url_auth') }}"><h1>АУТХ</h1></a>
-#     <br>
-#     <a href="{{ url_for('test_token') }}"><h1>Проверка токена</h1></a>
 
 
 # функции активации

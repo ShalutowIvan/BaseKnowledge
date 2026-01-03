@@ -34,7 +34,7 @@ async def get_activation_codes(
     db: AsyncSession = Depends(get_async_session)
     ):
     
-    return await get_activation_codes_services(status_filter=status_filter, page=page, per_page=per_page, admin_id=admin_id, db=db)
+    return await get_activation_codes_service(status_filter=status_filter, page=page, per_page=per_page, admin_id=admin_id, db=db)
 
 
 # деактивация кода
@@ -66,9 +66,24 @@ async def delete_activation_code(
     ):    
     return await delete_activation_code_service(code_id=code_id, admin_id=admin_id, db=db)
 
-# , response_model=ProjectsCreateSchema
+
+
+# получение списка пользователей с деталями
+@router_admin_panel.get("/list_users", response_model=PaginatedResponseUsers)
+async def list_users(
+    status_service: Optional[bool] = Query(default=None),
+    page: int = 1,
+    per_page: int = 50,
+    admin_id: int = Depends(require_admin),
+    db: AsyncSession = Depends(get_async_session)
+    ):
+    
+    return await list_users_service(status_service=status_service, page=page, per_page=per_page, admin_id=admin_id, db=db)
+
+
+
 # редактирование пользователя
-@router_admin_panel.patch("/change_user/{user_id}")
+@router_admin_panel.patch("/change_user/{user_id}", response_model=UsersSchema)
 async def change_user(
     user_id: int,
     user_update: ChangeUserSchema, 
@@ -76,6 +91,11 @@ async def change_user(
     db: AsyncSession = Depends(get_async_session)
     ):    
     return await change_user_service(user_id=user_id, user_update=user_update, admin_id=admin_id, db=db)
+
+
+
+
+
 
 
 

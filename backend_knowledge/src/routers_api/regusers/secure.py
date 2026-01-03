@@ -297,7 +297,7 @@ from email.message import EmailMessage
 #тут переделал, идет переадрессация на фронт в ссылке из письма, а фронт уже обрабатывает функции с бэка. При восстановлении пароля логика та же
 async def send_email_verify(user, use_https=False):
 	email = EmailMessage()
-	email['Subject'] = 'Подтверждение регистрации в интернет магазине'
+	email['Subject'] = 'Подтверждение регистрации пользователя'
 	email['From'] = HOST_USER
 	email['To'] = user.email
 

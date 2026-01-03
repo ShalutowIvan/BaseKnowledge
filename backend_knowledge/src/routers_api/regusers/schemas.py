@@ -4,41 +4,42 @@ from datetime import datetime
 from .models import ActivationCode, UserRole
 
 
-class UserRegShema(BaseModel):
+
+class UserRegSchema(BaseModel):
     name: str
     email: EmailStr
     password1: str
     password2: str
 
 
-class ForgotPasswordShema(BaseModel):
+class ForgotPasswordSchema(BaseModel):
     password1: str
     password2: str
 
 
-class EmailShema(BaseModel):
+class EmailSchema(BaseModel):
     email: EmailStr
 
     class Config:
         from_attributes = True
 
 
-class AuthShema(BaseModel):
+class AuthSchema(BaseModel):
     username: EmailStr#тут почта,а не имя пользака
     password: str
 
 
-class TokenSheme(BaseModel):
+class TokenSchema(BaseModel):
     Authorization: str
     RT: str
     token_type: str
     # live_time: int
 
-class AccessTokenSheme(BaseModel):
+class AccessTokenSchema(BaseModel):
     Authorization: str
     token_type: str
 
-class UserSheme(BaseModel):
+class UserSchema(BaseModel):
     id: str
     username: str    
     # email: str
@@ -112,7 +113,7 @@ class ActivationCodeWithUserResponse(ActivationCodeResponse):
     """Схема для кода активации с email пользователя"""
     
     
-    activated_user: Optional[EmailShema] = None
+    activated_user: Optional[EmailSchema] = None
 
 
     # class Config:
@@ -148,8 +149,8 @@ class BulkCreateCodesRequest(BaseModel):
 
 
 
-class PaginatedResponseCodes(BaseModel):
-    items: list[ActivationCodeWithUserResponse]   # Список элементов текущей страницы
+class PaginatedResponse(BaseModel):
+    # items: list[ActivationCodeWithUserResponse]   # Список элементов текущей страницы
     total: int                      # ОБЩЕЕ количество элементов во всей таблице
     page: int                       # Текущая страница
     per_page: int                   # Количество элементов на странице
@@ -160,11 +161,32 @@ class PaginatedResponseCodes(BaseModel):
     last_item: int | None           # ID последнего элемента на странице
 
 
-class ChangeUserSchema(BaseModel):
+class PaginatedResponseCodes(PaginatedResponse):
+    items: list[ActivationCodeWithUserResponse]
+
+
+class UsersSchema(BaseModel):
+    id: int
     name: str
+    time_create_user: datetime
     email: EmailStr
+    is_active: bool
     user_role: UserRole
+    service_active: bool
+
+    class Config:
+        from_attributes = True
 
 
-# сделать схему для юзера после редактирования ост тут!!!!!!!!!!
+class PaginatedResponseUsers(PaginatedResponse):
+    items: list[UsersSchema]
+
+
+class ChangeUserSchema(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    user_role: Optional[UserRole] = None
+
+
+
 

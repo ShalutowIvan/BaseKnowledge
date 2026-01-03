@@ -31,32 +31,89 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)#пока так, если что потом заменить на uuid
     name: Mapped[str] = mapped_column(String(256))
     time_create_user: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
+    # updated_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"), server_onupdate=text("TIMEZONE('utc', now())"))
     email: Mapped[str] = mapped_column(String(length=320), unique=True, nullable=False)    
-    hashed_password: Mapped[str] = mapped_column(String(length=1024), nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(length=1024), nullable=False)    
+    requires_password_reset: Mapped[bool] = mapped_column(default=False, server_default="false", nullable=False)#флаг нужно ли менять пароль.
     
     is_active: Mapped[bool] = mapped_column(default=False, nullable=False)#активация учетки при переходе по ссылке из письма при реге, нужно для проверки актуальности почты
-    
-    
+        
     #связи
-    knowledge_user: Mapped["Knowledge"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
-    group_user: Mapped["Group"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
-    roadmap_user: Mapped["RoadMap"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
-    chapter_user: Mapped["Chapter"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
-    stage_user: Mapped["Stage"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
-    storage_usage: Mapped["UserStorage"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
-    stats: Mapped["UserStats"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+    knowledge_user: Mapped["Knowledge"] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan", 
+        passive_deletes=True, 
+        lazy="select", 
+        foreign_keys="Knowledge.user_id",
+        uselist=True
+        )
+    group_user: Mapped["Group"] = relationship(
+        back_populates="user", 
+        cascade="all, delete-orphan", 
+        passive_deletes=True, 
+        lazy="select", 
+        foreign_keys="Group.user_id",
+        uselist=True
+        )
+    roadmap_user: Mapped["RoadMap"] = relationship(
+        back_populates="user", 
+        cascade="all, delete-orphan", 
+        passive_deletes=True, 
+        lazy="select"
+        )
+    chapter_user: Mapped["Chapter"] = relationship(
+        back_populates="user", 
+        cascade="all, delete-orphan", 
+        passive_deletes=True, 
+        lazy="select"
+        )
+    stage_user: Mapped["Stage"] = relationship(
+        back_populates="user", 
+        cascade="all, delete-orphan", 
+        passive_deletes=True, 
+        lazy="select"
+        )
+    storage_usage: Mapped["UserStorage"] = relationship(
+        back_populates="user", 
+        cascade="all, delete-orphan", 
+        passive_deletes=True, 
+        lazy="select"
+        )
+    stats: Mapped["UserStats"] = relationship(
+        back_populates="user", 
+        cascade="all, delete-orphan", 
+        passive_deletes=True, 
+        lazy="select"
+        )
 
     # сохранение поиска пока решил не делать. Пока не нужно. Но модель оставил
     # saved_search_user: Mapped["SavedSearch"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
 
     # сохранение списка вкладок
-    tab_list_user: Mapped["Tab_list"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+    tab_list_user: Mapped["Tab_list"] = relationship(
+        back_populates="user", 
+        cascade="all, delete-orphan", 
+        passive_deletes=True, 
+        lazy="select")
 
-    tokens: Mapped["Token"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")    
-    client_generate: Mapped["Code_verify_client"] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+    tokens: Mapped["Token"] = relationship(
+        back_populates="user", 
+        cascade="all, delete-orphan", 
+        passive_deletes=True, 
+        lazy="select")  
+
+    client_generate: Mapped["Code_verify_client"] = relationship(
+        back_populates="user", 
+        cascade="all, delete-orphan", 
+        passive_deletes=True, 
+        lazy="select")
 
     # Связь с проектами через ассоциативную таблицу
-    projects: Mapped[list["ProjectUserAssociation"]] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True, lazy="selectin")
+    projects: Mapped[list["ProjectUserAssociation"]] = relationship(
+        back_populates="user", 
+        cascade="all, delete-orphan", 
+        passive_deletes=True, 
+        lazy="select")
 
     
     # поля для кодов активации сервисов

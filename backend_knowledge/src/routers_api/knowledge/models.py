@@ -23,8 +23,8 @@ class Knowledge(Base):
     free_access: Mapped[bool] = mapped_column(default=False)
     # связи
     # группы
-    group_id: Mapped[int] = mapped_column(ForeignKey("group.id", ondelete="RESTRICT"))#ссылаемся на таблицу group на ее элемент id
-    group: Mapped["Group"] = relationship(back_populates="knowledge")#убрал , lazy="selectin"
+    group_id: Mapped[int] = mapped_column(ForeignKey("group.id", ondelete="RESTRICT"))
+    group: Mapped["Group"] = relationship(back_populates="knowledge", uselist=False)
     # юзеры
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
     user: Mapped["User"] = relationship(back_populates="knowledge_user")
@@ -57,7 +57,7 @@ class Group(Base):
     name_group: Mapped[str] = mapped_column(nullable=False)
     slug: Mapped[str] = mapped_column(unique=True, nullable=False)
     # связи
-    knowledge: Mapped["Knowledge"] = relationship(back_populates="group")
+    knowledge: Mapped["Knowledge"] = relationship(back_populates="group", uselist=True)
 
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
     user: Mapped["User"] = relationship(back_populates="group_user")

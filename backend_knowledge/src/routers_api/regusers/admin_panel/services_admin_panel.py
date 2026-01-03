@@ -46,7 +46,7 @@ async def create_activation_code_service(
 
 
 # """Получить список кодов активации с деталями"""
-async def get_activation_codes_services(
+async def get_activation_codes_service(
     admin_id: int,
     db: AsyncSession,
     status_filter: str = None,
@@ -54,8 +54,7 @@ async def get_activation_codes_services(
     per_page: int = 50    
     ):
     
-    try:        
-
+    try:
         if page < 1 or per_page < 1:
             raise HTTPException(
                 status_code=403,
@@ -127,10 +126,138 @@ async def get_activation_codes_services(
 
     except Exception as ex:
         # Логируем ошибку и возвращаем пользователю
-        print(f"Ошибка в get_activation_codes_services: {str(ex)}")
+        print(f"Ошибка в get_activation_codes_service: {str(ex)}")
         raise HTTPException(
             status_code=400, 
             detail="Ошибка при получении данных"
+        )
+
+
+# вывод списка пользователей
+async def list_users_service(
+    admin_id: int,
+    db: AsyncSession,
+    status_service: bool = None,
+    page: int = 1,
+    per_page: int = 50    
+    ):
+    
+    try:
+        if page < 1 or per_page < 1:
+            raise HTTPException(
+                status_code=403,
+                    detail="Номер страницы и размер страницы должны быть положительными числами"
+                )
+
+        if per_page > 100:
+            raise HTTPException(
+                    status_code=400, 
+                    detail="Размер страницы не может превышать 100"
+                )
+
+        offset = (page - 1) * per_page        
+        
+        data_query = select(User)
+        # .options(joinedload(ActivationCode.activated_user))
+        # data_query = select(ActivationCode).options(selectinload(ActivationCode.activated_user))
+
+        count_query = select(func.count(User.id))
+
+        data_query = data_query.order_by(User.time_create_user.desc())        
+
+        data_query = data_query.limit(per_page).offset(offset)
+
+        data_result = await db.execute(data_query)
+        
+        count_result = await db.execute(count_query)
+
+        items_data = data_result.scalars().all()
+
+        total_count = count_result.scalar()
+
+        total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
+
+        if page > total_pages and total_pages > 0:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Страница {page} не найдена. Всего страниц: {total_pages}"
+            )       
+
+        first_item = items_data[0].id if items_data else None
+        last_item = items_data[-1].id if items_data else None
+
+        has_next = page < total_pages
+        has_prev = page > 1
+                
+        return PaginatedResponseUsers(
+                items=items_data,
+                total=total_count,
+                page=page,
+                per_page=per_page,
+                total_pages=total_pages,
+                has_next=has_next,
+                has_prev=has_prev,
+                first_item=first_item,
+                last_item=last_item
+            )
+           
+    except HTTPException:        
+        raise
+
+    except Exception as ex:
+        # Логируем ошибку и возвращаем пользователю
+        print(f"Ошибка в list_users_service: {str(ex)}")
+        raise HTTPException(
+            status_code=400, 
+            detail="Ошибка при получении данных"
+        )
+
+
+async def change_user_service(user_id: int, user_update: ChangeUserSchema, admin_id: int, db: AsyncSession):
+    
+    try:
+        query_user = select(User).where(User.id == user_id)
+        result_user = await db.execute(query_user)
+        user_object = result_user.scalar_one_or_none()
+        if not user_object:
+            raise HTTPException(status_code=404, detail="user not found")
+
+        if user_update.name != user_object.name and user_update.name is not None:
+            user_object.name = user_update.name
+
+
+        if user_update.email != user_object.email and user_update.email is not None:
+            # Проверяем, не занят ли email другим пользователем
+            query_existing_user = select(User).where(User.email == user_update.email, User.id != user_id)
+            result_existing_user = await db.execute(query_existing_user)
+            existing_user = result_existing_user.scalar_one_or_none()
+            if existing_user:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+
+            user_object.email = user_update.email
+            user_object.requires_password_reset = True
+
+
+        if user_update.user_role != user_object.user_role and user_id != admin_id and user_update.user_role is not None:
+            user_object.user_role = user_update.user_role
+        elif user_id == admin_id:
+            await db.commit()#сохраняем другие измененные данные
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot change your administrator role.")
+        
+        await db.commit()
+        await db.refresh(user_object)
+
+        return user_object
+
+    except HTTPException:
+        # Перебрасываем уже созданные HTTP исключения
+        raise
+
+    except Exception as ex:
+        # logger.error(f"Unexpected error updating user {user_id}: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Error in change_user_service: {ex}"
         )
 
 
@@ -200,6 +327,7 @@ async def get_activation_codes_services(
 #     }
 
 
+
 async def activate_code_admin_service(
     code_data: ActivateAccountRequest,    
     db: AsyncSession
@@ -235,6 +363,7 @@ async def activate_code_admin_service(
         )
         
     # Активируем пользователя
+    # находим пользователя в базе
     query_user = select(User).where(User.id == code_data.user_id)
     result_user = await db.execute(query_user)
     current_user = result_user.scalar_one_or_none()
@@ -341,5 +470,4 @@ async def delete_activation_code_service(
     return {"message": "Code is delete"}
 
 
-async def change_user_service():
-    return
+
