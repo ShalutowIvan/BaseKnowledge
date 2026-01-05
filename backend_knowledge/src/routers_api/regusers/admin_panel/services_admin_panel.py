@@ -7,6 +7,7 @@ from ..models import *
 from ..schemas import *
 from .utils_codes import *
 import math
+from typing import List, Dict
 
 
 # """Создать новый код активации"""
@@ -335,7 +336,7 @@ async def activate_code_admin_service(
     # ищем код активации в базе
     query = select(ActivationCode).where(
         ActivationCode.code == code_data.code.strip().upper(), 
-        ActivationCode.status != ActivationCodeStatus.ACTIVATED
+        ActivationCode.status == ActivationCodeStatus.NOT_ACTIVATED
         )
     result = await db.execute(query)
     code = result.scalar_one_or_none()
@@ -343,7 +344,7 @@ async def activate_code_admin_service(
     if not code:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Code not found or not access for activated"
+            detail="Code not found or not available for activation"
         )
     
     # Проверяем срок действия
@@ -387,7 +388,7 @@ async def activate_code_admin_service(
     await db.commit()
     
     return {
-        "message": "Аккаунт успешно активирован",
+        "message": "Сервисы пользователя успешно активированы",
         "user": {
             "email": current_user.email,
             "username": current_user.name,
@@ -426,9 +427,8 @@ async def deactivate_code_service(
         user = result_user.scalar_one_or_none()
         if user:
             user.service_active = False
-        code.user_id = None
-    code.updated_at = datetime.utcnow() 
-
+        # code.user_id = None#оставляем связь кода активации и пользака, это надо для истории и чтобы повторно код нельзя было переиспользовать
+    code.updated_at = datetime.utcnow()
     
     await db.commit()
     
@@ -452,15 +452,14 @@ async def delete_activation_code_service(
     if code.status == ActivationCodeStatus.ACTIVATED:
         raise HTTPException(
             status_code=400, 
-            detail="You can't delete a used code. Please deactivate it first."
+            detail="You can't delete a used code."
         )
-
-    # ост тут...
+    
     
     if code.user_id:
         raise HTTPException(
             status_code=400, 
-            detail="Код привязан к пользователю. Сначала деактивируйте."
+            detail="The code has already been used. It cannot be deleted."
         )
     
     await db.delete(code)    
@@ -470,4 +469,84 @@ async def delete_activation_code_service(
     return {"message": "Code is delete"}
 
 
+async def search_user_stats_by_email_service(
+    session: AsyncSession,
+    email: str,
+    admin_id: int, 
+    exact_match: bool = True,
+    limit: int = 10
+) -> List[Dict[str, Any]]:
+    """
+    Поиск статистики пользователя по email.
+    
+    Args:
+        session: AsyncSession
+        email: Email для поиска
+        exact_match: True - точное совпадение, False - частичное
+        limit: Максимальное количество результатов
+    
+    Returns:
+        Список найденных пользователей со статистикой
+    """
+    # Базовая конструкция запроса
+    stmt = (
+        select(UserStats)
+        .join(User, User.id == UserStats.user_id)
+        .options(selectinload(UserStats.user))
+    )
+    
+    # Условие поиска
+    if exact_match:
+        # Точное совпадение (регистрозависимое)
+        stmt = stmt.where(User.email == email)
+    else:
+        # Частичное совпадение (регистронезависимое)
+        stmt = stmt.where(User.email.ilike(f"%{email}%"))
+    
+    # Ограничение и сортировка
+    stmt = stmt.order_by(User.email)
+    # .limit(limit)
+    
+    # Выполняем запрос
+    result = await session.execute(stmt)
+    stats_list = result.scalars().all()
+    
+    
+    # Форматируем результат
+    users_stats = []
+    for stats in stats_list:
+        if stats.user:  # Проверяем, что пользователь есть
+            users_stats.append({
+                "user": {
+                    "id": stats.user.id,
+                    "username": stats.user.name,
+                    "email": stats.user.email,
+                    "created_at": stats.user.time_create_user.isoformat() if stats.user.time_create_user else None
+                },
+                "stats": {
+                    "knowledge": {
+                        "count": stats.knowledge_count,
+                        "total_size_bytes": stats.knowledge_total_size,
+                        "average_size_bytes": stats.knowledge_average_text_size
+                    },
+                    "images": {
+                        "count": stats.images_count,
+                        "total_size_bytes": stats.images_total_size,
+                        "average_size_bytes": stats.images_average_size
+                    },
+                    "projects": {
+                        "count": stats.projects_count,
+                        "sections_count": stats.sections_count,
+                        "tasks_count": stats.tasks_count,
+                        "tasks_total_size_bytes": stats.tasks_total_size,
+                        "tasks_average_size_bytes": stats.tasks_average_size
+                    }
+                },
+                "timestamps": {
+                    "updated_at": stats.updated_at.isoformat() if stats.updated_at else None,
+                    "last_activity_at": stats.last_activity_at.isoformat() if stats.last_activity_at else None
+                }
+            })
+    
+    return users_stats
 

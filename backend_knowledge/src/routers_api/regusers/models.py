@@ -172,7 +172,7 @@ class ActivationCode(Base):
         "User", 
         back_populates="activation_code", 
         foreign_keys=[user_id],
-        # lazy="select"
+        lazy="select"
     )    
     creator_admin: Mapped[User] = relationship(
         "User", 

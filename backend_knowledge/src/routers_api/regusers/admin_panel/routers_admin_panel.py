@@ -93,12 +93,6 @@ async def change_user(
     return await change_user_service(user_id=user_id, user_update=user_update, admin_id=admin_id, db=db)
 
 
-
-
-
-
-
-
 # обновление статистики
 @router_admin_panel.put("/recalculate-stats", response_model=Dict[str, Any])
 async def recalculate_stats(
@@ -128,6 +122,15 @@ async def get_system_totals(
     """Быстрое получение итогов системы"""
     return await UserStatsService.get_system_totals_raw_sql(session=db)
 
+
+# , response_model=UsersSchema
+@router_admin_panel.get("/search_user_stats_by_email")
+async def search_user_stats_by_email(
+    email: str,    
+    admin_id: int = Depends(require_admin),
+    db: AsyncSession = Depends(get_async_session)
+    ):    
+    return await search_user_stats_by_email_service(admin_id=admin_id, email=email, session=db)
 
 
 

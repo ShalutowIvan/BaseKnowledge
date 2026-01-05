@@ -315,6 +315,8 @@ class UserStatsService:
         """
         Обновить время последней активности через SQL
         """
+        # -- 3. Дата входа пользователя (если есть такое поле)
+        #                     COALESCE(u.last_login_at, '1970-01-01'),
         try:
             activity_query = text("""
                 -- Находим последнюю активность для каждого пользователя
@@ -327,8 +329,7 @@ class UserStatsService:
                             COALESCE(MAX(k.updated_at), '1970-01-01'),
                             -- 2. Последнее обновление задач
                             COALESCE(MAX(t.updated_at), '1970-01-01'),
-                            -- 3. Дата входа пользователя (если есть такое поле)
-                            COALESCE(u.last_login_at, '1970-01-01'),
+                            
                             -- 4. Текущее время как fallback
                             TIMEZONE('utc', NOW()) - INTERVAL '1 day'
                         ) as new_last_activity_at
@@ -358,7 +359,7 @@ class UserStatsService:
                     -- Обновляем только если дата изменилась
                     us.last_activity_at IS NULL 
                     OR us.last_activity_at < la.new_last_activity_at
-                  )
+                   )
                 
                 RETURNING us.user_id;
             """)
