@@ -30,6 +30,7 @@ from ..secure import access_token_decode
 security = HTTPBearer()
 
 
+# это можно будет использовать если бы админка была на внешнем API. Сейчас она будет во внутренней админке и эта функция не будет использоваться. Но оставлю ее как запасной вариант
 async def require_admin(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
     """Проверка, что пользователь является администратором"""
 

@@ -10,6 +10,8 @@ import uuid
 
 from ..projects.models import ProjectUserAssociation, Project, Role
 
+
+
 @enum.unique
 class UserRole(str, enum.Enum):
     USER = "user"
@@ -145,6 +147,7 @@ class User(Base):
         project = Project(title=title, description=description)
         project.add_user(user=self, role=Role.ADMIN)  # Создатель = администратор
         return project
+    
 
 
 # таблица с кодами активации

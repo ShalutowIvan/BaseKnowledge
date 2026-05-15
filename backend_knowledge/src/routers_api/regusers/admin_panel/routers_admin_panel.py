@@ -18,7 +18,7 @@ router_admin_panel = APIRouter(prefix="/admin/codes", tags=["Admin_panel"])
 async def create_activation_code(
     days_valid: int = Query(30, ge=1, le=365, description="Срок действия в днях"),
     # note: Optional[str] = Query(None, max_length=255),
-    admin_id: int = Depends(require_admin),#надо понять откуда берется это
+    admin_id: int = Depends(require_admin),
     db: AsyncSession = Depends(get_async_session)
     ):
     return await create_activation_code_service(days_valid=days_valid, admin_id=admin_id, db=db)

@@ -27,6 +27,9 @@ KEY2 = os.environ.get("KEY2")#для рефреш токена
 KEY3 = os.environ.get("KEY3")#для токена активации
 KEY4 = os.environ.get("KEY4")#для токена при сброе пароля
 KEY5 = os.environ.get("KEY5")#для токена при генерации токена клиента
+KEY_ADMIN = os.environ.get("KEYADMIN")
+
+
 
 CLIENT_ID = os.environ.get("CLIENT_ID")#клиент ид, сгенерировал его сам
 PROJECT_KEY = os.environ.get("PROJECT_KEY")#ключ для ролей проекта

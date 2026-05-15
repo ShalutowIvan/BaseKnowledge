@@ -7,7 +7,7 @@ from sqlalchemy.pool import NullPool, AsyncAdaptedQueuePool
 from sqlalchemy.orm import DeclarativeBase
 # from sqlalchemy.ext.declarative import declarative_base
 # from sqlalchemy.orm import sessionmaker, Mapped, mapped_column
-from sqlalchemy.pool import NullPool
+
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
