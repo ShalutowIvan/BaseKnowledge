@@ -12,7 +12,10 @@ from .models import User, Token, Code_verify_client
 
 from fastapi.security import APIKeyHeader, APIKeyCookie, OAuth2PasswordBearer
 
-from passlib.context import CryptContext
+
+from pwdlib import PasswordHash
+from pwdlib.hashers.argon2 import Argon2Hasher
+# from passlib.context import CryptContext
 # from passlib.hash import argon2
 
 # вместо jose теперь юзаю PyJWT
@@ -35,10 +38,14 @@ from pydantic import EmailStr
 
 # вариант с новой схемой хеширования. Он более удобен и безопасен. Тоже можно настривать "Соль"
 # pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto", 
-	argon2__time_cost=3,      # Количество итераций
-    argon2__memory_cost=65536, # 64MB памяти
-    argon2__parallelism=4,     # 4 потока
+pwd_context = PasswordHash(
+    [
+        Argon2Hasher(
+            time_cost=3,
+            memory_cost=65536,
+            parallelism=4
+        )
+    ]
 )
 
 

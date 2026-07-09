@@ -21,6 +21,9 @@ from slowapi.errors import RateLimitExceeded
 from middleware.rate_limiter import limiter 
 
 
+
+
+
 app = FastAPI(title="База знаний", debug=True)#debug=True это для того чтобы в документации выводилсь ошибки как в консоли. 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -53,8 +56,9 @@ app.add_middleware(
     https_only=False,  # True для production с HTTPS
     max_age=3600 * 24,  # Время жизни сессии в секундах (24 часа)
 )
-from admin import setup_admin
-admin = setup_admin(app)
+
+from admin import admin, AdminAuthProvider
+from settings import KEY_ADMIN
 
 
 # это для API роутеров, которые работают с фронтом на react
@@ -185,7 +189,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 # admin.add_view(ModelView(UserStats))
 # admin.add_view(ModelView(Token))
 # admin.add_view(ModelView(Code_verify_client))
-# admin.mount_to(app)
+admin.mount_to(app)
 
 # адрес админки: 127.0.0.1:8000/admin
 

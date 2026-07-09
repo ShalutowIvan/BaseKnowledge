@@ -27,7 +27,7 @@ async def create_activation_code(
 # # получение списка кодов активации
 @router_admin_panel.get("/", response_model=PaginatedResponseCodes)
 async def get_activation_codes(
-    status_filter: Optional[str] = Query(None, regex="^(active|used|expired|deactivated|all)$"),
+    status_filter: Optional[str] = Query(None, pattern="^(active|used|expired|deactivated|all)$"),
     page: int = 1,
     per_page: int = 50,
     admin_id: int = Depends(require_admin),
