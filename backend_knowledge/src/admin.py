@@ -64,7 +64,7 @@ class AdminAuthProvider(AuthProvider):
             user = result.scalar_one_or_none()
             
             if not user:
-                raise LoginFailed("Неверный email или пароль")
+                raise LoginFailed("Неверный email или пароль или роль")
             
             # Проверяем пароль (используйте вашу функцию проверки)
             if not pwd_context.verify(password, user.hashed_password):
