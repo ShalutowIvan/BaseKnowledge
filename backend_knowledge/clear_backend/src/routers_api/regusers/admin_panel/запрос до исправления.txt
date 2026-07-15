@@ -1,0 +1,168 @@
+# ОДИН мощный SQL запрос делает ВСЕ расчеты
+            # upsert_query = text("""
+            #     -- Удаляем старые данные или используем UPSERT
+            #     -- Вариант 1: TRUNCATE + INSERT (быстрее)
+            #     -- Вариант 2: UPSERT (INSERT ... ON CONFLICT UPDATE)
+                
+            #     WITH user_aggregates AS (
+            #         SELECT 
+            #             u.id as user_id,
+                        
+            #             -- ========== СТАТИСТИКА ЗНАНИЙ ==========
+            #             -- Количество знаний пользователя
+            #             COUNT(DISTINCT k.id) as knowledge_count,
+                        
+            #             -- Общий размер текста знаний в БАЙТАХ
+            #             -- Используем OCTET_LENGTH для точного подсчета байт
+            #             COALESCE(SUM(
+            #                 OCTET_LENGTH(COALESCE(k.content, '')) + 
+            #                 OCTET_LENGTH(COALESCE(k.title, '')) + 
+            #                 OCTET_LENGTH(COALESCE(k.description, ''))
+            #             ), 0) as knowledge_total_size_bytes,
+                        
+            #             -- ========== СТАТИСТИКА ИЗОБРАЖЕНИЙ ==========
+            #             -- Количество изображений через знания пользователя
+            #             COUNT(DISTINCT i.id) as images_count,
+                        
+            #             -- Общий размер файлов изображений в БАЙТАХ
+            #             -- Берем реальный file_size из таблицы images
+            #             COALESCE(SUM(i.file_size), 0) as images_total_size_bytes,
+                        
+            #             -- ========== СТАТИСТИКА ПРОЕКТОВ ==========
+            #             -- Количество проектов где пользователь ADMIN
+            #             COUNT(DISTINCT 
+            #                 CASE WHEN pua.role::text = 'admin' THEN p.id END
+            #             ) as projects_count,
+                        
+            #             -- Количество разделов в проектах где пользователь ADMIN
+            #             COUNT(DISTINCT 
+            #                 CASE WHEN pua.role::text = 'admin' THEN s.id END
+            #             ) as sections_count,
+                        
+            #             -- ========== СТАТИСТИКА ЗАДАЧ ==========
+            #             -- Количество задач в проектах где пользователь ADMIN
+            #             COUNT(DISTINCT 
+            #                 CASE WHEN pua.role::text = 'admin' THEN t.id END
+            #             ) as tasks_count,
+                        
+            #             -- Общий размер текста задач в БАЙТАХ
+            #             COALESCE(SUM(
+            #                 CASE WHEN pua.role::text = 'admin' THEN 
+            #                     OCTET_LENGTH(COALESCE(t.content, '')) + 
+            #                     OCTET_LENGTH(COALESCE(t.title, '')) + 
+            #                     OCTET_LENGTH(COALESCE(t.description, ''))
+            #                 ELSE 0 END
+            #             ), 0) as tasks_total_size_bytes
+                        
+            #         FROM "user" u
+                    
+            #         -- ЛЕВОЕ соединение для знаний (если знаний нет - всё равно считаем)
+            #         LEFT JOIN knowledge k ON k.user_id = u.id
+                    
+            #         -- ЛЕВОЕ соединение для изображений знаний
+            #         LEFT JOIN image i ON i.knowledge_id = k.id
+                    
+            #         -- ЛЕВОЕ соединение для проектов (пользователь может быть в нескольких проектах)
+            #         LEFT JOIN project_user_association pua ON pua.user_id = u.id
+                    
+            #         -- ЛЕВОЕ соединение для проектов
+            #         LEFT JOIN project p ON p.id = pua.project_id
+                    
+            #         -- ЛЕВОЕ соединение для разделов проектов
+            #         LEFT JOIN section s ON s.project_id = p.id
+                    
+            #         -- ЛЕВОЕ соединение для задач разделов
+            #         LEFT JOIN task t ON t.section_id = s.id
+                    
+            #         -- Группируем по пользователю
+            #         GROUP BY u.id
+            #     )
+                
+            #     -- UPSERT: если запись есть - обновляем, если нет - создаем
+            #     INSERT INTO user_stats (
+            #         user_id,
+                    
+            #         -- Знания
+            #         knowledge_count,
+            #         knowledge_average_text_size,
+            #         knowledge_total_size,
+                    
+            #         -- Изображения
+            #         images_count,
+            #         images_average_size,
+            #         images_total_size,
+                    
+            #         -- Проекты
+            #         projects_count,
+            #         sections_count,
+                    
+            #         -- Задачи
+            #         tasks_count,
+            #         tasks_average_size,
+            #         tasks_total_size,
+                    
+            #         updated_at
+            #     )
+            #     SELECT 
+            #         user_id,
+                    
+            #         -- Знания
+            #         knowledge_count,
+            #         -- Средний размер: общий размер / количество (защита от деления на 0)
+            #         CASE 
+            #             WHEN knowledge_count > 0 
+            #             THEN knowledge_total_size_bytes / knowledge_count 
+            #             ELSE 0 
+            #         END,
+            #         knowledge_total_size_bytes,
+                    
+            #         -- Изображения
+            #         images_count,
+            #         -- Средний размер изображений
+            #         CASE 
+            #             WHEN images_count > 0 
+            #             THEN images_total_size_bytes / images_count 
+            #             ELSE 0 
+            #         END,
+            #         images_total_size_bytes,
+                    
+            #         -- Проекты
+            #         projects_count,
+            #         sections_count,
+                    
+            #         -- Задачи
+            #         tasks_count,
+            #         -- Средний размер текста задач
+            #         CASE 
+            #             WHEN tasks_count > 0 
+            #             THEN tasks_total_size_bytes / tasks_count 
+            #             ELSE 0 
+            #         END,
+            #         tasks_total_size_bytes,
+                    
+            #         -- Время обновления
+            #         TIMEZONE('utc', NOW())
+                    
+            #     FROM user_aggregates
+                
+            #     -- Конфликт по уникальному ключу user_id
+            #     ON CONFLICT (user_id) 
+            #     DO UPDATE SET
+            #         -- Обновляем ВСЕ поля
+            #         knowledge_count = EXCLUDED.knowledge_count,
+            #         knowledge_average_text_size = EXCLUDED.knowledge_average_text_size,
+            #         knowledge_total_size = EXCLUDED.knowledge_total_size,
+                    
+            #         images_count = EXCLUDED.images_count,
+            #         images_average_size = EXCLUDED.images_average_size,
+            #         images_total_size = EXCLUDED.images_total_size,
+                    
+            #         projects_count = EXCLUDED.projects_count,
+            #         sections_count = EXCLUDED.sections_count,
+                    
+            #         tasks_count = EXCLUDED.tasks_count,
+            #         tasks_average_size = EXCLUDED.tasks_average_size,
+            #         tasks_total_size = EXCLUDED.tasks_total_size,
+                    
+            #         updated_at = EXCLUDED.updated_at;
+            # """)
